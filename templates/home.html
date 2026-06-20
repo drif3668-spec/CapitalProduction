@@ -4,23 +4,14 @@
 {% block content %}
 <main class="landing-shell">
     <div class="digital-stars"></div>
-    <nav class="top-nav landing-nav">
-        <div class="navbar-utilities">
-            <div class="language-toggle" data-language-toggle>
-                <button class="globe-language-button" type="button" aria-label="Change language" aria-expanded="false">
-                    <span class="globe-core">🌐</span>
-                </button>
-                <div class="language-dropdown" role="menu">
-                    <button class="language-option" type="button" data-lang="ar" role="menuitem">🇸🇦 العربية</button>
-                    <button class="language-option" type="button" data-lang="en" role="menuitem">🇺🇸 English</button>
-                </div>
-            </div>
-        </div>
-        <div class="navbar-main">
-            <a class="site-infinity-logo-wrap nav-infinity-logo" href="{{ url_for('index') }}" aria-label="TrBridgo.io">
-                <svg class="site-glass-infinity-logo" viewBox="0 0 260 120" aria-hidden="true">
+
+    <!-- ═══════════════════════ NAV ═══════════════════════ -->
+    <nav class="v2-nav" role="navigation" aria-label="القائمة الرئيسية">
+        <div class="v2-nav-inner">
+            <a class="v2-logo-wrap site-infinity-logo-wrap nav-infinity-logo" href="{{ url_for('index') }}" aria-label="TrBridgo.io">
+                <svg class="v2-logo-svg site-glass-infinity-logo" viewBox="0 0 260 120" aria-hidden="true">
                     <defs>
-                        <linearGradient id="siteInfinityGradientNav" x1="0%" y1="15%" x2="100%" y2="85%">
+                        <linearGradient id="v2LogoGrad" x1="0%" y1="15%" x2="100%" y2="85%">
                             <stop offset="0%" stop-color="#ff2c35"/>
                             <stop offset="24%" stop-color="#f7fbff"/>
                             <stop offset="43%" stop-color="#204dff"/>
@@ -28,84 +19,295 @@
                             <stop offset="80%" stop-color="#ffffff"/>
                             <stop offset="100%" stop-color="#67ff4a"/>
                         </linearGradient>
-                        <linearGradient id="siteInfinityShineNav" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <linearGradient id="v2LogoShine" x1="0%" y1="0%" x2="100%" y2="0%">
                             <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
                             <stop offset="45%" stop-color="rgba(255,255,255,.95)"/>
                             <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
                         </linearGradient>
-                        <filter id="siteInfinityGlowNav">
+                        <filter id="v2LogoGlow">
                             <feGaussianBlur stdDeviation="4" result="blur"/>
                             <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
                         </filter>
                     </defs>
-                    <path class="site-infinity-path" fill="url(#siteInfinityGradientNav)" filter="url(#siteInfinityGlowNav)" d="M34 62 C62 18 100 18 130 60 C160 102 198 102 226 58 C198 18 160 18 130 60 C100 102 62 102 34 62 Z"/>
+                    <path class="site-infinity-path" fill="url(#v2LogoGrad)" filter="url(#v2LogoGlow)" d="M34 62 C62 18 100 18 130 60 C160 102 198 102 226 58 C198 18 160 18 130 60 C100 102 62 102 34 62 Z"/>
                     <path class="site-infinity-glass" d="M38 58 C64 24 98 24 126 60 C98 92 64 94 38 58 Z M134 60 C162 24 196 24 222 58 C196 94 162 92 134 60 Z"/>
-                    <path class="site-infinity-shine" stroke="url(#siteInfinityShineNav)" d="M28 46 C66 20 101 30 130 58 C164 88 198 82 232 52"/>
+                    <path class="site-infinity-shine" stroke="url(#v2LogoShine)" d="M28 46 C66 20 101 30 130 58 C164 88 198 82 232 52"/>
                 </svg>
+                <span class="v2-brand-name">TrBridgo</span>
             </a>
-            <a href="{{ url_for('index') }}" data-i18n="nav.home">Home</a>
-            <a href="#pricing" data-i18n="nav.cards">Cards</a>
-            <a href="/referral-program" data-i18n="nav.referral">Referral Program</a>
-            <a href="#security" data-i18n="nav.support">Support</a>
-            <a href="{{ url_for('trusted_clients') }}" data-i18n="buttons.viewClients">View Clients</a>
-            <a class="main-login" href="{{ url_for('login') }}" data-i18n="buttons.signIn">Sign In</a>
-            <a class="main-get-started" href="{{ url_for('register') }}" data-i18n="buttons.getStarted">Get Started</a>
+
+            <ul class="v2-nav-links" role="list">
+                <li><a href="{{ url_for('index') }}" data-i18n="nav.home">الرئيسية</a></li>
+                <li><a href="#pricing" data-i18n="nav.cards">الباقات</a></li>
+                <li><a href="/referral-program" data-i18n="nav.referral">الإحالة</a></li>
+                <li><a href="{{ url_for('trusted_clients') }}" data-i18n="buttons.viewClients">العملاء</a></li>
+                <li><a href="#faq">الأسئلة الشائعة</a></li>
+            </ul>
+
+            <div class="v2-nav-right">
+                <div class="language-toggle" data-language-toggle>
+                    <button class="globe-language-button" type="button" aria-label="Change language" aria-expanded="false">
+                        <span class="globe-core">🌐</span>
+                    </button>
+                    <div class="language-dropdown" role="menu">
+                        <button class="language-option" type="button" data-lang="ar" role="menuitem">🇸🇦 العربية</button>
+                        <button class="language-option" type="button" data-lang="en" role="menuitem">🇺🇸 English</button>
+                    </div>
+                </div>
+                <a class="v2-btn-ghost" href="{{ url_for('login') }}" data-i18n="buttons.signIn">دخول</a>
+                <a class="v2-btn-cta" href="{{ url_for('register') }}" data-i18n="buttons.getStarted">ابدأ الآن</a>
+            </div>
+
+            <button class="v2-hamburger" type="button" aria-label="فتح القائمة" aria-expanded="false" data-nav-toggle>
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+
+        <div class="v2-mobile-menu" data-mobile-menu aria-hidden="true">
+            <a href="{{ url_for('index') }}" data-i18n="nav.home">الرئيسية</a>
+            <a href="#pricing" data-i18n="nav.cards">الباقات</a>
+            <a href="/referral-program" data-i18n="nav.referral">برنامج الإحالة</a>
+            <a href="{{ url_for('trusted_clients') }}">العملاء</a>
+            <a href="#faq">الأسئلة الشائعة</a>
+            <div class="v2-mobile-actions">
+                <a class="v2-btn-ghost" href="{{ url_for('login') }}" data-i18n="buttons.signIn">تسجيل الدخول</a>
+                <a class="v2-btn-cta" href="{{ url_for('register') }}" data-i18n="buttons.getStarted">ابدأ الآن</a>
+            </div>
         </div>
     </nav>
 
     <div class="news-ticker"><span>تحديثات مستمرة • دعم متعدد اللغات • متاح في أكثر من 60 دولة • ربط MT4 / MT5 ذكي •</span></div>
 
-    <section class="landing-hero section">
-        <div class="hero-web3-bg" aria-hidden="true">
-            <span class="hero-glass-ribbon ribbon-blue"></span>
-            <span class="hero-glass-ribbon ribbon-purple"></span>
-            <span class="hero-glass-ribbon ribbon-green"></span>
-            <span class="hero-orb"></span>
+    <!-- ═══════════════════════ HERO ═══════════════════════ -->
+    <section class="v2-hero">
+        <div class="v2-hero-bg" aria-hidden="true">
+            <div class="v2-hero-orb v2-orb-1"></div>
+            <div class="v2-hero-orb v2-orb-2"></div>
+            <div class="v2-hero-grid-overlay"></div>
         </div>
-        <div class="hero-copy">
-            <span class="pill">Smart Trading Account Management</span>
-            <h1 class="hero-typewriter-text" data-hero-typewriter="منصة لربط وإدارة حسابات التداول MT4 و MT5">منصة لربط وإدارة حسابات التداول MT4 و MT5</h1>
-            <p>جرب تجربة تداول منظمة مع لوحة تحكم احترافية، بطاقات اشتراك، ربط سريع، ومحفظة مدمجة.</p>
-            <div class="actions">
-                <a class="primary" href="{{ url_for('register') }}" data-i18n="buttons.getStarted">Get Started</a>
-                <a class="secondary" href="{{ url_for('login') }}" data-i18n="buttons.signIn">Sign In</a>
+
+        <div class="v2-hero-body">
+            <div class="v2-hero-content">
+                <a class="v2-pill-link" href="{{ url_for('register') }}">
+                    <span class="v2-pill-dot"></span>
+                    Smart Trading Account Management
+                    <span class="v2-pill-arrow">→</span>
+                </a>
+                <h1 class="v2-hero-title" data-hero-typewriter="منصة ربط وإدارة حسابات التداول MT4 و MT5">منصة ربط وإدارة حسابات التداول MT4 و MT5</h1>
+                <p class="v2-hero-desc">إدارة احترافية لحسابات التداول مع لوحة تحكم متكاملة، بطاقات اشتراك، ربط سريع ذكي، ومحفظة مدمجة — كل ذلك في منصة واحدة.</p>
+                <div class="v2-hero-actions">
+                    <a class="v2-btn-cta v2-btn-large" href="{{ url_for('register') }}" data-i18n="buttons.getStarted">
+                        ابدأ مجاناً — 14 يوم
+                        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+                    <a class="v2-btn-ghost" href="{{ url_for('login') }}" data-i18n="buttons.signIn">تسجيل الدخول</a>
+                </div>
+                <div class="v2-hero-badges">
+                    <span>✓ بدون بطاقة بنكية</span>
+                    <span>✓ 14 يوم مجاناً</span>
+                    <span>✓ إلغاء في أي وقت</span>
+                </div>
+            </div>
+
+            <div class="v2-hero-visual" aria-hidden="true">
+                <div class="v2-dashboard-mockup">
+                    <div class="v2-mock-topbar">
+                        <div class="v2-mock-dots">
+                            <span class="v2-dot-r"></span>
+                            <span class="v2-dot-y"></span>
+                            <span class="v2-dot-g"></span>
+                        </div>
+                        <span class="v2-mock-title">TrBridgo — Dashboard</span>
+                    </div>
+                    <div class="v2-mock-body">
+                        <div class="v2-mock-stats-row">
+                            <div class="v2-mock-stat">
+                                <small>الرصيد الإجمالي</small>
+                                <b>$12,450</b>
+                                <em class="v2-mock-up">▲ 8.4%</em>
+                            </div>
+                            <div class="v2-mock-stat">
+                                <small>البطاقات النشطة</small>
+                                <b>3</b>
+                                <em class="v2-mock-tag">Ultra</em>
+                            </div>
+                            <div class="v2-mock-stat">
+                                <small>الحسابات</small>
+                                <b>5</b>
+                                <em class="v2-mock-up">MT5</em>
+                            </div>
+                        </div>
+                        <div class="v2-mock-chart">
+                            <svg viewBox="0 0 280 80" preserveAspectRatio="none" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#67ff4a" stop-opacity=".32"/>
+                                        <stop offset="100%" stop-color="#67ff4a" stop-opacity="0"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0 62 C28 56 48 44 72 40 C96 36 112 48 138 36 C162 24 174 30 198 18 C218 9 248 15 280 8 L280 80 L0 80Z" fill="url(#chartFill)"/>
+                                <path d="M0 62 C28 56 48 44 72 40 C96 36 112 48 138 36 C162 24 174 30 198 18 C218 9 248 15 280 8" fill="none" stroke="#67ff4a" stroke-width="2.2" stroke-linecap="round"/>
+                                <circle cx="198" cy="18" r="4" fill="#67ff4a" opacity=".9"/>
+                            </svg>
+                        </div>
+                        <div class="v2-mock-cards-row">
+                            <div class="v2-mock-plan v2-plan-b"><span>BASIC</span><b>$25</b></div>
+                            <div class="v2-mock-plan v2-plan-p"><span>PRO</span><b>$120</b></div>
+                            <div class="v2-mock-plan v2-plan-u"><span>ULTRA</span><b>$350</b></div>
+                        </div>
+                    </div>
+                    <div class="v2-float-badge v2-fbadge-a">
+                        <span>✓</span> تم ربط MT5
+                    </div>
+                    <div class="v2-float-badge v2-fbadge-b">
+                        <span>📊</span> +$340 اليوم
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="v2-hero-stats-bar">
+            <div class="v2-stat-item">
+                <b data-counter="15000">0</b>
+                <span>مستخدم نشط</span>
+            </div>
+            <div class="v2-stat-sep" aria-hidden="true"></div>
+            <div class="v2-stat-item">
+                <b data-counter="8600">0</b>
+                <span>حساب مربوط</span>
+            </div>
+            <div class="v2-stat-sep" aria-hidden="true"></div>
+            <div class="v2-stat-item">
+                <b data-counter="63">0</b>
+                <span>دولة مدعومة</span>
+            </div>
+            <div class="v2-stat-sep" aria-hidden="true"></div>
+            <div class="v2-stat-item">
+                <b data-counter="12400">0</b>
+                <span>طلب ربط مكتمل</span>
             </div>
         </div>
     </section>
 
-    <section id="how" class="section">
-        <h2>كيف تعمل المنصة؟</h2>
-        <div class="cards three steps-grid">
-            <article>1<br><b>أنشئ حسابك</b><p>ابدأ خلال دقائق بلوحة واضحة.</p></article>
-            <article>2<br><b>اختر بطاقة الاشتراك</b><p>Basic أو Pro أو Ultra.</p></article>
-            <article>3<br><b>اربط حساب MT4 / MT5</b><p>طلب ربط سريع ومراجعة يدوية.</p></article>
-            <article>4<br><b>تابع حالتك</b><p>بطاقات، محفظة، تذاكر وتنبيهات.</p></article>
+    <!-- ═══════════════════════ BROKERS BAR ═══════════════════════ -->
+    <div class="v2-brokers-bar">
+        <span class="v2-brokers-label">وسطاء مدعومون</span>
+        <div class="v2-brokers-track">
+            <span>AAAFx</span><b>·</b><span>FXDD</span><b>·</b><span>Markets.com</span><b>·</b><span>HFM</span><b>·</b><span>eToro</span><b>·</b><span>Exness</span><b>·</b><span>XM</span><b>·</b><span>Pepperstone</span><b>·</b><span>Octa</span><b>·</b><span>Plus500</span><b>·</b>
+            <span>AAAFx</span><b>·</b><span>FXDD</span><b>·</b><span>Markets.com</span><b>·</b><span>HFM</span><b>·</b><span>eToro</span><b>·</b><span>Exness</span><b>·</b><span>XM</span><b>·</b><span>Pepperstone</span><b>·</b><span>Octa</span><b>·</b><span>Plus500</span>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════ HOW IT WORKS ═══════════════════════ -->
+    <section id="how" class="v2-section">
+        <div class="v2-section-head v2-centered">
+            <span class="v2-section-pill">كيف تعمل المنصة</span>
+            <h2>4 خطوات بسيطة للبدء</h2>
+            <p>من التسجيل إلى إدارة حساباتك في أقل من 10 دقائق</p>
+        </div>
+        <div class="v2-steps-grid">
+            <article class="v2-step-card">
+                <div class="v2-step-num">01</div>
+                <div class="v2-step-icon">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/></svg>
+                </div>
+                <h3>أنشئ حسابك</h3>
+                <p>سجّل في دقيقة واحدة وابدأ فترتك التجريبية المجانية 14 يومًا فوراً.</p>
+            </article>
+            <div class="v2-step-arrow" aria-hidden="true">
+                <svg viewBox="0 0 48 24" fill="none"><path d="M2 12h44M36 4l8 8-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <article class="v2-step-card">
+                <div class="v2-step-num">02</div>
+                <div class="v2-step-icon">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M2 10h20" stroke="currentColor" stroke-width="2"/></svg>
+                </div>
+                <h3>اختر بطاقة اشتراك</h3>
+                <p>اختر Basic أو Pro أو Ultra حسب حجم تداولك واحتياجاتك.</p>
+            </article>
+            <div class="v2-step-arrow" aria-hidden="true">
+                <svg viewBox="0 0 48 24" fill="none"><path d="M2 12h44M36 4l8 8-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <article class="v2-step-card">
+                <div class="v2-step-num">03</div>
+                <div class="v2-step-icon">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 9l3 3-3 3M13 15h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/></svg>
+                </div>
+                <h3>اربط MT4 / MT5</h3>
+                <p>أرسل طلب ربط حسابك عبر نموذج سريع، ومراجعة يدوية متخصصة.</p>
+            </article>
+            <div class="v2-step-arrow" aria-hidden="true">
+                <svg viewBox="0 0 48 24" fill="none"><path d="M2 12h44M36 4l8 8-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <article class="v2-step-card">
+                <div class="v2-step-num">04</div>
+                <div class="v2-step-icon">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h3>تابع حالتك</h3>
+                <p>لوحة تحكم كاملة: بطاقات، محفظة، تذاكر تداول، وإشعارات فورية.</p>
+            </article>
         </div>
     </section>
 
-    <section id="pricing" class="section">
-        <div class="pricing-showcase-head">
-            <h2>Choose Your Perfect Plan</h2>
-            <p>Compare plans and choose the package that suits your trading journey.</p>
+    <!-- ═══════════════════════ PRICING ═══════════════════════ -->
+    <section id="pricing" class="v2-section v2-pricing-section">
+        <div class="v2-section-head">
+            <div>
+                <span class="v2-section-pill">الباقات</span>
+                <h2>اختر الخطة المناسبة لك</h2>
+                <p>باقات مرنة تناسب جميع مستويات التداول — ابدأ مجاناً 14 يوم</p>
+            </div>
+            <a class="v2-btn-ghost" href="{{ url_for('register') }}">ابدأ الآن مجاناً</a>
         </div>
-        <div class="subscription-picker public-picker">
-            <article class="premium-card pricing-card basic" data-pricing-card>
+        <div class="subscription-picker public-picker v2-pricing-grid">
+            <article class="premium-card pricing-card basic v2-plan-card" data-pricing-card>
                 <div class="pricing-power" style="--power: 20%"><b>Power 20%</b><i></i></div>
-                <span>BASIC</span><strong>25$ / شهريًا</strong><small>ربط حساب واحد<br>تجربة الربط السريع<br>دعم أساسي<br>لوحة متابعة بسيطة</small><a class="pricing-plan-button diamond-blue" href="{{ url_for('register') }}" data-i18n="buttons.choosePlan">Choose Your Plan</a>
+                <span>BASIC</span>
+                <strong>$25 <em class="v2-per">/ شهريًا</em></strong>
+                <ul class="v2-plan-list">
+                    <li><span>✓</span> ربط حساب تداول واحد</li>
+                    <li><span>✓</span> تجربة الربط السريع</li>
+                    <li><span>✓</span> لوحة متابعة أساسية</li>
+                    <li><span>✓</span> دعم فني</li>
+                </ul>
+                <a class="pricing-plan-button diamond-blue" href="{{ url_for('register') }}" data-i18n="buttons.choosePlan">اختر الباقة</a>
             </article>
-            <article class="premium-card pricing-card pro" data-pricing-card>
+
+            <article class="premium-card pricing-card pro v2-plan-card v2-plan-popular" data-pricing-card>
+                <div class="v2-popular-tag">الأكثر طلبًا</div>
                 <div class="pricing-power" style="--power: 50%"><b>Power 50%</b><i></i></div>
-                <span>PRO</span><strong>120$ / شهريًا</strong><small>ربط عدة حسابات<br>لوحة متابعة متقدمة<br>أولوية في المراجعة<br>تذاكر وتحليلات أكثر</small><a class="pricing-plan-button diamond-blue" href="{{ url_for('register') }}" data-i18n="buttons.choosePlan">Choose Your Plan</a>
+                <span>PRO</span>
+                <strong>$120 <em class="v2-per">/ شهريًا</em></strong>
+                <ul class="v2-plan-list">
+                    <li><span>✓</span> ربط عدة حسابات</li>
+                    <li><span>✓</span> لوحة متابعة متقدمة</li>
+                    <li><span>✓</span> أولوية في المراجعة</li>
+                    <li><span>✓</span> تذاكر وتحليلات أكثر</li>
+                    <li><span>✓</span> دعم ذو أولوية</li>
+                </ul>
+                <a class="pricing-plan-button diamond-blue" href="{{ url_for('register') }}" data-i18n="buttons.choosePlan">اختر الباقة</a>
             </article>
-            <article class="premium-card pricing-card ultra" data-pricing-card>
+
+            <article class="premium-card pricing-card ultra v2-plan-card" data-pricing-card>
+                <div class="v2-vip-tag">VIP</div>
                 <div class="pricing-power" style="--power: 100%"><b>Power 100%</b><i></i></div>
-                <span>ULTRA</span><strong>350$ / شهريًا</strong><small>إدارة متقدمة<br>أولوية كاملة<br>دعم أسرع<br>مميزات VIP وبطاقات متعددة</small><a class="pricing-plan-button diamond-blue" href="{{ url_for('register') }}" data-i18n="buttons.choosePlan">Choose Your Plan</a>
+                <span>ULTRA</span>
+                <strong>$350 <em class="v2-per">/ شهريًا</em></strong>
+                <ul class="v2-plan-list">
+                    <li><span>✓</span> إدارة متقدمة بلا حدود</li>
+                    <li><span>✓</span> أولوية كاملة وسرعة تنفيذ</li>
+                    <li><span>✓</span> دعم VIP على مدار الساعة</li>
+                    <li><span>✓</span> بطاقات متعددة</li>
+                    <li><span>✓</span> مميزات حصرية</li>
+                </ul>
+                <a class="pricing-plan-button diamond-blue" href="{{ url_for('register') }}" data-i18n="buttons.choosePlan">اختر الباقة</a>
             </article>
         </div>
     </section>
 
-    <section class="section quick-public-section">
-        <a class="quick-launch-card landing-quick-card" href="{{ url_for('register') }}"><span>MT4 / MT5</span><strong>الربط السريع</strong></a>
+    <!-- ═══════════════════════ TRUSTED CLIENTS ═══════════════════════ -->
+    <section class="v2-section">
         <a class="trusted-clients-launch" href="{{ url_for('trusted_clients') }}">
             <div class="trusted-avatar-stack" aria-hidden="true">
                 <span><img src="{{ url_for('static', filename='uploads/trusted/trusted-1.jpg') }}" alt=""></span>
@@ -114,20 +316,67 @@
                 <span><img src="{{ url_for('static', filename='uploads/trusted/trusted-4.jpg') }}" alt=""></span>
             </div>
             <div class="trusted-launch-copy">
-                <strong>عملاء يثقون بنا</strong>
+                <strong>+15,000 عميل يثقون بنا</strong>
                 <small>اكتشف تجارب المستخدمين داخل منصتنا</small>
             </div>
-            <em data-i18n="buttons.viewClients">View Clients</em>
+            <em data-i18n="buttons.viewClients">اكتشف العملاء</em>
         </a>
     </section>
 
-    <section class="section">
-        <h2>لماذا تختار TrBridgo.io؟</h2>
-        <div class="cards three glass-grid">
-            <article>سرعة تنفيذ عالية</article><article>نظام ربط ذكي MT4 / MT5</article><article>واجهة سهلة للمبتدئين والمحترفين</article><article>دعم فني سريع</article><article>حماية متعددة الطبقات</article><article>إشعارات وتنبيهات فورية</article>
+    <!-- ═══════════════════════ FEATURES ═══════════════════════ -->
+    <section class="v2-section">
+        <div class="v2-section-head v2-centered">
+            <span class="v2-section-pill">المزايا</span>
+            <h2>لماذا تختار TrBridgo.io؟</h2>
+            <p>مميزات احترافية تجعل إدارة حسابات التداول أسهل وأكثر كفاءة</p>
+        </div>
+        <div class="v2-features-grid">
+            <article class="v2-feature-card">
+                <div class="v2-feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h3>سرعة تنفيذ عالية</h3>
+                <p>ربط حسابات التداول بسرعة فائقة مع مراجعة يدوية متخصصة في أقل وقت.</p>
+            </article>
+            <article class="v2-feature-card">
+                <div class="v2-feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </div>
+                <h3>نظام ربط ذكي MT4/MT5</h3>
+                <p>ربط كلا المنصتين بذكاء مع لوحة تحكم موحدة لجميع حساباتك.</p>
+            </article>
+            <article class="v2-feature-card">
+                <div class="v2-feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h3>حماية متعددة الطبقات</h3>
+                <p>تشفير متقدم وحماية كاملة لبياناتك ومعلوماتك المالية الحساسة.</p>
+            </article>
+            <article class="v2-feature-card">
+                <div class="v2-feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h3>دعم فني سريع</h3>
+                <p>فريق دعم متخصص جاهز للمساعدة في أي وقت عبر محادثة مباشرة.</p>
+            </article>
+            <article class="v2-feature-card">
+                <div class="v2-feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h3>تحليلات تداول متقدمة</h3>
+                <p>تذاكر تداول مفصلة مع تحليل الأزواج ونسب المخاطرة والربح.</p>
+            </article>
+            <article class="v2-feature-card">
+                <div class="v2-feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <h3>إشعارات وتنبيهات فورية</h3>
+                <p>تنبيهات لحظية لكل تغيير في حالة حساباتك وبطاقاتك وصفقاتك.</p>
+            </article>
         </div>
     </section>
 
+    <!-- ═══════════════════════ REFERRAL TABLE ═══════════════════════ -->
     <section class="section referral-table-section" aria-labelledby="referral-table-title">
         <div class="section-title referral-table-title">
             <div>
@@ -144,28 +393,38 @@
         <p class="referral-note">يتم احتساب العمولات بعد تأكيد الاشتراك أو التجديد من الإدارة. تخضع مستويات الإحالة للمراجعة حسب نشاط الحساب.</p>
     </section>
 
-    <section id="security" class="section">
-        <h2>Security & Protection</h2>
-        <div class="cards three security-badges">
-            <article>✓ SSL Secure Connection</article><article>✓ Advanced Data Encryption</article><article>✓ Identity Verification</article><article>✓ Secure Payment Gateway</article><article>✓ Fraud Protection System</article><article>✓ Protected Access</article>
+    <!-- ═══════════════════════ SECURITY ═══════════════════════ -->
+    <section id="security" class="v2-section">
+        <div class="v2-section-head v2-centered">
+            <span class="v2-section-pill">الحماية</span>
+            <h2>Security & Protection</h2>
+            <p>بنية تحتية آمنة ومتعددة الطبقات تحمي بياناتك على الدوام</p>
+        </div>
+        <div class="v2-security-grid">
+            <div class="v2-security-card"><span>🔒</span><b>SSL Secure</b><small>Connection</small></div>
+            <div class="v2-security-card"><span>🔐</span><b>Advanced</b><small>Encryption</small></div>
+            <div class="v2-security-card"><span>🛡️</span><b>Identity</b><small>Verification</small></div>
+            <div class="v2-security-card"><span>💳</span><b>Secure</b><small>Payment Gateway</small></div>
+            <div class="v2-security-card"><span>🚫</span><b>Fraud</b><small>Protection</small></div>
+            <div class="v2-security-card"><span>🔑</span><b>Protected</b><small>Access</small></div>
         </div>
     </section>
 
-    <section class="section">
-        <h2>المزايا الذكية</h2>
-        <div class="cards three glass-grid"><article>نظام التذاكر</article><article>تحليل الحساب</article><article>البطاقات الذكية</article><article>إدارة المحفظة</article><article>الإشعارات</article><article>الربط السريع</article></div>
+    <!-- ═══════════════════════ LIVE ACTIVITY ═══════════════════════ -->
+    <section class="v2-section">
+        <div class="v2-section-head v2-centered">
+            <span class="v2-section-pill">نشاط مباشر</span>
+            <h2>الأنشطة المباشرة</h2>
+        </div>
+        <div class="v2-live-grid">
+            <div class="v2-live-card"><span class="v2-live-dot"></span>طلب ربط جديد</div>
+            <div class="v2-live-card"><span class="v2-live-dot"></span>تفعيل بطاقة</div>
+            <div class="v2-live-card"><span class="v2-live-dot"></span>إنشاء تذكرة تداول</div>
+            <div class="v2-live-card"><span class="v2-live-dot"></span>تحديث محفظة</div>
+        </div>
     </section>
 
-    <section class="section">
-        <h2>الأنشطة المباشرة</h2>
-        <div class="live-cards"><span>طلب ربط جديد</span><span>تفعيل بطاقة</span><span>إنشاء تذكرة</span><span>تحديث محفظة</span></div>
-    </section>
-
-    <section class="section cta-final">
-        <h2>أنشئ حسابك خلال دقائق.</h2>
-        <div class="actions"><a class="primary" href="{{ url_for('register') }}">إنشاء حساب</a><a class="secondary" href="{{ url_for('login') }}">تسجيل الدخول</a></div>
-    </section>
-
+    <!-- ═══════════════════════ REGULATORY ═══════════════════════ -->
     <section class="section regulatory-section" aria-labelledby="regulatory-title">
         <div class="section-title regulatory-title">
             <div>
@@ -176,78 +435,92 @@
         </div>
         <div class="regulatory-grid">
             <article class="regulatory-card" style="--i: 0">
-                <span class="reg-flag" aria-label="United States">
-                    <svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><clipPath id="flag-us-a"><circle cx="30" cy="30" r="28"/></clipPath><g clip-path="url(#flag-us-a)"><path fill="#fff" d="M2 2h56v56H2z"/><path fill="#bf0a30" d="M2 2h56v8H2zm0 16h56v8H2zm0 16h56v8H2zm0 16h56v8H2z"/><path fill="#002868" d="M2 2h28v28H2z"/></g></svg>
-                    <span class="flag-emoji">🇺🇸</span>
-                </span>
-                <div class="reg-logo">CFTC</div>
-                <h3>CFTC</h3>
-                <small>United States</small>
+                <span class="reg-flag" aria-label="United States"><svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><clipPath id="flag-us-a"><circle cx="30" cy="30" r="28"/></clipPath><g clip-path="url(#flag-us-a)"><path fill="#fff" d="M2 2h56v56H2z"/><path fill="#bf0a30" d="M2 2h56v8H2zm0 16h56v8H2zm0 16h56v8H2zm0 16h56v8H2z"/><path fill="#002868" d="M2 2h28v28H2z"/></g></svg><span class="flag-emoji">🇺🇸</span></span>
+                <div class="reg-logo">CFTC</div><h3>CFTC</h3><small>United States</small>
                 <p>Commodity Futures Trading Commission، جهة رقابية أمريكية ضمن قطاع أسواق المشتقات.</p>
             </article>
             <article class="regulatory-card" style="--i: 1">
-                <span class="reg-flag" aria-label="United States">
-                    <svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><clipPath id="flag-us-b"><circle cx="30" cy="30" r="28"/></clipPath><g clip-path="url(#flag-us-b)"><path fill="#fff" d="M2 2h56v56H2z"/><path fill="#bf0a30" d="M2 2h56v8H2zm0 16h56v8H2zm0 16h56v8H2zm0 16h56v8H2z"/><path fill="#002868" d="M2 2h28v28H2z"/></g></svg>
-                    <span class="flag-emoji">🇺🇸</span>
-                </span>
-                <div class="reg-logo">NFA</div>
-                <h3>NFA</h3>
-                <small>United States</small>
+                <span class="reg-flag" aria-label="United States"><svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><clipPath id="flag-us-b"><circle cx="30" cy="30" r="28"/></clipPath><g clip-path="url(#flag-us-b)"><path fill="#fff" d="M2 2h56v56H2z"/><path fill="#bf0a30" d="M2 2h56v8H2zm0 16h56v8H2zm0 16h56v8H2zm0 16h56v8H2z"/><path fill="#002868" d="M2 2h28v28H2z"/></g></svg><span class="flag-emoji">🇺🇸</span></span>
+                <div class="reg-logo">NFA</div><h3>NFA</h3><small>United States</small>
                 <p>National Futures Association، منظمة رقابية ذاتية مرتبطة بصناعة العقود والأسواق المالية.</p>
             </article>
             <article class="regulatory-card" style="--i: 2">
-                <span class="reg-flag" aria-label="United Kingdom">
-                    <svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><clipPath id="flag-gb"><circle cx="30" cy="30" r="28"/></clipPath><g clip-path="url(#flag-gb)"><path fill="#012169" d="M2 2h56v56H2z"/><path stroke="#fff" stroke-width="12" d="m2 2 56 56m0-56L2 58"/><path stroke="#c8102e" stroke-width="6" d="m2 2 56 56m0-56L2 58"/><path stroke="#fff" stroke-width="18" d="M30 2v56M2 30h56"/><path stroke="#c8102e" stroke-width="10" d="M30 2v56M2 30h56"/></g></svg>
-                    <span class="flag-emoji">🇬🇧</span>
-                </span>
-                <div class="reg-logo">FCA</div>
-                <h3>FCA</h3>
-                <small>United Kingdom</small>
+                <span class="reg-flag" aria-label="United Kingdom"><svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><clipPath id="flag-gb"><circle cx="30" cy="30" r="28"/></clipPath><g clip-path="url(#flag-gb)"><path fill="#012169" d="M2 2h56v56H2z"/><path stroke="#fff" stroke-width="12" d="m2 2 56 56m0-56L2 58"/><path stroke="#c8102e" stroke-width="6" d="m2 2 56 56m0-56L2 58"/><path stroke="#fff" stroke-width="18" d="M30 2v56M2 30h56"/><path stroke="#c8102e" stroke-width="10" d="M30 2v56M2 30h56"/></g></svg><span class="flag-emoji">🇬🇧</span></span>
+                <div class="reg-logo">FCA</div><h3>FCA</h3><small>United Kingdom</small>
                 <p>Financial Conduct Authority، جهة رقابية بريطانية معروفة في قطاع الخدمات المالية.</p>
             </article>
             <article class="regulatory-card" style="--i: 3">
-                <span class="reg-flag" aria-label="Hong Kong">
-                    <svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="28" fill="#de2910"/><g fill="#fff" transform="translate(30 30)"><ellipse rx="4" ry="12" transform="rotate(0) translate(0 -12)"/><ellipse rx="4" ry="12" transform="rotate(72) translate(0 -12)"/><ellipse rx="4" ry="12" transform="rotate(144) translate(0 -12)"/><ellipse rx="4" ry="12" transform="rotate(216) translate(0 -12)"/><ellipse rx="4" ry="12" transform="rotate(288) translate(0 -12)"/></g></svg>
-                    <span class="flag-emoji">🇭🇰</span>
-                </span>
-                <div class="reg-logo">SFC</div>
-                <h3>SFC</h3>
-                <small>Hong Kong</small>
-                <p>Securities and Futures Commission، جهة رقابية في هونغ كونغ لأسواق الأوراق المالية والعقود.</p>
+                <span class="reg-flag" aria-label="Hong Kong"><svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="28" fill="#de2910"/><g fill="#fff" transform="translate(30 30)"><ellipse rx="4" ry="12" transform="rotate(0) translate(0 -12)"/><ellipse rx="4" ry="12" transform="rotate(72) translate(0 -12)"/><ellipse rx="4" ry="12" transform="rotate(144) translate(0 -12)"/><ellipse rx="4" ry="12" transform="rotate(216) translate(0 -12)"/><ellipse rx="4" ry="12" transform="rotate(288) translate(0 -12)"/></g></svg><span class="flag-emoji">🇭🇰</span></span>
+                <div class="reg-logo">SFC</div><h3>SFC</h3><small>Hong Kong</small>
+                <p>Securities and Futures Commission، جهة رقابية في هونغ كونغ لأسواق الأوراق المالية.</p>
             </article>
             <article class="regulatory-card" style="--i: 4">
-                <span class="reg-flag" aria-label="Canada">
-                    <svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><clipPath id="flag-ca"><circle cx="30" cy="30" r="28"/></clipPath><g clip-path="url(#flag-ca)"><path fill="#fff" d="M2 2h56v56H2z"/><path fill="#d52b1e" d="M2 2h14v56H2zm42 0h14v56H44z"/><path fill="#d52b1e" d="m30 13 4 10 9-4-4 10 9 4-10 3 3 10-8-6-3 9-3-9-8 6 3-10-10-3 9-4-4-10 9 4z"/></g></svg>
-                    <span class="flag-emoji">🇨🇦</span>
-                </span>
-                <div class="reg-logo">IIROC</div>
-                <h3>IIROC</h3>
-                <small>Canada</small>
+                <span class="reg-flag" aria-label="Canada"><svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><clipPath id="flag-ca"><circle cx="30" cy="30" r="28"/></clipPath><g clip-path="url(#flag-ca)"><path fill="#fff" d="M2 2h56v56H2z"/><path fill="#d52b1e" d="M2 2h14v56H2zm42 0h14v56H44z"/><path fill="#d52b1e" d="m30 13 4 10 9-4-4 10 9 4-10 3 3 10-8-6-3 9-3-9-8 6 3-10-10-3 9-4-4-10 9 4z"/></g></svg><span class="flag-emoji">🇨🇦</span></span>
+                <div class="reg-logo">IIROC</div><h3>IIROC</h3><small>Canada</small>
                 <p>Investment Industry Regulatory Organization of Canada، مثال على جهات تنظيم الاستثمار في كندا.</p>
             </article>
             <article class="regulatory-card" style="--i: 5">
-                <span class="reg-flag" aria-label="Australia">
-                    <svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="28" fill="#012169"/><path fill="#fff" d="m16 11 2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6zm24 8 1.5 4h4l-3.3 2.5 1.3 4-3.5-2.5-3.5 2.5 1.3-4-3.3-2.5h4zm-3 23 1.5 4h4l-3.3 2.5 1.3 4-3.5-2.5-3.5 2.5 1.3-4-3.3-2.5h4z"/><path stroke="#fff" stroke-width="8" d="M2 2 30 30M30 2 2 30M16 2v28M2 16h28"/><path stroke="#c8102e" stroke-width="4" d="M2 2 30 30M30 2 2 30M16 2v28M2 16h28"/></svg>
-                    <span class="flag-emoji">🇦🇺</span>
-                </span>
-                <div class="reg-logo">ASIC</div>
-                <h3>ASIC</h3>
-                <small>Australia</small>
+                <span class="reg-flag" aria-label="Australia"><svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="28" fill="#012169"/><path fill="#fff" d="m16 11 2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6zm24 8 1.5 4h4l-3.3 2.5 1.3 4-3.5-2.5-3.5 2.5 1.3-4-3.3-2.5h4zm-3 23 1.5 4h4l-3.3 2.5 1.3 4-3.5-2.5-3.5 2.5 1.3-4-3.3-2.5h4z"/><path stroke="#fff" stroke-width="8" d="M2 2 30 30M30 2 2 30M16 2v28M2 16h28"/><path stroke="#c8102e" stroke-width="4" d="M2 2 30 30M30 2 2 30M16 2v28M2 16h28"/></svg><span class="flag-emoji">🇦🇺</span></span>
+                <div class="reg-logo">ASIC</div><h3>ASIC</h3><small>Australia</small>
                 <p>Australian Securities and Investments Commission، جهة رقابية أسترالية للأسواق والخدمات المالية.</p>
             </article>
             <article class="regulatory-card" style="--i: 6">
-                <span class="reg-flag" aria-label="Switzerland">
-                    <svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="28" fill="#d52b1e"/><path fill="#fff" d="M25 13h10v12h12v10H35v12H25V35H13V25h12z"/></svg>
-                    <span class="flag-emoji">🇨🇭</span>
-                </span>
-                <div class="reg-logo">FINMA</div>
-                <h3>FINMA</h3>
-                <small>Switzerland</small>
+                <span class="reg-flag" aria-label="Switzerland"><svg class="flag-svg" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="28" fill="#d52b1e"/><path fill="#fff" d="M25 13h10v12h12v10H35v12H25V35H13V25h12z"/></svg><span class="flag-emoji">🇨🇭</span></span>
+                <div class="reg-logo">FINMA</div><h3>FINMA</h3><small>Switzerland</small>
                 <p>Swiss Financial Market Supervisory Authority، جهة إشرافية سويسرية ضمن قطاع الأسواق المالية.</p>
             </article>
         </div>
     </section>
 
+    <!-- ═══════════════════════ FAQ ═══════════════════════ -->
+    <section id="faq" class="v2-section">
+        <div class="v2-section-head v2-centered">
+            <span class="v2-section-pill">الأسئلة الشائعة</span>
+            <h2>كل ما تريد معرفته</h2>
+        </div>
+        <div class="v2-faq">
+            <details class="v2-faq-item">
+                <summary class="v2-faq-q">ما هي منصة TrBridgo.io؟<span class="v2-faq-icon" aria-hidden="true">+</span></summary>
+                <div class="v2-faq-a"><p>TrBridgo.io منصة متخصصة لإدارة وربط حسابات التداول MT4 و MT5، تتيح لك متابعة حساباتك، إدارة المحفظة، والبطاقات من مكان واحد.</p></div>
+            </details>
+            <details class="v2-faq-item">
+                <summary class="v2-faq-q">كيف تعمل الفترة التجريبية؟<span class="v2-faq-icon" aria-hidden="true">+</span></summary>
+                <div class="v2-faq-a"><p>تحصل على فترة تجريبية مجانية لمدة 14 يومًا عند إنشاء حسابك، يمكنك خلالها استخدام جميع مميزات المنصة دون أي تكلفة أو التزام.</p></div>
+            </details>
+            <details class="v2-faq-item">
+                <summary class="v2-faq-q">ما الفرق بين الباقات Basic و Pro و Ultra؟<span class="v2-faq-icon" aria-hidden="true">+</span></summary>
+                <div class="v2-faq-a"><p><strong>Basic ($25/شهر):</strong> ربط حساب تداول واحد مع لوحة أساسية.<br><strong>Pro ($120/شهر):</strong> ربط عدة حسابات مع مزايا متقدمة وأولوية مراجعة.<br><strong>Ultra ($350/شهر):</strong> إدارة كاملة بدون حدود مع دعم VIP على مدار الساعة.</p></div>
+            </details>
+            <details class="v2-faq-item">
+                <summary class="v2-faq-q">هل يمكنني ربط MT4 و MT5 معًا؟<span class="v2-faq-icon" aria-hidden="true">+</span></summary>
+                <div class="v2-faq-a"><p>نعم، المنصة تدعم ربط كلا المنصتين MT4 و MT5 مع إمكانية إدارة حسابات متعددة من خلال بطاقات الاشتراك.</p></div>
+            </details>
+            <details class="v2-faq-item">
+                <summary class="v2-faq-q">كيف يعمل برنامج الإحالة؟<span class="v2-faq-icon" aria-hidden="true">+</span></summary>
+                <div class="v2-faq-a"><p>عند دعوة أصدقائك وانضمامهم واشتراكهم، تحصل على عمولات تُضاف لمحفظة الإحالة، مع مستويات ترقية حتى VIP للأكثر نشاطًا.</p></div>
+            </details>
+            <details class="v2-faq-item">
+                <summary class="v2-faq-q">ما طرق الدفع المتاحة؟<span class="v2-faq-icon" aria-hidden="true">+</span></summary>
+                <div class="v2-faq-a"><p>نقبل تحويلات بنكية، USDT، وطرق دفع محلية متعددة. تواصل مع فريق الدعم لمعرفة الخيارات المتاحة في بلدك.</p></div>
+            </details>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════ CTA FINAL ═══════════════════════ -->
+    <section class="v2-section v2-cta-section">
+        <div class="v2-cta-box">
+            <div class="v2-cta-glow" aria-hidden="true"></div>
+            <span class="v2-section-pill">ابدأ اليوم</span>
+            <h2>انضم إلى آلاف المتداولين على TrBridgo.io</h2>
+            <p>أنشئ حسابك الآن واستفد من فترة تجريبية مجانية 14 يومًا — بدون بطاقة بنكية.</p>
+            <div class="v2-cta-actions">
+                <a class="v2-btn-cta v2-btn-large" href="{{ url_for('register') }}" data-i18n="buttons.getStarted">إنشاء حساب مجاني</a>
+                <a class="v2-btn-ghost" href="{{ url_for('login') }}" data-i18n="buttons.signIn">تسجيل الدخول</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════ FOOTER ═══════════════════════ -->
     <footer class="premium-footer">
         <div class="footer-particles" aria-hidden="true">
             <span></span><span></span><span></span><span></span><span></span><span></span>
@@ -262,7 +535,7 @@
                 <div class="footer-links">
                     <h3>روابط سريعة</h3>
                     <a href="{{ url_for('index') }}">الرئيسية</a>
-                    <a href="{{ url_for('index') }}#pricing">البطاقات</a>
+                    <a href="{{ url_for('index') }}#pricing">الباقات</a>
                     <a href="/referral-program">برنامج الإحالة</a>
                     <a href="{{ url_for('register') }}">الربط السريع</a>
                     <a href="{{ url_for('login') }}">تسجيل الدخول</a>
@@ -342,12 +615,9 @@
                     <svg class="site-glass-infinity-logo" viewBox="0 0 260 120" aria-hidden="true">
                         <defs>
                             <linearGradient id="siteInfinityGradientFooter" x1="0%" y1="15%" x2="100%" y2="85%">
-                                <stop offset="0%" stop-color="#ff2c35"/>
-                                <stop offset="24%" stop-color="#f7fbff"/>
-                                <stop offset="43%" stop-color="#204dff"/>
-                                <stop offset="61%" stop-color="#cf24ff"/>
-                                <stop offset="80%" stop-color="#ffffff"/>
-                                <stop offset="100%" stop-color="#67ff4a"/>
+                                <stop offset="0%" stop-color="#ff2c35"/><stop offset="24%" stop-color="#f7fbff"/>
+                                <stop offset="43%" stop-color="#204dff"/><stop offset="61%" stop-color="#cf24ff"/>
+                                <stop offset="80%" stop-color="#ffffff"/><stop offset="100%" stop-color="#67ff4a"/>
                             </linearGradient>
                             <linearGradient id="siteInfinityShineFooter" x1="0%" y1="0%" x2="100%" y2="0%">
                                 <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
@@ -370,6 +640,8 @@
             <small class="footer-legal">استخدام المنصة يخضع للشروط والأحكام الخاصة بها. يجب على المستخدمين مراجعة جميع المعلومات قبل اتخاذ أي قرارات مالية.</small>
         </div>
     </footer>
+
+    <!-- ═══════════════════════ SUPPORT WIDGET ═══════════════════════ -->
     <div class="rich-support-widget home-support-widget" data-rich-support>
         <button class="rich-support-button" type="button" data-support-toggle aria-label="افتح الدردشة">
             <span class="rich-support-badge" aria-hidden="true">0</span>

@@ -484,3 +484,24 @@ document.querySelectorAll("[data-admin-section]").forEach((section) => {
         applyFilters();
     });
 });
+
+/* ─── V2 NAV: Hamburger toggle ─── */
+document.addEventListener("DOMContentLoaded", () => {
+    const navToggle = document.querySelector("[data-nav-toggle]");
+    const mobileMenu = document.querySelector("[data-mobile-menu]");
+    if (navToggle && mobileMenu) {
+        navToggle.addEventListener("click", () => {
+            const open = navToggle.getAttribute("aria-expanded") === "true";
+            navToggle.setAttribute("aria-expanded", String(!open));
+            mobileMenu.classList.toggle("open", !open);
+            mobileMenu.setAttribute("aria-hidden", String(open));
+        });
+        mobileMenu.querySelectorAll("a").forEach((link) => {
+            link.addEventListener("click", () => {
+                navToggle.setAttribute("aria-expanded", "false");
+                mobileMenu.classList.remove("open");
+                mobileMenu.setAttribute("aria-hidden", "true");
+            });
+        });
+    }
+});
