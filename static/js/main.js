@@ -211,7 +211,7 @@ if (siteInfinityLogos.length) {
 }
 
 document.querySelectorAll("[data-rich-support]").forEach((supportWidget) => {
-    const toggle = supportWidget.querySelector("[data-support-toggle]");
+    const toggles = supportWidget.querySelectorAll("[data-support-toggle]");
     const soundToggle = supportWidget.querySelector("[data-support-sound]");
     const form = supportWidget.querySelector("[data-support-form]");
     const thread = supportWidget.querySelector("[data-support-thread]");
@@ -253,7 +253,9 @@ document.querySelectorAll("[data-rich-support]").forEach((supportWidget) => {
     const renderMessages = (messages) => {
         if (!thread) return;
         if (!messages.length) {
-            thread.innerHTML = `<div class="support-bubble agent">مرحبًا، اكتب استفسارك وسنرد عليك قريبًا.</div>`;
+            thread.innerHTML = supportWidget.classList.contains("home-support-widget")
+                ? `<div class="support-bubble agent support-intro">أهلاً بك في <b>TrBridgo.io</b> 🌿<br>نقدّم خدمة متكاملة لربط حسابات التداول MT4 و MT5. اكتب رسالتك وسيردّ عليك أحد أعضاء الفريق.</div>`
+                : `<div class="support-bubble agent">مرحبًا، اكتب استفسارك وسنرد عليك قريبًا.</div>`;
             return;
         }
         thread.innerHTML = messages.map((message) => {
@@ -283,11 +285,13 @@ document.querySelectorAll("[data-rich-support]").forEach((supportWidget) => {
         if (data.ok) renderMessages(data.messages || []);
     };
 
-    toggle?.addEventListener("click", async () => {
+    toggles.forEach((toggle) => toggle.addEventListener("click", async () => {
         supportWidget.classList.toggle("open");
-        startSound();
-        await loadMessages();
-    });
+        if (supportWidget.classList.contains("open")) {
+            startSound();
+            await loadMessages();
+        }
+    }));
 
     soundToggle?.addEventListener("click", () => {
         soundEnabled = !soundEnabled;
@@ -307,12 +311,16 @@ document.querySelectorAll("[data-rich-support]").forEach((supportWidget) => {
         const response = await fetch("/support/messages", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify({ message }),
+            body: JSON.stringify({
+                message,
+                guest_name: form.guest_name?.value.trim() || "",
+                guest_email: form.guest_email?.value.trim() || "",
+            }),
         });
         const data = await response.json();
         statusNode.textContent = data.message || data.error || "";
         if (data.ok) {
-            form.reset();
+            form.message.value = "";
             await loadMessages();
         }
     });

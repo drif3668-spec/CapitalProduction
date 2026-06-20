@@ -370,22 +370,33 @@
             <small class="footer-legal">استخدام المنصة يخضع للشروط والأحكام الخاصة بها. يجب على المستخدمين مراجعة جميع المعلومات قبل اتخاذ أي قرارات مالية.</small>
         </div>
     </footer>
-    <div class="rich-support-widget" data-rich-support>
-        <button class="rich-support-button" type="button" data-support-toggle aria-label="فتح الدعم الغني">
-            <span>💬</span>
+    <div class="rich-support-widget home-support-widget" data-rich-support>
+        <button class="rich-support-button" type="button" data-support-toggle aria-label="افتح الدردشة">
+            <span class="rich-support-badge" aria-hidden="true">0</span>
+            <span class="rich-support-icon">💬</span>
         </button>
         <section class="rich-support-window" data-support-window aria-live="polite">
             <header>
                 <div>
-                    <strong>الدعم الغني</strong>
-                    <p>كيف يمكننا مساعدتك؟</p>
+                    <span class="support-brand-line">📊 <b>TrBridgo.io</b> — TRADING GROUP</span>
+                    <strong>مرحباً 👋</strong>
+                    <p>فريق ربط حسابات MT5 و MT4 جاهز لمساعدتك</p>
                 </div>
-                <button type="button" data-support-sound>الصوت: تشغيل</button>
+                <button class="support-close-button" type="button" data-support-toggle aria-label="إغلاق">×</button>
             </header>
             <div class="rich-support-thread" data-support-thread></div>
             <form class="rich-support-form" data-support-form>
-                <textarea name="message" placeholder="اكتب استفسارك هنا..." required></textarea>
-                <button type="submit" data-keep-text="1">إرسال</button>
+                <div class="home-support-identity">
+                    <label>عرّفنا بنفسك لنخدمك بشكل أفضل</label>
+                    <input name="guest_name" placeholder="الاسم">
+                    <input name="guest_email" type="email" placeholder="البريد الإلكتروني (اختياري)">
+                </div>
+                <div class="home-support-composer">
+                    <textarea name="message" rows="1" placeholder="اكتب رسالتك..." required></textarea>
+                    <button type="submit" data-keep-text="1" aria-label="إرسال">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+                    </button>
+                </div>
             </form>
             <p class="rich-support-status" data-support-status></p>
         </section>
