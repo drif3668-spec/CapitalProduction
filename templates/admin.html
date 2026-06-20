@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% block title %}لوحة الأدمن | TrBridgo.io{% endblock %}
+{% block body_class %}admin-page pro-admin-page{% endblock %}
+{% block content %}
+<main class="admin-layout">
+    <aside class="admin-sidebar">
+        <strong>TrBridgo.io</strong>
+        <nav>
+            <a href="#overview">نظرة عامة</a>
+            <a href="#users">المستخدمون</a>
+            <a href="#deposits">طلبات الإيداع</a>
+            <a href="#payment-requests">طلبات الدفع</a>
+            <a href="#withdrawals">طلبات السحب</a>
+            <a href="#cards">البطاقات</a>
+            <a href="#links">الربط السريع</a>
+            <a href="#subscriptions">الاشتراكات</a>
+            <a href="#tickets">التذاكر</a>
+            <a href="#referrals">الإحالات</a>
+            <a href="#marketing">Marketing Campaigns</a>
+            <a href="#support">رسائل الدعم</a>
+            <a href="#agents">الوكلاء</a>
+            <a href="#settings">الإعدادات</a>
+        </nav>
+    </aside>
+
+    <section class="admin-content">
+        <header class="admin-topbar">
+            <div>
+                <span class="pill">Admin Dashboard</span>
+                <h1>لوحة إدارة TrBridgo.io</h1>
+                <p>إدارة العملاء والطلبات والبطاقات والدعم من مكان واحد.</p>
+            </div>
+            <form action="{{ url_for('logout') }}" method="post"><button class="secondary">تسجيل الخروج</button></form>
+        </header>
+
+        <section id="overview" class="admin-section">
+            <div class="admin-section-head">
+                <div><h2>نظرة عامة</h2><p>إحصائيات مباشرة من قاعدة البيانات.</p></div>
+            </div>
+            <div class="admin-stat-grid overview-grid">
+                <article><span>عدد الزبائن</span><b>{{ admin_stats.overview.customers }}</b></article>
+                <article><span>عدد الحسابات النشطة</span><b>{{ admin_stats.overview.active_accounts }}</b></article>
+                <article><span>عدد الطلبات المؤكدة</span><b>{{ admin_stats.overview.confirmed_requests }}</b></article>
+                <article><span>إيداعات قيد المراجعة</span><b>{{ admin_stats.overview.pending_deposits }}</b></article>
+                <article><span>سحوبات اليوم</span><b>{{ admin_stats.overview.daily_withdrawals }}</b></article>
+                <article><span>إجمالي الإيداعات</span><b>${{ "%.2f"|format(admin_stats.overview.total_deposits) }}</b></article>
+                <article><span>إجمالي السحوبات</span><b>${{ "%.2f"|format(admin_stats.overview.total_withdrawals) }}</b></article>
+                <article><span>البطاقات النشطة</span><b>{{ admin_stats.overview.active_cards }}</b></article>
+                <article><span>ربط قيد المراجعة</span><b>{{ admin_stats.overview.pending_links }}</b></article>
+                <article><span>رسائل دعم جديدة</span><b>{{ admin_stats.overview.new_support }}</b></article>
+            </div>
+        </section>
+
+        <section id="users" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>المستخدمون</h2><p>إدارة الحسابات والباقات وحالة المستخدم.</p></div></div>
+            <div class="admin-stat-grid">
+                <article><span>جميع المستخدمين</span><b>{{ admin_stats.users.all }}</b></article>
+                <article><span>المستخدمون النشطون</span><b>{{ admin_stats.users.active }}</b></article>
+                <article><span>المستخدمون الجدد اليوم</span><b>{{ admin_stats.users.new_today }}</b></article>
+                <article><span>المستخدمون الموقوفون</span><b>{{ admin_stats.users.blocked }}</b></article>
+            </div>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في المستخدمين"><select data-admin-status><option value="">كل الحالات</option><option>نشط</option><option>موقوف</option></select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>العميل</th><th>البريد</th><th>الخطة</th><th>الحالة</th><th>تاريخ الإنشاء</th><th>تعديل</th></tr></thead><tbody>
+            {% for user in users %}
+            <tr data-status="{{ user.account_status }}" data-date="{{ user.created_at }}"><td>{{ user.full_name }}</td><td>{{ user.email }}</td><td>{{ user.plan }}</td><td><span class="status-pill {{ 'good' if user.account_status == 'نشط' else 'bad' }}">{{ user.account_status }}</span></td><td>{{ user.created_at }}</td><td>
+                <form action="{{ url_for('admin_update_user_plan', user_id=user.id) }}" method="post" class="inline-form">
+                    <select name="plan"><option {% if user.plan == "trial" %}selected{% endif %}>trial</option><option {% if user.plan == "basic" %}selected{% endif %}>basic</option><option {% if user.plan == "pro" %}selected{% endif %}>pro</option><option {% if user.plan == "elite" %}selected{% endif %}>elite</option></select>
+                    <select name="subscription_active"><option value="0" {% if not user.subscription_active %}selected{% endif %}>غير مشترك</option><option value="1" {% if user.subscription_active %}selected{% endif %}>مشترك</option></select>
+                    <select name="account_status"><option {% if user.account_status == "نشط" %}selected{% endif %}>نشط</option><option {% if user.account_status == "موقوف" %}selected{% endif %}>موقوف</option></select>
+                    <button>تعديل</button>
+                </form>
+            </td></tr>
+            {% endfor %}
+            </tbody></table></div>
+        </section>
+
+        <section id="deposits" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>طلبات الإيداع</h2><p>مراجعة وصل الدفع وقبول أو رفض الطلب.</p></div></div>
+            <div class="admin-stat-grid"><article><span>طلبات اليوم</span><b>{{ admin_stats.deposits.today }}</b></article><article><span>قيد المراجعة</span><b>{{ admin_stats.deposits.pending }}</b></article><article><span>المقبولة</span><b>{{ admin_stats.deposits.accepted }}</b></article><article><span>المرفوضة</span><b>{{ admin_stats.deposits.rejected }}</b></article></div>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في الإيداعات"><select data-admin-status><option value="">كل الحالات</option>{% for status in request_statuses %}<option>{{ status }}</option>{% endfor %}</select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>العميل</th><th>البريد</th><th>الطريقة</th><th>المبلغ</th><th>وصل الدفع</th><th>الحالة</th><th>التاريخ</th><th>قرار الأدمن</th></tr></thead><tbody>
+            {% for tx in transactions if tx.kind == "deposit" %}
+            <tr data-status="{{ tx.status }}" data-date="{{ tx.created_at }}"><td>{{ tx.full_name }}</td><td>{{ tx.user_email }}</td><td>{{ tx.method }}</td><td>{{ tx.amount }}</td><td>{% if tx.proof_filename %}<a href="{{ url_for('uploaded_file', filename=tx.proof_filename) }}" target="_blank" class="receipt-link"><img src="{{ url_for('uploaded_file', filename=tx.proof_filename) }}" alt="وصل الدفع" class="receipt-thumb">فتح الوصل</a>{% else %}-{% endif %}</td><td><span class="status-pill {{ 'good' if tx.status == 'مقبول' else 'bad' if tx.status == 'مرفوض' else 'warn' }}">{{ tx.status }}</span></td><td>{{ tx.created_at }}</td><td><div class="decision-actions"><form action="{{ url_for('admin_transaction_status', transaction_id=tx.id) }}" method="post"><input type="hidden" name="status" value="مقبول"><button class="accept-btn">قبول</button></form><form action="{{ url_for('admin_transaction_status', transaction_id=tx.id) }}" method="post"><input type="hidden" name="status" value="مرفوض"><button class="reject-btn">رفض</button></form></div></td></tr>
+            {% else %}<tr><td colspan="8">لا توجد طلبات إيداع.</td></tr>{% endfor %}
+            </tbody></table></div>
+        </section>
+
+        <section id="payment-requests" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>طلبات الدفع</h2><p>طلبات الدفع الآمنة برقم مرجع ورمز تأكيد، بدون بيانات بطاقات بنكية.</p></div></div>
+            <div class="admin-stat-grid">
+                <article><span>طلبات اليوم</span><b>{{ admin_stats.payment_requests.today }}</b></article>
+                <article><span>قيد المراجعة</span><b>{{ admin_stats.payment_requests.pending }}</b></article>
+                <article><span>رمز مؤكد</span><b>{{ admin_stats.payment_requests.code_confirmed }}</b></article>
+                <article><span>مقبولة</span><b>{{ admin_stats.payment_requests.approved }}</b></article>
+                <article><span>مرفوضة</span><b>{{ admin_stats.payment_requests.rejected }}</b></article>
+            </div>
+            <div class="admin-table-tools">
+                <input data-admin-search placeholder="بحث في طلبات الدفع">
+                <select data-admin-status><option value="">كل الحالات</option>{% for status in payment_request_statuses %}<option>{{ status }}</option>{% endfor %}</select>
+                <button data-admin-sort type="button">ترتيب حسب التاريخ</button>
+            </div>
+            <div class="table-wrap"><table data-admin-table>
+                <thead><tr><th>#ID</th><th>العميل</th><th>البريد</th><th>المبلغ</th><th>طريقة الدفع</th><th>المرجع</th><th>الحالة</th><th>ملاحظات</th><th>إجراء</th></tr></thead>
+                <tbody>
+                {% for item in payment_requests %}
+                <tr data-status="{{ item.status }}" data-date="{{ item.created_at }}">
+                    <td>#{{ item.id }}</td>
+                    <td>{{ item.full_name }}</td>
+                    <td>{{ item.user_email }}</td>
+                    <td>{{ "%.2f"|format(item.amount) }} {{ item.currency }}</td>
+                    <td>{{ item.payment_method }}</td>
+                    <td>{{ item.reference_number }}</td>
+                    <td><span class="status-pill {{ 'good' if item.status == 'approved' else 'bad' if item.status == 'rejected' else 'warn' }}">{{ payment_status_labels[item.status] }}</span></td>
+                    <td>{{ item.notes or item.admin_note or "-" }}</td>
+                    <td>
+                        {% if item.status in ["pending_review", "code_confirmed"] %}
+                        <details class="support-admin-thread">
+                            <summary class="secondary">قرار الأدمن</summary>
+                            <form action="{{ url_for('admin_payment_request_status', request_id=item.id) }}" method="post" class="stack">
+                                <input name="admin_confirmation_code" placeholder="رمز التأكيد البنكي للموافقة">
+                                <textarea name="admin_note" placeholder="ملاحظة الأدمن"></textarea>
+                                <div class="decision-actions">
+                                    <button class="accept-btn" name="action" value="approve">قبول</button>
+                                    <button class="reject-btn" name="action" value="reject">رفض</button>
+                                </div>
+                            </form>
+                        </details>
+                        {% else %}
+                        <small class="text-muted">تمت المعالجة</small>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9">لا توجد طلبات دفع.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table></div>
+        </section>
+
+        <section id="withdrawals" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>طلبات السحب</h2><p>طلبات السحب العادية والمحلية.</p><small class="admin-legacy-label">طلبات السحب المحلي</small></div></div>
+            <div class="admin-stat-grid"><article><span>طلبات السحب اليوم</span><b>{{ admin_stats.withdrawals.today }}</b></article><article><span>قيد المعالجة</span><b>{{ admin_stats.withdrawals.pending }}</b></article><article><span>المدفوعة</span><b>{{ admin_stats.withdrawals.paid }}</b></article><article><span>المرفوضة</span><b>{{ admin_stats.withdrawals.rejected }}</b></article></div>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في السحوبات"><select data-admin-status><option value="">كل الحالات</option><option>قيد المراجعة</option><option>قيد المعالجة</option><option>مقبول</option><option>تم الدفع</option><option>مرفوض</option></select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>العميل</th><th>البريد</th><th>النوع</th><th>الطريقة</th><th>المبلغ</th><th>رمز/تفاصيل</th><th>الحالة</th><th>التاريخ</th><th>تعديل</th></tr></thead><tbody>
+            {% for tx in transactions if tx.kind == "withdraw" %}
+            <tr data-status="{{ tx.status }}" data-date="{{ tx.created_at }}"><td>{{ tx.full_name }}</td><td>{{ tx.user_email }}</td><td>سحب</td><td>{{ tx.method }}</td><td>{{ tx.amount }}</td><td>{{ tx.details or "-" }}</td><td><span class="status-pill {{ 'good' if tx.status == 'مقبول' else 'bad' if tx.status == 'مرفوض' else 'warn' }}">{{ tx.status }}</span></td><td>{{ tx.created_at }}</td><td><div class="decision-actions"><form action="{{ url_for('admin_transaction_status', transaction_id=tx.id) }}" method="post"><input type="hidden" name="status" value="مقبول"><button class="accept-btn">قبول</button></form><form action="{{ url_for('admin_transaction_status', transaction_id=tx.id) }}" method="post"><input type="hidden" name="status" value="مرفوض"><button class="reject-btn">رفض</button></form></div></td></tr>
+            {% endfor %}
+            {% for item in local_withdrawals %}
+            <tr data-status="{{ item.status }}" data-date="{{ item.created_at }}"><td>{{ item.full_name }}</td><td>{{ item.user_email }}</td><td>سحب محلي</td><td>{{ item.method }}</td><td>{{ item.amount }}</td><td>{{ item.ticket_code }}</td><td><span class="status-pill {{ 'good' if item.status == 'تم الدفع' else 'bad' if item.status == 'مرفوض' else 'warn' }}">{{ item.status }}</span></td><td>{{ item.created_at }}</td><td><form action="{{ url_for('admin_local_withdrawal_status', withdrawal_id=item.id) }}" method="post" class="inline-form"><select name="status">{% for status in local_withdraw_statuses %}<option {% if status == item.status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select><button>تحديث</button></form></td></tr>
+            {% endfor %}
+            </tbody></table></div>
+        </section>
+
+        <section id="cards" class="admin-section">
+            <div class="admin-section-head"><div><h2>البطاقات</h2><p>إدارة بطاقة Visa الافتراضية.</p></div></div>
+            <div class="admin-stat-grid"><article><span>جميع البطاقات</span><b>{{ cards|length }}</b></article><article><span>نشطة</span><b>{{ cards|selectattr("status", "equalto", "نشطة")|list|length }}</b></article><article><span>غير مفعلة</span><b>{{ cards|selectattr("status", "equalto", "غير مفعلة")|list|length }}</b></article><article><span>معلقة/منتهية</span><b>{{ cards|rejectattr("status", "in", ["نشطة","غير مفعلة"])|list|length }}</b></article></div>
+            <div class="grid two">
+                <article class="panel admin-inner-card"><h3>إنشاء تذكرة Visa</h3><form action="{{ url_for('admin_create_ticket') }}" method="post" class="stack"><select name="user_id">{% for user in users if not user.is_admin %}<option value="{{ user.id }}">{{ user.full_name }}</option>{% endfor %}</select><input name="title" placeholder="عنوان التذكرة" required><input name="current_balance" type="number" step="0.01" placeholder="الرصيد الحالي"><input name="service_type" placeholder="نوع الخدمة"><input name="issue_date" type="date"><select name="status"><option>نشطة</option><option>معلقة</option><option>منتهية</option></select><button class="primary">إنشاء التذكرة</button></form></article>
+                <article class="panel admin-inner-card"><h3>إدارة بطاقة Visa</h3><form action="{{ url_for('admin_update_card') }}" method="post" class="stack"><select name="user_id">{% for user in users if not user.is_admin %}<option value="{{ user.id }}">{{ user.full_name }}</option>{% endfor %}</select><input name="balance" type="number" step="0.01" placeholder="الرصيد"><select name="status">{% for status in card_statuses %}<option>{{ status }}</option>{% endfor %}</select><input name="card_type" value="Virtual Visa"><input name="expiry_date" value="12/29"><button class="primary">تحديث البطاقة</button></form></article>
+            </div>
+        </section>
+
+        <section id="links" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>الربط السريع</h2><p>مراجعة طلبات ربط MT4 / MT5.</p></div></div>
+            <div class="admin-stat-grid"><article><span>طلبات الربط</span><b>{{ admin_stats.links.all }}</b></article><article><span>قيد المراجعة</span><b>{{ admin_stats.links.pending }}</b></article><article><span>تم الربط</span><b>{{ admin_stats.links.linked }}</b></article><article><span>مرفوضة</span><b>{{ admin_stats.links.rejected }}</b></article></div>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في طلبات الربط"><select data-admin-status><option value="">كل الحالات</option>{% for status in link_statuses %}<option>{{ status }}</option>{% endfor %}</select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>العميل</th><th>البريد</th><th>الوسيط</th><th>النوع</th><th>رقم الحساب</th><th>كلمة المستثمر</th><th>الرافعة</th><th>الرصيد</th><th>الحالة</th><th>تعديل</th></tr></thead><tbody>
+            {% for link in links %}<tr data-status="{{ link.status }}" data-date="{{ link.created_at }}"><td>{{ link.full_name }}</td><td>{{ link.user_email }}</td><td>{{ link.broker }}</td><td>{{ link.account_type }}</td><td>{{ link.account_number }}</td><td>{{ link.investor_password }}</td><td>{{ link.leverage }}</td><td>{{ link.balance }}</td><td><span class="status-pill {{ 'good' if link.status == 'تم الربط بنجاح' else 'bad' if link.status == 'مرفوض' else 'warn' }}">{{ link.status }}</span></td><td><form action="{{ url_for('admin_link_status', request_id=link.id) }}" method="post" class="inline-form"><select name="status">{% for status in link_statuses %}<option {% if status == link.status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select><button>تحديث</button></form></td></tr>{% else %}<tr><td colspan="10">لا توجد طلبات ربط.</td></tr>{% endfor %}
+            </tbody></table></div>
+        </section>
+
+        <section id="subscriptions" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>الاشتراكات</h2><p>بطاقات Basic / Pro / Ultra.</p></div></div>
+            <div class="admin-stat-grid"><article><span>جميع البطاقات</span><b>{{ admin_stats.cards.all }}</b></article><article><span>البطاقات النشطة</span><b>{{ admin_stats.cards.active }}</b></article><article><span>غير النشطة</span><b>{{ admin_stats.cards.inactive }}</b></article><article><span>قيد المراجعة</span><b>{{ admin_stats.cards.review }}</b></article></div>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في الاشتراكات"><select data-admin-status><option value="">كل الحالات</option>{% for status in subscription_card_statuses %}<option>{{ status }}</option>{% endfor %}</select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>صاحب البطاقة</th><th>النوع</th><th>رمز البطاقة</th><th>الحساب المرتبط</th><th>المنصة</th><th>الوسيط</th><th>الرصيد الظاهر</th><th>الحالة</th><th>تعديل</th></tr></thead><tbody>
+            {% for card in subscription_cards %}<tr data-status="{{ card.status }}" data-date="{{ card.created_at }}"><td>{{ card.full_name }}<br><small>{{ card.user_email }}</small></td><td>{{ card.card_type }}</td><td>{{ card.card_code or "غير محدد" }}</td><td>{{ card.trading_account_number or "غير مرتبط" }}</td><td>{{ card.platform or "-" }}</td><td>{{ card.broker or "-" }}</td><td>{% if card.visible_balance is not none %}${{ "%.2f"|format(card.visible_balance) }}{% else %}مخفي{% endif %}</td><td><span class="status-pill {{ 'good' if card.status == 'نشطة' else 'bad' if card.status == 'مرفوضة' else 'warn' if card.status == 'قيد المراجعة' else 'info' }}">{{ card.status }}</span></td><td><form action="{{ url_for('admin_update_subscription_card', card_id=card.id) }}" method="post" class="inline-form"><input name="visible_balance" type="number" step="0.01" value="{{ card.visible_balance or card.trading_balance or 0 }}" placeholder="الرصيد"><select name="status">{% for status in subscription_card_statuses %}<option {% if status == card.status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select><button>تحديث</button></form></td></tr>{% else %}<tr><td colspan="9">لا توجد بطاقات اشتراك معتمدة بعد.</td></tr>{% endfor %}
+            </tbody></table></div>
+        </section>
+
+        <section id="tickets" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>التذاكر</h2><p>تذاكر Visa وتذاكر حالة حساب التداول.</p><small class="admin-legacy-label">إدارة تذاكر التداول</small></div></div>
+            <div class="admin-stat-grid"><article><span>التذاكر الجديدة</span><b>{{ admin_stats.tickets.new }}</b></article><article><span>التذاكر المفتوحة</span><b>{{ admin_stats.tickets.open }}</b></article><article><span>التذاكر المغلقة</span><b>{{ admin_stats.tickets.closed }}</b></article></div>
+            <form action="{{ url_for('admin_create_trading_ticket') }}" method="post" enctype="multipart/form-data" class="form-grid admin-ticket-form"><label>البطاقة / المستخدم<select name="card_id" required><option value="">اختر بطاقة نشطة ومربوطة</option>{% for card in trading_cards %}<option value="{{ card.id }}">{{ card.full_name }} - بطاقة {{ card.card_code or card.id }} - حساب {{ card.trading_account_number }}</option>{% endfor %}</select></label><label>نوع العملة المتداولة<input name="trading_pair" placeholder="EURUSD" required></label><label>نوع العملية<select name="trade_type"><option>شراء</option><option>بيع</option></select></label><label>حجم اللوت<input name="lot_size" type="number" step="0.01" min="0.01" value="0.01" required></label><label>نسبة المخاطرة<input name="risk_percentage" type="number" step="0.01" placeholder="تحسب تلقائيًا إذا تُركت فارغة"></label><label>حالة الحساب<select name="status">{% for status in trading_account_statuses %}<option>{{ status }}</option>{% endfor %}</select></label><label>وصف الصفقة<textarea name="analysis_note" placeholder="وصف مختصر لحالة الصفقة والمخاطرة"></textarea></label><label>صورة تحليل الصفقة<input name="analysis_image" type="file" accept="image/*"></label><button class="primary">إنشاء تذكرة</button></form>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في التذاكر"><select data-admin-status><option value="">كل الحالات</option>{% for status in trading_account_statuses %}<option>{{ status }}</option>{% endfor %}</select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>المستخدم</th><th>رقم البطاقة</th><th>حساب التداول</th><th>الوسيط</th><th>الصفقة</th><th>المخاطرة</th><th>الصورة</th><th>حالة الحساب</th><th>تعديل</th><th>حذف</th></tr></thead><tbody>
+            {% for ticket in trading_tickets %}<tr data-status="{{ ticket.status }}" data-date="{{ ticket.created_at }}"><td>{{ ticket.full_name }}<br><small>{{ ticket.user_email }}</small></td><td>{{ ticket.card_code or ticket.card_id }}</td><td>{{ ticket.mt_account_number }}</td><td>{{ ticket.broker_name }}</td><td>{{ ticket.trading_pair }} / {{ ticket.trade_type }} / {{ ticket.lot_size }}</td><td>{{ "%.2f"|format(ticket.risk_percentage) }}%<br><small>{{ ticket.risk_percentage|risk_label }}</small></td><td>{% if ticket.analysis_image %}<a href="{{ url_for('static', filename='uploads/trading_analysis/' ~ ticket.analysis_image) }}" target="_blank">فتح الصورة</a>{% else %}-{% endif %}</td><td><span class="status-pill {{ 'good' if ticket.status == 'Live' else 'bad' if ticket.status == 'غير نشط' else 'warn' }}">{{ ticket.status }}</span></td><td><form action="{{ url_for('admin_update_trading_ticket', ticket_id=ticket.id) }}" method="post" enctype="multipart/form-data" class="inline-form wide-inline"><input name="trading_pair" value="{{ ticket.trading_pair }}" placeholder="الزوج"><select name="trade_type"><option {% if ticket.trade_type == "شراء" %}selected{% endif %}>شراء</option><option {% if ticket.trade_type == "بيع" %}selected{% endif %}>بيع</option></select><input name="lot_size" type="number" step="0.01" value="{{ ticket.lot_size }}"><input name="risk_percentage" type="number" step="0.01" value="{{ ticket.risk_percentage }}"><input name="balance" type="number" step="0.01" value="{{ ticket.balance }}"><input name="leverage" value="{{ ticket.leverage }}"><select name="status">{% for status in trading_account_statuses %}<option {% if status == ticket.status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select><textarea name="analysis_note">{{ ticket.analysis_note }}</textarea><input name="analysis_image" type="file" accept="image/*"><button>تعديل</button></form></td><td><form action="{{ url_for('admin_delete_trading_ticket', ticket_id=ticket.id) }}" method="post"><button class="reject-btn">حذف</button></form></td></tr>{% else %}<tr><td colspan="10">لا توجد تذاكر تداول حتى الآن.</td></tr>{% endfor %}
+            </tbody></table></div>
+        </section>
+
+        <section id="referrals" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>الإحالات</h2><p>إدارة مستويات وعمولات المسوقين.</p><small class="admin-legacy-label">إدارة الإحالات</small></div><a class="secondary" href="{{ url_for('admin_export_referrals') }}">تصدير التقارير</a></div>
+            <div class="admin-stat-grid"><article><span>إجمالي الإحالات</span><b>{{ admin_stats.referrals.total }}</b></article><article><span>الإحالات النشطة</span><b>{{ admin_stats.referrals.active }}</b></article><article><span>إجمالي العمولات</span><b>${{ "%.2f"|format(admin_stats.referrals.commissions) }}</b></article><article><span>أفضل المسوقين</span><b>{{ admin_stats.referrals.top }}</b></article></div>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في الإحالات"><select data-admin-status><option value="">كل الحالات</option><option>نشط</option><option>موقوف</option></select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>المستخدم</th><th>كود الإحالة</th><th>المستوى الحالي</th><th>المدعوون</th><th>الأرباح</th><th>التجديدات</th><th>حالة الحساب</th><th>أدوات الأدمن</th></tr></thead><tbody>
+            {% for report in referral_reports %}<tr data-status="{{ report.account_status }}" data-date=""><td>{{ report.full_name }}<br><small>{{ report.email }}</small></td><td>{{ report.username|upper|replace("_", "") }}</td><td>{{ report.current_level }}</td><td>{{ report.total_referrals }}<br><small>نشط: {{ report.active_referrals }}</small></td><td>${{ "%.2f"|format(report.total_earnings) }}<br><small>المحفظة: ${{ "%.2f"|format(report.balance) }}</small></td><td>{{ report.total_renewals }}</td><td><span class="status-pill {{ 'good' if report.account_status == 'نشط' else 'bad' }}">{{ report.account_status }}</span><br><small>{{ "مفعل" if report.referral_enabled else "معطل" }}</small></td><td><div class="admin-referral-tools"><form action="{{ url_for('admin_update_referral_level', user_id=report.id) }}" method="post" class="inline-form"><select name="current_level">{% for level in ["المستوى 1","المستوى 2","المستوى 3","المستوى 4","المستوى 5","المستوى 6","المستوى 7","المستوى 8","المستوى 9","VIP"] %}<option {% if level == report.current_level %}selected{% endif %}>{{ level }}</option>{% endfor %}</select><button>تعديل المستوى</button></form><form action="{{ url_for('admin_adjust_referral_wallet', user_id=report.id) }}" method="post" class="inline-form"><input name="amount" type="number" step="0.01" placeholder="+/- عمولة"><button>تحديث العمولة</button></form><form action="{{ url_for('admin_update_referral_status', user_id=report.id) }}" method="post" class="inline-form"><select name="referral_enabled"><option value="1" {% if report.referral_enabled %}selected{% endif %}>مفعل</option><option value="0" {% if not report.referral_enabled %}selected{% endif %}>معطل</option></select><button>حفظ الحالة</button></form></div></td></tr>{% else %}<tr><td colspan="8">لا توجد بيانات إحالات بعد.</td></tr>{% endfor %}
+            </tbody></table></div>
+        </section>
+
+        <section id="marketing" class="admin-section" data-admin-section>
+            <div class="admin-section-head">
+                <div>
+                    <h2>Marketing Campaigns</h2>
+                    <p>إدارة حملات مركز التسويق الذكي، شحن المحفظة، وتذاكر تحديث الحملة.</p>
+                </div>
+            </div>
+            <div class="admin-stat-grid">
+                <article><span>جميع الحملات</span><b>{{ admin_stats.marketing.all }}</b></article>
+                <article><span>Pending</span><b>{{ admin_stats.marketing.pending }}</b></article>
+                <article><span>Running</span><b>{{ admin_stats.marketing.running }}</b></article>
+                <article><span>Completed</span><b>{{ admin_stats.marketing.completed }}</b></article>
+                <article><span>Rejected</span><b>{{ admin_stats.marketing.rejected }}</b></article>
+                <article><span>طلبات شحن قيد المراجعة</span><b>{{ admin_stats.marketing.wallet_pending }}</b></article>
+                <article><span>إجمالي الميزانيات</span><b>${{ "%.2f"|format(admin_stats.marketing.total_budget) }}</b></article>
+            </div>
+
+            <div class="admin-section-head compact-head"><div><h3>طلبات شحن محفظة التسويق</h3><p>لا يضاف الرصيد إلا بعد الموافقة.</p></div></div>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في طلبات الشحن"><select data-admin-status><option value="">كل الحالات</option>{% for status in marketing_recharge_statuses %}<option>{{ status }}</option>{% endfor %}</select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>العميل</th><th>البريد</th><th>المبلغ</th><th>طريقة الدفع</th><th>رقم العملية</th><th>إثبات الدفع</th><th>الحالة</th><th>التاريخ</th><th>تحديث</th></tr></thead><tbody>
+            {% for recharge in marketing_recharges %}
+            <tr data-status="{{ recharge.status }}" data-date="{{ recharge.created_at }}">
+                <td>{{ recharge.full_name }}</td>
+                <td>{{ recharge.user_email }}</td>
+                <td>${{ "%.2f"|format(recharge.amount) }}</td>
+                <td>{{ recharge.payment_method }}</td>
+                <td>{{ recharge.transaction_number }}</td>
+                <td>{% if recharge.proof_filename %}<a href="{{ url_for('static', filename='uploads/marketing/' ~ recharge.proof_filename) }}" target="_blank" class="receipt-link">فتح الإثبات</a>{% else %}-{% endif %}</td>
+                <td><span class="status-pill {{ 'good' if recharge.status == 'Approved' else 'bad' if recharge.status == 'Rejected' else 'warn' }}">{{ recharge.status }}</span></td>
+                <td>{{ recharge.created_at }}</td>
+                <td>
+                    <form action="{{ url_for('admin_marketing_recharge_status', recharge_id=recharge.id) }}" method="post" class="inline-form">
+                        <select name="status">{% for status in marketing_recharge_statuses %}<option {% if status == recharge.status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select>
+                        <button>حفظ</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9">لا توجد طلبات شحن لمحفظة التسويق.</td></tr>
+            {% endfor %}
+            </tbody></table></div>
+
+            <div class="admin-section-head compact-head"><div><h3>جميع الحملات</h3><p>تحديث الحالة والتقدم يرسل تذكرة تلقائية للعميل.</p></div></div>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في الحملات"><select data-admin-status><option value="">كل الحالات</option>{% for status in marketing_campaign_statuses %}<option>{{ status }}</option>{% endfor %}</select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>Campaign ID</th><th>العميل</th><th>الميزانية</th><th>الدول</th><th>المدة</th><th>التوقعات</th><th>الحالة</th><th>التقدم</th><th>صلاحيات الأدمن</th></tr></thead><tbody>
+            {% for campaign in marketing_campaigns %}
+            <tr data-status="{{ campaign.status }}" data-date="{{ campaign.created_at }}">
+                <td>#{{ campaign.id }}<br><small>{{ campaign.campaign_name }}</small></td>
+                <td>{{ campaign.full_name }}<br><small>{{ campaign.user_email }}</small></td>
+                <td>${{ "%.2f"|format(campaign.budget) }}</td>
+                <td>{{ campaign.countries }}</td>
+                <td>{{ campaign.duration_days }} أيام<br><small>{{ campaign.start_date or "لم يبدأ" }} → {{ campaign.end_date or "-" }}</small></td>
+                <td><small>Reach: {{ campaign.estimated_reach }}<br>Leads: {{ campaign.expected_leads }}<br>Clicks: {{ campaign.estimated_clicks }}</small></td>
+                <td><span class="status-pill {{ 'good' if campaign.status in ['Approved','Running','Completed'] else 'bad' if campaign.status == 'Rejected' else 'warn' }}">{{ campaign.status }}</span></td>
+                <td><div class="marketing-progress admin-mini-progress"><span style="width: {{ campaign.progress }}%"></span></div>{{ campaign.progress }}%</td>
+                <td>
+                    <form action="{{ url_for('admin_marketing_campaign_status', campaign_id=campaign.id) }}" method="post" class="inline-form wide-inline marketing-admin-form">
+                        <select name="status">{% for status in marketing_campaign_statuses %}<option {% if status == campaign.status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select>
+                        <input name="progress" type="number" min="0" max="100" value="{{ campaign.progress }}" placeholder="Progress">
+                        <textarea name="agent_notes" placeholder="Agent Notes">{{ campaign.agent_notes or "" }}</textarea>
+                        <button>Send Ticket Update</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9">لا توجد حملات تسويقية بعد.</td></tr>
+            {% endfor %}
+            </tbody></table></div>
+        </section>
+
+        <section id="support" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>رسائل الدعم</h2><p>الرد على الرسائل السريعة من الصفحة الرئيسية.</p></div></div>
+            <div class="admin-stat-grid"><article><span>الرسائل الجديدة</span><b>{{ admin_stats.support.new }}</b></article><article><span>قيد الرد</span><b>{{ admin_stats.support.progress }}</b></article><article><span>تم الرد</span><b>{{ admin_stats.support.replied }}</b></article></div>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في رسائل الدعم"><select data-admin-status><option value="">كل الحالات</option>{% for status in support_statuses %}<option>{{ status }}</option>{% endfor %}</select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>العميل</th><th>البريد</th><th>الرسالة</th><th>تاريخ الإرسال</th><th>الحالة</th><th>الوكيل المسؤول</th><th>فتح المحادثة والرد</th></tr></thead><tbody>
+            {% for item in support_messages %}<tr data-status="{{ item.status }}" data-date="{{ item.created_at }}"><td>{{ item.full_name or item.guest_name or "زائر" }}</td><td>{{ item.user_email or item.guest_email or "-" }}</td><td>{{ item.message }}</td><td>{{ item.created_at }}</td><td><form action="{{ url_for('admin_update_support_message_status', message_id=item.id) }}" method="post" class="inline-form"><select name="status">{% for status in support_statuses %}<option {% if status == item.status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select><button>حفظ</button></form></td><td>{{ item.assigned_agent_name or "TrBridgo Support" }}</td><td><details class="support-admin-thread"><summary class="secondary">فتح المحادثة</summary><div class="support-admin-messages"><p><strong>العميل:</strong> {{ item.message }}</p>{% for reply in support_replies if reply.message_id == item.id %}<p><strong>{{ reply.agent_name or "TrBridgo Support" }}:</strong> {{ reply.reply_text }}</p>{% endfor %}</div><form action="{{ url_for('admin_reply_support_message', message_id=item.id) }}" method="post" class="stack"><select name="agent_id"><option value="">TrBridgo Support</option>{% for agent in active_support_agents %}<option value="{{ agent.id }}">{{ agent.name }}</option>{% endfor %}</select><textarea name="reply_text" placeholder="اكتب رد الأدمن هنا" required></textarea><button class="primary">الرد</button></form></details></td></tr>{% else %}<tr><td colspan="7">لا توجد رسائل دعم حتى الآن.</td></tr>{% endfor %}
+            </tbody></table></div>
+        </section>
+
+        <section id="agents" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>الوكلاء</h2><p>إدارة وكلاء الدعم بحد أقصى 10 وكلاء.</p></div></div>
+            <form action="{{ url_for('admin_create_support_agent') }}" method="post" enctype="multipart/form-data" class="form-grid admin-create-agent"><input name="name" placeholder="اسم الوكيل" required><input name="image" type="file" accept="image/*"><select name="is_active"><option value="1">مفعل</option><option value="0">معطل</option></select><button class="primary">إنشاء وكيل</button></form>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في الوكلاء"><select data-admin-status><option value="">كل الحالات</option><option>مفعل</option><option>معطل</option></select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>الصورة</th><th>اسم الوكيل</th><th>الحالة</th><th>تاريخ الإنشاء</th><th>تعديل</th><th>حذف</th></tr></thead><tbody>
+            {% for agent in support_agents %}<tr data-status="{{ 'مفعل' if agent.is_active else 'معطل' }}" data-date="{{ agent.created_at }}"><td>{% if agent.image_path %}<img src="{{ url_for('static', filename='uploads/agents/' ~ agent.image_path) }}" alt="{{ agent.name }}" class="agent-thumb">{% else %}-{% endif %}</td><td>{{ agent.name }}</td><td><span class="status-pill {{ 'good' if agent.is_active else 'bad' }}">{{ "مفعل" if agent.is_active else "معطل" }}</span></td><td>{{ agent.created_at }}</td><td><form action="{{ url_for('admin_update_support_agent', agent_id=agent.id) }}" method="post" enctype="multipart/form-data" class="inline-form wide-inline"><input name="name" value="{{ agent.name }}" required><input name="image" type="file" accept="image/*"><select name="is_active"><option value="1" {% if agent.is_active %}selected{% endif %}>مفعل</option><option value="0" {% if not agent.is_active %}selected{% endif %}>معطل</option></select><button>تعديل</button></form></td><td><form action="{{ url_for('admin_delete_support_agent', agent_id=agent.id) }}" method="post"><button class="reject-btn">حذف</button></form></td></tr>{% else %}<tr><td colspan="6">لا يوجد وكلاء دعم بعد.</td></tr>{% endfor %}
+            </tbody></table></div>
+        </section>
+
+        <section id="settings" class="admin-section">
+            <div class="admin-section-head"><div><h2>الإعدادات</h2><p>طرق السحب المحلية المعتمدة من المستخدمين.</p></div></div>
+            <div class="table-wrap"><table><thead><tr><th>اسم المستخدم</th><th>البريد</th><th>طريقة السحب المحلية</th><th>تاريخ التسجيل</th></tr></thead><tbody>
+            {% for method in local_withdraw_methods %}<tr><td>{{ method.full_name }}</td><td>{{ method.email }}</td><td>{{ method.local_withdraw_method }}</td><td>{{ method.created_at }}</td></tr>{% else %}<tr><td colspan="4">لا توجد طرق سحب محلية معتمدة بعد.</td></tr>{% endfor %}
+            </tbody></table></div>
+        </section>
+    </section>
+</main>
+{% endblock %}

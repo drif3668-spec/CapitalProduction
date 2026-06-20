@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}إنشاء حساب | TriBridge.io{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block content %}
+<main class="auth-box">
+    <form method="post" class="panel">
+        <h1>إنشاء حساب جديد</h1>
+        <p>ابدأ فترة تجريبية لمدة 14 يومًا.</p>
+        <label>الاسم الكامل<input name="full_name" required minlength="3"></label>
+        <label>البريد الإلكتروني<input name="email" type="email" required></label>
+        <label>كود الإحالة<input name="referral_code" value="{{ ref_code or '' }}" placeholder="اختياري"></label>
+        <label>كلمة المرور<input name="password" type="password" required minlength="8"></label>
+        <label>تأكيد كلمة المرور<input name="confirm_password" type="password" required minlength="8"></label>
+        <button class="primary" type="submit">إنشاء الحساب</button>
+        <a href="{{ url_for('login') }}">لدي حساب بالفعل</a>
+        <a class="secondary home-return" href="{{ url_for('index') }}">العودة إلى الصفحة الرئيسية</a>
+    </form>
+</main>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}لوحة العميل | TriBridge.io{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+{% block content %}
+<aside class="side-nav">
+    <strong>TriBridge.io</strong>
+    <a href="#home">الرئيسية</a>
+    <a href="#subscriptions">الاشتراكات</a>
+    <a href="#quick">الربط السريع</a>
+    <a href="#wallet">المحفظة</a>
+    <a href="#tickets">التذاكر</a>
+    <form action="{{ url_for('logout') }}" method="post"><button>تسجيل الخروج</button></form>
+</aside>
+<main class="dash" id="home">
+    <header class="dash-header">
+        <div>
+            <span class="pill">مرحبًا، {{ user.full_name }}</span>
+            <h1>لوحة التحكم الذكية</h1>
+        </div>
+        <div class="trial-box {% if not services_active %}expired{% endif %}">
+            {% if services_active %}
+                <b>{{ trial.days }}</b><span>يوم و {{ trial.hours }} ساعة متبقية</span>
+            {% else %}
+                <b>انتهت</b><a href="#plans">تفعيل الاشتراك</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <section class="grid two">
+        <a class="subscription-stack-link" href="{{ url_for('my_cards') }}" aria-label="عرض بطاقاتي">
+            <div class="subscription-stack">
+                {% if subscription_cards %}
+                    {% for sub_card in subscription_cards[:3] %}
+                    <article class="premium-card mini-stack {{ sub_card.card_type|lower }} {% if sub_card.status == 'نشطة' %}live{% endif %}" style="--i: {{ loop.index0 }}">
+                        <span>{{ sub_card.card_type }}</span>
+                        <strong>
+                            {% if sub_card.status == 'نشطة' and sub_card.visible_balance is not none %}
+                                $ {{ "%.2f"|format(sub_card.visible_balance) }}
+                            {% else %}
+                                {{ user.full_name }}
+                            {% endif %}
+                        </strong>
+                        <small>{{ sub_card.status }}{% if sub_card.status == 'نشطة' and sub_card.trading_account_number %} • {{ sub_card.trading_account_number }}{% endif %}</small>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <article class="premium-card mini-stack basic">
+                        <span>Subscriptions</span>
+                        <strong>اعتمد بطاقتك</strong>
+                        <small>اضغط للانتقال إلى بطاقاتي</small>
+                    </article>
+                {% endif %}
+            </div>
+        </a>
+        <article class="panel wallet" id="wallet">
+            <h2>المحفظة</h2>
+            <div class="stats">
+                <span>الرصيد الحالي <b>${{ "%.2f"|format(wallet.balance) }}</b></span>
+                <span>الإيداعات <b>${{ "%.2f"|format(wallet.deposits) }}</b></span>
+                <span>السحوبات <b>${{ "%.2f"|format(wallet.withdrawals) }}</b></span>
+            </div>
+        </article>
+    </section>
+
+    <section class="panel" id="subscriptions">
+        <div class="section-title">
+            <div>
+                <h2>الاشتراكات</h2>
+                <p>اختر بطاقة اشتراك فاخرة واعتمدها. يمكنك اعتماد حتى {{ max_subscription_cards }} بطاقة.</p>
+            </div>
+            <span>{{ subscription_cards|length }} / {{ max_subscription_cards }}</span>
+        </div>
+        <form action="{{ url_for('adopt_subscription_card') }}" method="post" class="subscription-picker" id="subscriptionPicker">
+            {% for type in card_types %}
+            <label class="premium-card pick-card {{ type|lower }}">
+                <input type="radio" name="card_type" value="{{ type }}" {% if loop.first %}checked{% endif %}>
+                <span>{{ type }}</span>
+                <strong>{% if type == "Basic" %}1 حساب{% elif type == "Pro" %}عدة حسابات{% else %}تجربة Ultra{% endif %}</strong>
+                <small>غير نشطة حتى ربط حساب التداول</small>
+            </label>
+            {% endfor %}
+            <button class="primary" type="submit">اعتماد البطاقة</button>
+        </form>
+    </section>
+
+    <section class="panel {% if not services_active %}inactive{% endif %}" id="quick">
+        <div class="section-title">
+            <h2>⚡ الربط السريع</h2>
+            <span>{{ active_links }} / {{ account_limit }} حسابات مستخدمة</span>
+        </div>
+        {% if not services_active %}
+            <p>الخدمات غير نشطة بعد انتهاء التجربة.</p>
+            <a class="primary" href="#plans">تفعيل الاشتراك</a>
+        {% else %}
+            <form class="form-grid" action="{{ url_for('quick_link_start') }}" method="post">
+                <label>البطاقة المراد ربطها
+                    <select name="subscription_card_id" required>
+                        <option value="">اختر بطاقة</option>
+                        {% for sub_card in subscription_cards if sub_card.status in ["غير نشطة", "مرفوضة"] %}
+                        <option value="{{ sub_card.id }}">{{ sub_card.card_type }} - {{ sub_card.status }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>شركة الوساطة<input name="broker" required placeholder="Exness / IC Markets"></label>
+                <label>نوع المنصة<select name="account_type"><option>MT5</option><option>MT4</option></select></label>
+                <label>الرافعة المالية<input name="leverage" required placeholder="1:500"></label>
+                <label>رصيد الحساب الحالي<input name="balance" type="number" step="0.01" required></label>
+                <button class="primary" type="submit">إنشاء ربط سريع</button>
+            </form>
+        {% endif %}
+        <div class="cards">
+            {% for link in links %}
+            <article class="service-card">
+                <b>{{ link.account_type }} - {{ link.broker }}</b>
+                <span>{{ link.account_number }}</span>
+                <em>{{ link.status }}</em>
+            </article>
+            {% else %}
+            <article class="service-card">لا توجد طلبات ربط بعد.</article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="grid two">
+        <article class="panel">
+            <h2>طلب إيداع</h2>
+            <form action="{{ url_for('deposit') }}" method="post" enctype="multipart/form-data" class="stack">
+                <select name="method"><option>USDT (TRC20)</option><option>BNB</option><option>Vodafone Cash</option><option>InstaPay</option><option>وكيل Telegram</option></select>
+                <input name="amount" type="number" step="0.01" placeholder="المبلغ" required>
+                <input name="proof" type="file">
+                <button class="primary">إرسال طلب الإيداع</button>
+            </form>
+        </article>
+        <article class="panel">
+            <h2>طلب سحب</h2>
+            <form action="{{ url_for('withdraw') }}" method="post" class="stack">
+                <select name="method"><option>USDT (TRC20)</option><option>BNB</option><option>Vodafone Cash</option><option>InstaPay</option><option>وكيل Telegram</option></select>
+                <input name="amount" type="number" step="0.01" placeholder="المبلغ" required>
+                <textarea name="details" placeholder="بيانات الاستلام"></textarea>
+                <button class="primary">إرسال طلب السحب</button>
+            </form>
+        </article>
+    </section>
+
+    <section class="panel" id="tickets">
+        <h2>آخر التذاكر وبطاقات Visa الذكية</h2>
+        <div class="cards three">
+            {% for ticket in tickets %}
+            <article class="ticket-card">
+                <span>{{ ticket.service_type }}</span>
+                <h3>{{ ticket.title }}</h3>
+                <b>$ {{ "%.2f"|format(ticket.current_balance) }}</b>
+                <small>{{ ticket.issue_date }} • {{ ticket.status }}</small>
+            </article>
+            {% else %}
+            <article class="ticket-card">لا توجد تذاكر مخصصة حتى الآن.</article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="grid two">
+        <article class="panel">
+            <h2>الإشعارات الجديدة</h2>
+            {% for note in notifications %}<p class="notice">{{ note.message }}</p>{% else %}<p>لا توجد إشعارات.</p>{% endfor %}
+        </article>
+        <article class="panel" id="plans">
+            <h2>حالة الاشتراك الحالية</h2>
+            <p>الباقة: <b>{{ user.plan }}</b> | الحالة: <b>{{ "نشط" if user.subscription_active else "تجريبي" }}</b></p>
+        </article>
+    </section>
+</main>
+{% endblock %}

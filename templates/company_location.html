@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}موقع شركة TrBridgo.io{% endblock %}
+{% block body_class %}company-location-page{% endblock %}
+{% block content %}
+<main class="company-location-shell">
+    <a class="location-back-link" href="{{ url_for('index') }}">← العودة إلى الرئيسية</a>
+
+    <section class="company-location-hero">
+        <div class="company-location-pin" aria-hidden="true">
+            <span></span>
+        </div>
+        <div>
+            <p class="location-kicker">Company Location</p>
+            <h1>موقع شركة TrBridgo.io</h1>
+            <p>يمكنك عرض موقع الشركة مباشرة عبر Google Maps من خلال الرابط الرسمي أدناه.</p>
+        </div>
+    </section>
+
+    <section class="company-location-grid">
+        <figure class="company-building-card">
+            <img src="{{ url_for('static', filename='uploads/company/trbridgo-building.jpg') }}" alt="TrBridgo.io building">
+        </figure>
+
+        <article class="company-info-card">
+            <span class="company-info-pin" aria-hidden="true">⌖</span>
+            <h2>TrBridgo.io</h2>
+            <dl>
+                <div>
+                    <dt>اسم الشركة</dt>
+                    <dd>TrBridgo.io</dd>
+                </div>
+                <div>
+                    <dt>العنوان</dt>
+                    <dd>11 Wall St, New York, NY 10005, United States</dd>
+                </div>
+                <div>
+                    <dt>الحالة</dt>
+                    <dd>متاح عبر Google Maps</dd>
+                </div>
+                <div>
+                    <dt>رابط الموقع على الخريطة</dt>
+                    <dd><a href="https://maps.app.goo.gl/UA2x9GPEFfGjnAKD8" target="_blank" rel="noopener">maps.app.goo.gl/UA2x9GPEFfGjnAKD8</a></dd>
+                </div>
+            </dl>
+            <a class="google-maps-button" href="https://maps.app.goo.gl/UA2x9GPEFfGjnAKD8" target="_blank" rel="noopener">
+                <span>⌖</span>
+                فتح الموقع في Google Maps
+            </a>
+        </article>
+    </section>
+</main>
+{% endblock %}

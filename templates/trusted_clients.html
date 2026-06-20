@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}عملاء يثقون بنا | TrBridgo.io{% endblock %}
+{% block body_class %}landing-page premium-landing trusted-clients-page{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/trusted_clients.css') }}">
+<main class="landing-shell">
+    <div class="digital-stars"></div>
+    <nav class="top-nav landing-nav">
+        <strong class="brand">TrBridgo<span>.io</span></strong>
+        <a href="{{ url_for('index') }}">الرئيسية</a>
+        <a href="{{ url_for('index') }}#pricing">البطاقات</a>
+        <a href="/referral-program">برنامج الإحالة</a>
+        <a class="main-login" href="{{ url_for('login') }}">تسجيل الدخول</a>
+    </nav>
+
+    <section class="section trusted-page-hero">
+        <span class="pill">Trusted Clients</span>
+        <h1>عملاء يثقون بنا</h1>
+        <p>نماذج افتراضية لمستخدمين يستعملون المنصة لإدارة حسابات التداول وربط MT4 / MT5 دون عرض نتائج مالية أو ادعاءات غير مؤكدة.</p>
+    </section>
+
+    <section class="trusted-live-map-section" dir="rtl">
+        <div class="trusted-map-header">
+            <div>
+                <span class="trusted-live-dot"></span>
+                <span class="trusted-live-label">مباشر</span>
+            </div>
+            <h2>خريطة نشاط العملاء العالمية</h2>
+            <p>نموذج توضيحي لطريقة عرض نشاط العملاء داخل منصة TrBridgo.io.</p>
+            <div class="trusted-live-counters" aria-label="عدادات النشاط العالمي">
+                <article><span>المستثمرون المتصلون الآن</span><b id="trusted-investors-counter">18,420</b></article>
+                <article><span>إجمالي العمليات العالمية</span><b id="trusted-operations-counter">842,190</b></article>
+            </div>
+        </div>
+
+        <div class="trusted-map-layout">
+            <div class="trusted-world-map-card">
+                <div class="trusted-map-topbar">
+                    <h3>النشاط العالمي</h3>
+                    <span id="trusted-map-clock">LIVE</span>
+                </div>
+
+                <div class="trusted-map-canvas">
+                    <svg class="trusted-world-svg" viewBox="0 0 1200 620" preserveAspectRatio="xMidYMid meet" aria-label="خريطة نشاط العملاء">
+                        <defs>
+                            <linearGradient id="trusted-land-gradient" x1="0" x2="1" y1="0" y2="1">
+                                <stop offset="0%" stop-color="#75ff96" stop-opacity=".32"/>
+                                <stop offset="100%" stop-color="#0f7c4d" stop-opacity=".13"/>
+                            </linearGradient>
+                            <filter id="trusted-land-glow">
+                                <feGaussianBlur stdDeviation="3" result="blur"/>
+                                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                            </filter>
+                        </defs>
+
+                        <g class="trusted-map-grid" aria-hidden="true">
+                            <path d="M80 120H1120M80 220H1120M80 320H1120M80 420H1120M80 520H1120"/>
+                            <path d="M160 70V560M320 70V560M480 70V560M640 70V560M800 70V560M960 70V560"/>
+                        </g>
+
+                        <g class="trusted-continents">
+                            <path class="trusted-continent" d="M167 146L205 116L270 98L352 110L410 146L443 205L421 260L356 288L310 325L251 318L211 284L165 262L128 211L139 168Z M365 302L410 327L436 384L410 442L373 503L331 540L300 508L310 450L276 399L292 351Z" />
+                            <path class="trusted-continent" d="M492 177L535 134L608 124L684 145L722 194L693 237L626 238L585 267L530 254L497 220Z M568 246L631 252L683 300L718 380L692 468L650 535L591 505L566 427L530 377L510 305Z" />
+                            <path class="trusted-continent" d="M681 151L778 112L884 124L986 160L1078 224L1108 308L1053 366L941 371L854 338L780 344L726 300L702 236Z" />
+                            <path class="trusted-continent" d="M862 432L937 412L1024 438L1056 494L1010 538L925 536L850 502Z" />
+                            <path class="trusted-continent trusted-island" d="M1015 250L1048 236L1070 250L1056 275L1024 275Z" />
+                            <path class="trusted-continent trusted-island" d="M454 132L486 116L505 132L489 155L456 154Z" />
+                        </g>
+
+                        <g class="trusted-routes">
+                            <path id="route-ny-london" class="trusted-arc" d="M285 238 Q420 110 548 203" />
+                            <path id="route-london-paris" class="trusted-arc" d="M548 203 Q562 217 574 236" />
+                            <path id="route-paris-berlin" class="trusted-arc" d="M574 236 Q590 220 610 219" />
+                            <path id="route-london-dubai" class="trusted-arc" d="M548 203 Q655 210 731 335" />
+                            <path id="route-dubai-riyadh" class="trusted-arc" d="M731 335 Q704 330 686 326" />
+                            <path id="route-dubai-singapore" class="trusted-arc" d="M731 335 Q792 365 835 409" />
+                            <path id="route-tokyo-singapore" class="trusted-arc" d="M967 278 Q902 330 835 409" />
+                            <path id="route-sydney-dubai" class="trusted-arc" d="M948 506 Q874 410 731 335" />
+
+                            <circle class="trusted-route-particle" r="4"><animateMotion dur="4.5s" repeatCount="indefinite"><mpath href="#route-ny-london"/></animateMotion></circle>
+                            <circle class="trusted-route-particle" r="4"><animateMotion dur="3.2s" repeatCount="indefinite"><mpath href="#route-london-dubai"/></animateMotion></circle>
+                            <circle class="trusted-route-particle" r="4"><animateMotion dur="4s" repeatCount="indefinite"><mpath href="#route-dubai-singapore"/></animateMotion></circle>
+                            <circle class="trusted-route-particle" r="4"><animateMotion dur="4.8s" repeatCount="indefinite"><mpath href="#route-tokyo-singapore"/></animateMotion></circle>
+                            <circle class="trusted-route-particle" r="4"><animateMotion dur="5.4s" repeatCount="indefinite"><mpath href="#route-sydney-dubai"/></animateMotion></circle>
+                        </g>
+
+                        <g class="trusted-points">
+                            <g class="trusted-point" data-country="الولايات المتحدة الأمريكية" data-activity="New York اتصال عالمي" transform="translate(285 238)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="كندا" data-activity="نشاط شبكة" transform="translate(268 172)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="المملكة المتحدة" data-activity="London اتصال مباشر" transform="translate(548 203)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="فرنسا" data-activity="Paris متابعة طلب" transform="translate(574 236)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="ألمانيا" data-activity="Berlin تحديث حالة" transform="translate(610 219)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="إيطاليا" data-activity="نشاط جديد" transform="translate(610 266)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="إسبانيا" data-activity="تحديث حساب" transform="translate(544 270)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="السعودية" data-activity="Riyadh تفعيل بطاقة" transform="translate(686 326)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="الإمارات" data-activity="Dubai مركز اتصال" transform="translate(731 335)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="قطر" data-activity="نشاط جديد" transform="translate(718 340)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="مصر" data-activity="طلب ربط" transform="translate(619 309)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="الجزائر" data-activity="تحديث حساب" transform="translate(552 310)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="المغرب" data-activity="متابعة بطاقة" transform="translate(516 318)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="تركيا" data-activity="نشاط ربط" transform="translate(649 272)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="اليابان" data-activity="Tokyo اتصال عالمي" transform="translate(967 278)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="الصين" data-activity="تحديث محفظة" transform="translate(852 300)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="سنغافورة" data-activity="Singapore اتصال مباشر" transform="translate(835 409)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                            <g class="trusted-point" data-country="أستراليا" data-activity="Sydney اتصال عالمي" transform="translate(948 506)"><circle r="8"></circle><circle class="pulse" r="18"></circle></g>
+                        </g>
+                    </svg>
+                    <div class="trusted-tooltip" id="trusted-tooltip"></div>
+                </div>
+            </div>
+
+            <div class="trusted-activity-card">
+                <div class="trusted-activity-header">
+                    <h3>النشاط الأخير</h3>
+                    <span>LIVE</span>
+                </div>
+                <div class="trusted-activity-list" id="trusted-activity-list"></div>
+            </div>
+        </div>
+
+        <div class="trusted-benefits-row">
+            <div class="trusted-benefit-card"><span>🛡️</span><h4>شفافية كاملة</h4><p>حالات واضحة للطلبات والبطاقات والربط داخل المنصة.</p></div>
+            <div class="trusted-benefit-card"><span>⚡</span><h4>تحديث لحظي</h4><p>عرض مرئي لأنشطة العملاء بطريقة منظمة وسهلة.</p></div>
+            <div class="trusted-benefit-card"><span>🌍</span><h4>انتشار عالمي</h4><p>نموذج يوضح تغطية المنصة لعدة دول ومناطق.</p></div>
+        </div>
+
+        <p class="trusted-demo-note">يعرض هذا القسم نموذجًا توضيحيًا لطريقة عرض نشاط العملاء داخل المنصة، ولا يمثل بيانات مالية حقيقية.</p>
+    </section>
+
+    <section class="section trusted-clients-grid" aria-label="قائمة العملاء">
+        {% for name, country, card in clients %}
+        <article class="trusted-client-card">
+            <div class="trusted-client-avatar">{{ name.split()[0][0] }}{{ name.split()[-1][0] }}</div>
+            <h2>{{ name }}</h2>
+            <p>{{ country }}</p>
+            <span class="trusted-card-type {{ card|lower }}">{{ card }}</span>
+            <b>حالة الحساب: نشط</b>
+            <small>يستخدم المنصة لإدارة حساب التداول وربط MT4 / MT5</small>
+        </article>
+        {% endfor %}
+    </section>
+</main>
+<script src="{{ url_for('static', filename='js/trusted_clients.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,966 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} | TriBridge.io{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+{% block content %}
+<aside class="side-nav">
+    <strong>TriBridge.io</strong>
+    <a class="{% if page == 'home' %}active{% endif %}" href="{{ url_for('dashboard') }}">الرئيسية</a>
+    <a class="{% if page == 'cards' %}active{% endif %}" href="{{ url_for('cards_page') }}">البطاقات</a>
+    <a class="{% if page == 'subscriptions' %}active{% endif %}" href="{{ url_for('subscriptions_page') }}">الاشتراكات</a>
+    <a class="{% if page == 'quick' %}active{% endif %}" href="{{ url_for('quick_link_page') }}">الربط السريع</a>
+    <a class="{% if page == 'wallet' %}active{% endif %}" href="{{ url_for('wallet_page') }}">المحفظة</a>
+    <a class="{% if page == 'referrals' %}active{% endif %}" href="{{ url_for('referrals_page') }}">دعوة الأصدقاء</a>
+    <a class="{% if page in ['marketing', 'marketing_detail'] %}active{% endif %}" href="{{ url_for('marketing_page') }}">Smart Marketing Center</a>
+    <a class="{% if page == 'support_center' %}active{% endif %}" href="{{ url_for('support_center_page') }}">الدعم الفني</a>
+    <a class="{% if page == 'deposit' %}active{% endif %}" href="{{ url_for('deposit') }}">الإيداع</a>
+    <a class="{% if page == 'payment_requests' %}active{% endif %}" href="{{ url_for('payment_requests_page') }}">طلبات الدفع</a>
+    <a class="{% if page == 'withdraw' %}active{% endif %}" href="{{ url_for('withdraw') }}">السحب</a>
+    <a class="{% if page == 'tickets' %}active{% endif %}" href="{{ url_for('tickets_page') }}">التذاكر</a>
+    <a class="{% if page == 'settings' %}active{% endif %}" href="{{ url_for('settings_page') }}">الإعدادات</a>
+    <form action="{{ url_for('logout') }}" method="post"><button>تسجيل الخروج</button></form>
+</aside>
+
+<main class="dash">
+    <header class="dash-header">
+        <div>
+            <a class="profile-greeting" href="{{ url_for('settings_page') }}">
+                <img src="{{ profile_image_url }}" alt="صورة الحساب" class="profile-avatar">
+                <span class="pill">مرحبًا، {{ user.full_name }}</span>
+            </a>
+            <h1>{{ page_title }}</h1>
+        </div>
+        <div class="client-topbar-actions">
+            <button class="client-icon-button" type="button" aria-label="الإشعارات">
+                <span>🔔</span>
+                <b>{{ notifications|length }}</b>
+            </button>
+            <button class="client-icon-button" type="button" data-open-client-support aria-label="الرسائل">
+                <span>💬</span>
+            </button>
+            <a class="client-user-menu" href="{{ url_for('settings_page') }}">
+                <img src="{{ profile_image_url }}" alt="صورة المستخدم">
+                <span>
+                    <strong>{{ user.full_name }}</strong>
+                    <small>{% if user.subscription_active %}عضو مميز{% else %}عضو تجريبي{% endif %}</small>
+                </span>
+                <em>⌄</em>
+            </a>
+            <div class="trial-box compact {% if not services_active %}expired{% endif %}">
+                {% if services_active %}
+                    <b>{{ trial.days }}</b><span>يوم</span>
+                {% else %}
+                    <b>انتهت</b><a href="{{ url_for('subscriptions_page') }}">تفعيل</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <div class="rich-support-widget client-support-widget" data-rich-support>
+        <button class="rich-support-button" type="button" data-support-toggle aria-label="فتح الدعم الفني">
+            <span>💬</span>
+        </button>
+        <section class="rich-support-window" data-support-window aria-live="polite">
+            <header>
+                <div>
+                    <strong>الدعم الفني</strong>
+                    <p>رسائلك وردود الوكلاء تظهر هنا.</p>
+                </div>
+                <button type="button" data-support-sound>الصوت: تشغيل</button>
+            </header>
+            <div class="rich-support-thread" data-support-thread></div>
+            <form class="rich-support-form" data-support-form>
+                <textarea name="message" placeholder="اكتب رسالتك للدعم الفني..." required></textarea>
+                <button type="submit" data-keep-text="1">إرسال</button>
+            </form>
+            <p class="rich-support-status" data-support-status></p>
+        </section>
+    </div>
+
+    {% if page == "home" %}
+    <section class="grid two">
+        <a class="subscription-stack-link" href="{{ url_for('cards_page') }}" aria-label="عرض بطاقاتي">
+            <div class="subscription-stack">
+                {% if subscription_cards %}
+                    {% for sub_card in subscription_cards[:3] %}
+                    <article class="premium-card mini-stack {{ sub_card.card_type|lower }} {% if sub_card.status == 'نشطة' %}live{% endif %}" style="--i: {{ loop.index0 }}">
+                        <span>{{ sub_card.card_type }}</span>
+                        <strong>{% if sub_card.status == 'نشطة' and sub_card.visible_balance is not none %}$ {{ "%.2f"|format(sub_card.visible_balance) }}{% else %}{{ user.full_name }}{% endif %}</strong>
+                        <small>{{ sub_card.status }}{% if sub_card.status == 'نشطة' and sub_card.trading_account_number %} • {{ sub_card.trading_account_number }}{% endif %}</small>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <article class="premium-card mini-stack basic">
+                        <span>Subscriptions</span>
+                        <strong>اعتمد بطاقتك</strong>
+                        <small>اضغط للانتقال إلى البطاقات</small>
+                    </article>
+                {% endif %}
+            </div>
+        </a>
+        <article class="panel wallet">
+            <h2>ملخص المحفظة</h2>
+            <div class="stats">
+                <span>الرصيد الحالي <b>${{ "%.2f"|format(wallet.balance) }}</b></span>
+                <span>الإيداعات <b>${{ "%.2f"|format(wallet.deposits) }}</b></span>
+                <span>السحوبات <b>${{ "%.2f"|format(wallet.withdrawals) }}</b></span>
+            </div>
+            <div class="actions">
+                <a class="primary" href="{{ url_for('deposit') }}">إيداع</a>
+                <a class="secondary" href="{{ url_for('withdraw') }}">سحب</a>
+            </div>
+        </article>
+    </section>
+    <section class="grid two">
+        <article class="panel">
+            <h2>حالة الربط السريع</h2>
+            {% for link in links[:3] %}
+            <p class="notice">{{ link.account_type }} - {{ link.broker }}: {{ link.status }}</p>
+            {% else %}
+            <p>لا توجد طلبات ربط بعد.</p>
+            {% endfor %}
+            <a class="secondary" href="{{ url_for('quick_link_page') }}">إدارة الربط</a>
+        </article>
+        <article class="panel">
+            <h2>الإشعارات الجديدة</h2>
+            {% for note in notifications %}<p class="notice">{{ note.message }}</p>{% else %}<p>لا توجد إشعارات.</p>{% endfor %}
+        </article>
+    </section>
+    {% endif %}
+
+    {% if page == "subscriptions" %}
+    <section class="panel">
+        <div class="section-title">
+            <div>
+                <h2>اختيار بطاقة الاشتراك</h2>
+                <p>يمكنك اعتماد حتى {{ max_subscription_cards }} بطاقة. البطاقة تبقى غير نشطة حتى ربط حساب التداول وموافقة الأدمن.</p>
+            </div>
+            <span>{{ subscription_cards|length }} / {{ max_subscription_cards }}</span>
+        </div>
+        <form action="{{ url_for('adopt_subscription_card') }}" method="post" class="subscription-picker" id="subscriptionPicker">
+            {% for type in card_types %}
+            <label class="premium-card pick-card clean-plan-card {{ type|lower }}"
+                   data-card="{{ type }}"
+                   data-price="{% if type == 'Basic' %}25$ / شهريًا{% elif type == 'Pro' %}120$ / شهريًا{% else %}350$ / شهريًا{% endif %}"
+                   data-features="{% if type == 'Basic' %}ربط حساب واحد|تجربة الربط السريع|دعم أساسي|لوحة متابعة بسيطة{% elif type == 'Pro' %}ربط عدة حسابات|لوحة متابعة متقدمة|أولوية في المراجعة|تذاكر وتحليلات أكثر{% else %}إدارة متقدمة|أولوية كاملة|دعم أسرع|مميزات VIP|بطاقات متعددة{% endif %}">
+                <input type="radio" name="card_type" value="{{ type }}" {% if loop.first %}checked{% endif %}>
+                <strong>{{ type|upper }}</strong>
+            </label>
+            {% endfor %}
+            <article class="plan-info-box" id="planInfoBox">
+                <span>اسم البطاقة</span>
+                <h3 id="planInfoName">BASIC</h3>
+                <p id="planInfoPrice">25$ / شهريًا</p>
+                <ul id="planInfoFeatures">
+                    <li>ربط حساب واحد</li>
+                    <li>تجربة الربط السريع</li>
+                    <li>دعم أساسي</li>
+                    <li>لوحة متابعة بسيطة</li>
+                </ul>
+                <button class="primary" type="submit">الاشتراك</button>
+            </article>
+        </form>
+    </section>
+    {% endif %}
+
+    {% if page == "cards" %}
+    <section class="panel">
+        <div class="section-title">
+            <h2>بطاقاتي</h2>
+            <a class="primary" href="{{ url_for('subscriptions_page') }}">اعتماد بطاقة جديدة</a>
+        </div>
+        <div class="cards-page-grid">
+            {% for card in subscription_cards %}
+            <article class="premium-card full-card {{ card.card_type|lower }} {% if card.status == 'نشطة' %}live{% endif %}">
+                <span>{{ card.card_type }}</span>
+                <strong>{% if card.status == 'نشطة' and card.visible_balance is not none %}$ {{ "%.2f"|format(card.visible_balance) }}{% else %}{{ user.full_name }}{% endif %}</strong>
+                <small>{{ card.status }}{% if card.status == 'نشطة' and card.trading_account_number %} • Live • {{ card.trading_account_number }}{% endif %}</small>
+                <div class="card-details">
+                    <b>رمز البطاقة</b><em>{{ card.card_code or "غير محدد" }}</em>
+                    <b>المنصة</b><em>{{ card.platform or "غير مرتبطة" }}</em>
+                    <b>الوسيط</b><em>{{ card.broker or "غير مرتبط" }}</em>
+                </div>
+            </article>
+            {% else %}
+            <article class="service-card">لا توجد بطاقات بعد. ابدأ من صفحة الاشتراكات.</article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if page == "quick" %}
+    <section class="panel {% if not services_active %}inactive{% endif %}">
+        <div class="quick-platform-hero">
+            <div class="quick-platform-title">
+                <span>Trading Platforms</span>
+                <strong>اختر منصة الربط السريع</strong>
+                <small>MetaTrader 4 • MetaTrader 5 • cTrader</small>
+            </div>
+            <div class="quick-platform-grid" data-platform-picker>
+                <button type="button" class="quick-platform-card" data-platform="MT4">
+                    <span class="platform-orb mt4">4</span>
+                    <strong>MetaTrader 4</strong>
+                    <small>Classic Trading</small>
+                </button>
+                <button type="button" class="quick-platform-card active" data-platform="MT5">
+                    <span class="platform-orb mt5">5</span>
+                    <strong>MetaTrader 5</strong>
+                    <small>Advanced Trading</small>
+                </button>
+                <button type="button" class="quick-platform-card" data-platform="cTrader">
+                    <span class="platform-orb ctrader">C</span>
+                    <strong>cTrader</strong>
+                    <small>Smart Execution</small>
+                </button>
+            </div>
+        </div>
+        <div class="section-title">
+            <h2>الربط السريع</h2>
+            <span>{{ active_links }} / {{ account_limit }} حسابات مستخدمة</span>
+        </div>
+        {% if not services_active %}
+            <p>الخدمات غير نشطة بعد انتهاء التجربة.</p>
+            <a class="primary" href="{{ url_for('subscriptions_page') }}">تفعيل الاشتراك</a>
+        {% elif subscription_cards|length == 0 %}
+            <p>اعتمد بطاقة أولًا قبل إنشاء طلب الربط.</p>
+            <a class="primary" href="{{ url_for('subscriptions_page') }}">اختيار بطاقة</a>
+        {% else %}
+            <form class="form-grid" id="quick-form" action="{{ url_for('quick_link_start') }}" method="post">
+                <label>البطاقة المراد ربطها
+                    <select name="subscription_card_id" required>
+                        <option value="">اختر بطاقة</option>
+                        {% for sub_card in subscription_cards if sub_card.status in ["غير نشطة", "مرفوضة"] %}
+                        <option value="{{ sub_card.id }}">{{ sub_card.card_type }} - {{ sub_card.status }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>شركة الوساطة<input name="broker" required placeholder="Exness / IC Markets"></label>
+                <label>نوع المنصة<select name="account_type" data-platform-select><option>MT5</option><option>MT4</option><option>cTrader</option></select></label>
+                <label>الرافعة المالية<input name="leverage" required placeholder="1:500"></label>
+                <label>رصيد الحساب الحالي<input name="balance" type="number" step="0.01" required></label>
+                <button class="quick-submit-card" type="submit"><span data-platform-submit>MT5</span><strong>إنشاء ربط سريع</strong></button>
+            </form>
+        {% endif %}
+    </section>
+    <section class="panel">
+        <h2>طلبات الربط</h2>
+        <div class="cards">
+            {% for link in links %}
+            <article class="service-card">
+                <b>{{ link.account_type }} - {{ link.broker }}</b>
+                <span>{{ link.account_number }}</span>
+                <em>{{ link.status }}</em>
+            </article>
+            {% else %}
+            <article class="service-card">لا توجد طلبات ربط بعد.</article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if page == "wallet" %}
+    <section class="panel wallet">
+        <div class="section-title">
+            <div>
+                <h2>المحفظة</h2>
+                <p>حوّل جزءًا من رصيدك الرئيسي إلى محفظة التسويق لاستخدامه في حملات Smart Marketing Center.</p>
+            </div>
+            <button class="primary wallet-transfer-button" type="button" data-marketing-dialog-open="wallet-transfer">تحويل إلى محفظة التسويق</button>
+        </div>
+        <div class="stats">
+            <span>الرصيد الحالي <b>${{ "%.2f"|format(wallet.balance) }}</b></span>
+            <span>إجمالي الإيداعات <b>${{ "%.2f"|format(wallet.deposits) }}</b></span>
+            <span>إجمالي السحوبات <b>${{ "%.2f"|format(wallet.withdrawals) }}</b></span>
+            <span>محفظة التسويق <b>${{ "%.2f"|format(marketing_wallet.balance) }}</b></span>
+            <span>تحويلات التسويق <b>${{ "%.2f"|format(wallet.marketing_transfers) }}</b></span>
+        </div>
+    </section>
+    <dialog class="marketing-dialog wallet-transfer-dialog" data-marketing-dialog="wallet-transfer">
+        <form action="{{ url_for('transfer_to_marketing_wallet') }}" method="post" class="marketing-wizard wallet-transfer-form">
+            <button class="dialog-close" type="button" data-marketing-dialog-close aria-label="إغلاق">×</button>
+            <div class="section-title">
+                <div>
+                    <span>Portfolio Wallet</span>
+                    <h2>Transfer to Marketing Wallet</h2>
+                    <p>الرصيد المتاح في المحفظة الرئيسية: <strong>${{ "%.2f"|format(wallet.balance) }}</strong></p>
+                </div>
+                <span class="wallet-transfer-badge">Marketing Wallet</span>
+            </div>
+            <label class="marketing-step">
+                <h3>المبلغ المراد تحويله</h3>
+                <input name="amount" type="number" min="0.01" max="{{ '%.2f'|format(wallet.balance) }}" step="0.01" placeholder="0.00" required>
+                <small>لا يمكن تحويل مبلغ أكبر من الرصيد المتاح أو مبلغ يساوي صفر.</small>
+            </label>
+            <button class="primary marketing-main-btn" type="submit">تأكيد التحويل</button>
+        </form>
+    </dialog>
+    <section class="panel">
+        <h2>آخر العمليات</h2>
+        <div class="table-wrap"><table><thead><tr><th>النوع</th><th>الطريقة</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>
+        {% for tx in transactions %}
+        <tr>
+            <td>{% if tx.kind == "deposit" %}إيداع{% elif tx.kind == "withdraw" %}سحب{% elif tx.kind == "wallet_to_marketing_transfer" %}تحويل لمحفظة التسويق{% else %}{{ tx.kind }}{% endif %}</td>
+            <td>{{ tx.method }}</td>
+            <td>{{ tx.amount }}</td>
+            <td>{{ tx.status }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4">لا توجد عمليات حتى الآن.</td></tr>
+        {% endfor %}
+        </tbody></table></div>
+    </section>
+    {% endif %}
+
+    {% if page == "support_center" %}
+    <section class="panel support-center-panel" data-rich-support>
+        <div class="support-center-hero">
+            <div class="support-robot-orb" aria-hidden="true">
+                <span>AI</span>
+            </div>
+            <div>
+                <span>TrBridgo Support Center</span>
+                <h2>مرحباً، كيف يمكننا مساعدتك اليوم؟</h2>
+                <p>أرسل رسالتك هنا وستظهر مباشرة في لوحة الأدمن ضمن رسائل الدعم. ردود الوكيل تظهر في نفس المحادثة.</p>
+            </div>
+        </div>
+        <div class="support-center-chat">
+            <div class="rich-support-thread support-center-thread" data-support-thread></div>
+            <form class="rich-support-form support-center-form" data-support-form>
+                <textarea name="message" placeholder="اكتب رسالتك للدعم الفني..." required></textarea>
+                <button type="submit" data-keep-text="1">إرسال</button>
+            </form>
+            <p class="rich-support-status" data-support-status></p>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if page == "deposit" %}
+    <section class="panel">
+        <h2>طلب إيداع</h2>
+        <form action="{{ url_for('deposit') }}" method="post" enctype="multipart/form-data" class="stack compact-form">
+            <select name="method"><option>USDT (TRC20)</option><option>BNB</option><option>Vodafone Cash</option><option>InstaPay</option><option>وكيل Telegram</option></select>
+            <input name="amount" type="number" step="0.01" placeholder="المبلغ" required>
+            <input name="details" placeholder="ملاحظات أو رقم العملية">
+            <input name="proof" type="file" accept="image/*">
+            <button class="primary">تم</button>
+        </form>
+    </section>
+    <section class="panel">
+        <h2>طلبات الإيداع</h2>
+        <div class="table-wrap"><table><thead><tr><th>الطريقة</th><th>المبلغ</th><th>الحالة</th><th>الوصل</th></tr></thead><tbody>
+        {% for tx in transactions if tx.kind == "deposit" %}
+        <tr><td>{{ tx.method }}</td><td>{{ tx.amount }}</td><td>{{ tx.status }}</td><td>{{ "مرفق" if tx.proof_filename else "-" }}</td></tr>
+        {% else %}
+        <tr><td colspan="4">لا توجد طلبات إيداع.</td></tr>
+        {% endfor %}
+        </tbody></table></div>
+    </section>
+    {% endif %}
+
+    {% if page == "payment_requests" %}
+    <section class="panel">
+        <div class="section-title">
+            <div>
+                <h2>طلب دفع جديد</h2>
+                <p>أرسل بيانات الدفع الآمنة بدون إدخال أو حفظ بيانات البطاقة البنكية.</p>
+            </div>
+            <span>Payment Request</span>
+        </div>
+        <form action="{{ url_for('payment_requests_page') }}" method="post" class="stack compact-form payment-request-form">
+            <input name="full_name" value="{{ user.full_name }}" placeholder="الاسم الكامل" required>
+            <select name="payment_method" required>
+                <option value="">اختر طريقة الدفع</option>
+                <option>Visa</option>
+                <option>MasterCard</option>
+                <option>Bank Transfer</option>
+                <option>PayPal</option>
+                <option>USDT (TRC20)</option>
+                <option>BNB</option>
+            </select>
+            <div class="form-grid">
+                <input name="amount" type="number" step="0.01" min="0.01" placeholder="المبلغ" required>
+                <select name="currency" required>
+                    <option>USD</option>
+                    <option>EUR</option>
+                    <option>SAR</option>
+                    <option>AED</option>
+                </select>
+            </div>
+            <input name="reference_number" placeholder="رقم المرجع / العملية" required>
+            <textarea name="notes" rows="3" placeholder="ملاحظات اختيارية"></textarea>
+            <p class="notice">بعد إنشاء الطلب سيظهر رمز تأكيد للتجربة المحلية. أدخله في جدول الطلبات لتأكيد الرمز قبل مراجعة الأدمن.</p>
+            <button class="primary">إرسال طلب الدفع</button>
+        </form>
+    </section>
+    <section class="panel">
+        <h2>طلبات الدفع الخاصة بي</h2>
+        <div class="table-wrap"><table>
+            <thead><tr><th>#</th><th>الطريقة</th><th>المبلغ</th><th>المرجع</th><th>الحالة</th><th>ملاحظة الأدمن</th><th>تأكيد الرمز</th></tr></thead>
+            <tbody>
+            {% for item in payment_requests %}
+            <tr>
+                <td>#{{ item.id }}</td>
+                <td>{{ item.payment_method }}</td>
+                <td>{{ "%.2f"|format(item.amount) }} {{ item.currency }}</td>
+                <td>{{ item.reference_number }}</td>
+                <td><span class="status-pill {{ 'good' if item.status == 'approved' else 'bad' if item.status == 'rejected' else 'warn' }}">{{ payment_status_labels[item.status] }}</span></td>
+                <td>{{ item.admin_note or "-" }}</td>
+                <td>
+                    {% if item.status == "pending_review" %}
+                    <form action="{{ url_for('confirm_payment_request_code', request_id=item.id) }}" method="post" class="inline-form">
+                        <input name="confirmation_code" placeholder="رمز التأكيد" maxlength="10" required>
+                        <button>تم</button>
+                    </form>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7">لا توجد طلبات دفع بعد.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table></div>
+    </section>
+    {% endif %}
+
+    {% if page == "withdraw" %}
+    <section class="panel">
+        <h2>طلب سحب</h2>
+        {% if wallet.balance < 10 %}
+        <p class="notice danger-notice">الحد الأدنى للسحب هو 10$.</p>
+        {% endif %}
+        <form action="{{ url_for('withdraw') }}" method="post" class="stack compact-form">
+            <select name="method" id="withdrawMethod" data-local-url="{{ url_for('local_withdraw') }}">
+                <option>USDT (TRC20)</option><option>BNB</option><option>Vodafone Cash</option><option>InstaPay</option><option>وكيل Telegram</option>
+                {% if user.local_withdraw_method %}<option value="__local__">{{ user.local_withdraw_method }} - سحب محلي مباشر</option>{% endif %}
+            </select>
+            <input name="amount" type="number" step="0.01" placeholder="المبلغ" required>
+            <textarea name="details" placeholder="بيانات الاستلام"></textarea>
+            <button class="primary" {% if wallet.balance < 10 %}disabled{% endif %}>إرسال طلب السحب</button>
+        </form>
+        {% if user.local_withdraw_method %}
+        <a class="secondary local-withdraw-link" href="{{ url_for('local_withdraw') }}">فتح صفحة السحب المحلي: {{ user.local_withdraw_method }}</a>
+        {% endif %}
+    </section>
+    <section class="panel">
+        <h2>طلبات السحب</h2>
+        <div class="table-wrap"><table><thead><tr><th>الطريقة</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>
+        {% for tx in transactions if tx.kind == "withdraw" %}
+        <tr><td>{{ tx.method }}</td><td>{{ tx.amount }}</td><td>{{ tx.status }}</td></tr>
+        {% else %}
+        <tr><td colspan="3">لا توجد طلبات سحب.</td></tr>
+        {% endfor %}
+        </tbody></table></div>
+    </section>
+    {% endif %}
+
+    {% if page == "local_withdraw" %}
+    <section class="panel local-withdraw-panel">
+        <div class="section-title">
+            <div>
+                <h2>السحب المحلي المباشر</h2>
+                <p>طريقة السحب المعتمدة: <b>{{ user.local_withdraw_method }}</b></p>
+            </div>
+            <span class="account-status review">قيد المعالجة بعد الإرسال</span>
+        </div>
+        <form action="{{ url_for('local_withdraw') }}" method="post" class="stack compact-form">
+            {% if wallet.balance < 10 %}
+            <p class="notice danger-notice">الحد الأدنى للسحب هو 10$.</p>
+            {% endif %}
+            <input name="amount" type="number" step="0.01" min="10" placeholder="مبلغ السحب" required>
+            <label>رمز التذكرة<input id="localTicketCode" name="ticket_code" readonly value="{{ local_ticket_code }}"></label>
+            <button class="secondary" type="button" data-copy-target="localTicketCode">نسخ رمز التذكرة</button>
+            <p class="notice">أرسل رمز التذكرة إلى الوكيل التالي لإتمام السحب المباشر</p>
+            <a class="whatsapp-btn" href="{{ whatsapp_url }}" target="_blank" rel="noopener">فتح WhatsApp للوكيل 213779012833</a>
+            <button class="primary" {% if wallet.balance < 10 %}disabled{% endif %}>تسجيل طلب السحب المحلي</button>
+        </form>
+    </section>
+    <section class="panel">
+        <h2>طلبات السحب المحلي</h2>
+        <div class="table-wrap"><table><thead><tr><th>الطريقة</th><th>المبلغ</th><th>رمز التذكرة</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>
+        {% for item in local_withdrawals %}
+        <tr><td>{{ item.method }}</td><td>{{ item.amount }}</td><td>{{ item.ticket_code }}</td><td>{{ item.status }}</td><td>{{ item.created_at }}</td></tr>
+        {% else %}
+        <tr><td colspan="5">لا توجد طلبات سحب محلي بعد.</td></tr>
+        {% endfor %}
+        </tbody></table></div>
+    </section>
+    {% endif %}
+
+    {% if page == "referrals" %}
+    <section class="panel referral-hero">
+        <div>
+            <span class="pill">Referral System</span>
+            <h2>دعوة الأصدقاء</h2>
+            <p>أنشئ رابط دعوتك وشارك المنصة. يتم احتساب العمولة بعد نجاح دفع الاشتراك من لوحة الأدمن.</p>
+        </div>
+        <form action="{{ url_for('generate_referral_link') }}" method="post">
+            <button class="primary">إنشاء رابط الدعوة</button>
+        </form>
+    </section>
+    <section class="grid two">
+        <article class="panel">
+            <h2>رابط الدعوة الخاص بك</h2>
+            <label>كود الإحالة<input readonly value="{{ referral_code }}"></label>
+            <label>رابط الإحالة<input readonly value="{{ referral_link }}"></label>
+        </article>
+        <article class="panel referral-wallet-card">
+            <h2>محفظة الإحالة</h2>
+            <strong>${{ "%.2f"|format(referral_wallet.balance) }}</strong>
+            <p>إجمالي المكتسب: ${{ "%.2f"|format(referral_wallet.total_earned) }} | المسحوب: ${{ "%.2f"|format(referral_wallet.total_withdrawn) }}</p>
+        </article>
+    </section>
+    <section class="panel">
+        <h2>إحصائيات الإحالة</h2>
+        <div class="stats referral-stats">
+            <span>عدد المدعوين <b>{{ referral_level.total_referrals }}</b></span>
+            <span>الأشخاص النشطون <b>{{ referral_level.active_referrals }}</b></span>
+            <span>الاشتراكات المكتملة <b>{{ completed_subscriptions }}</b></span>
+            <span>إجمالي العمولات <b>${{ "%.2f"|format(referral_level.total_earnings) }}</b></span>
+            <span>المستوى الحالي <b>{{ referral_level.current_level }}</b></span>
+            <span>المستوى التالي <b>{{ next_referral_target }}</b></span>
+        </div>
+    </section>
+    <section class="panel">
+        <h2>جدول المدعوين</h2>
+        <div class="table-wrap"><table><thead><tr><th>الاسم</th><th>نوع البطاقة</th><th>حالة الاشتراك</th><th>تاريخ التسجيل</th><th>العمولة المكتسبة</th></tr></thead><tbody>
+        {% for invited in referral_invited %}
+        <tr>
+            <td>{{ invited.full_name }}</td>
+            <td>{{ invited.plan }}</td>
+            <td>{{ "نشط" if invited.subscription_active else "غير نشط" }}</td>
+            <td>{{ invited.created_at }}</td>
+            <td>${{ "%.2f"|format(invited.commission) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">لم تقم بدعوة أي شخص بعد.</td></tr>
+        {% endfor %}
+        </tbody></table></div>
+    </section>
+    {% endif %}
+
+    {% if page == "marketing" %}
+    <section class="marketing-dashboard-shell">
+        <header class="marketing-command-bar">
+            <div>
+                <span class="pill">AI-Powered Campaign Management</span>
+                <h2><span>SMART</span> MARKETING CENTER</h2>
+                <p>Campaign management, client acquisition, live analytics, and marketing wallet control for TrBridgo.io members.</p>
+            </div>
+            <div class="marketing-hero-actions">
+                <button class="secondary marketing-guide-btn" type="button">Marketing Guides</button>
+                <button class="primary marketing-main-btn" type="button" data-marketing-dialog-open="campaign">Create New Campaign</button>
+                <button class="secondary" type="button" data-marketing-dialog-open="recharge">Recharge Marketing Wallet</button>
+            </div>
+        </header>
+
+        <section class="marketing-enterprise-grid">
+            <aside class="marketing-kpi-stack">
+                <article class="marketing-kpi-card wallet-kpi">
+                    <div>
+                        <span>Marketing Wallet Balance</span>
+                        <b data-count-to="{{ '%.2f'|format(marketing_wallet.balance) }}" data-count-prefix="$">${{ "%.2f"|format(marketing_wallet.balance) }}</b>
+                        <small>↑ 12.5% this month</small>
+                    </div>
+                    <i class="marketing-wallet-icon"></i>
+                </article>
+                <article class="marketing-kpi-card">
+                    <i class="kpi-dot emerald">♣</i>
+                    <div>
+                        <span>Active Campaigns</span>
+                        <b data-count-to="{{ marketing_active_campaigns }}">{{ marketing_active_campaigns }}</b>
+                    </div>
+                    <svg viewBox="0 0 120 42" aria-hidden="true"><path d="M2 32 C18 24, 22 28, 34 18 S56 24, 68 14 S92 20, 118 5"/></svg>
+                </article>
+                <article class="marketing-kpi-card">
+                    <i class="kpi-dot purple">◈</i>
+                    <div>
+                        <span>Expected Leads</span>
+                        <b data-count-to="{{ marketing_expected_leads }}">{{ marketing_expected_leads }}</b>
+                    </div>
+                    <svg viewBox="0 0 120 42" aria-hidden="true"><path d="M2 34 C14 10, 24 35, 36 18 S58 8, 72 22 S94 32, 118 6"/></svg>
+                </article>
+                <article class="marketing-kpi-card">
+                    <i class="kpi-dot blue">●</i>
+                    <div>
+                        <span>Estimated Conversion Rate</span>
+                        <b class="conversion-rate-value">{{ marketing_estimated_conversion or "0%" }}</b>
+                        <small>+2.1% This Month</small>
+                    </div>
+                    <svg viewBox="0 0 120 42" aria-hidden="true"><path d="M2 35 C20 33, 26 20, 42 25 S64 30, 78 16 S96 16, 118 4"/></svg>
+                </article>
+            </aside>
+
+            <article class="marketing-create-card">
+                <div class="section-title">
+                    <div>
+                        <h2>Create New Campaign</h2>
+                        <p>Target, budget, duration, and estimate preview.</p>
+                    </div>
+                    <button class="primary marketing-main-btn" type="button" data-marketing-dialog-open="campaign">Launch Campaign</button>
+                </div>
+                <div class="marketing-stepper">
+                    <span class="active">1 Target</span><span>2 Budget</span><span>3 Duration</span><span>4 Estimate</span>
+                </div>
+                <div class="marketing-chip-row">
+                    <span>🇸🇦 Saudi Arabia</span><span>🇪🇬 Egypt</span><span>🇫🇷 France</span><span>🇦🇪 UAE</span>
+                </div>
+                <div class="marketing-form-preview">
+                    <span>Campaign Budget <b>${% if marketing_campaigns %}{{ "%.0f"|format(marketing_campaigns[0].budget) }}{% else %}500{% endif %}</b></span>
+                    <span>Duration <b>{% if marketing_campaigns %}{{ marketing_campaigns[0].duration_days }}{% else %}30{% endif %} Days</b></span>
+                </div>
+                <div class="marketing-estimate-grid preview-estimates">
+                    <span>Estimated Reach <b>{% if marketing_campaigns %}{{ marketing_campaigns[0].estimated_reach }}{% else %}250,000+{% endif %}</b></span>
+                    <span>Expected Leads <b>{% if marketing_campaigns %}{{ marketing_campaigns[0].expected_leads }}{% else %}4,500+{% endif %}</b></span>
+                    <span>Expected Clicks <b>{% if marketing_campaigns %}{{ marketing_campaigns[0].estimated_clicks }}{% else %}12,000+{% endif %}</b></span>
+                    <span>Conversion Rate <b>{% if marketing_campaigns %}{{ marketing_campaigns[0].estimated_conversion_rate }}{% else %}5.2%{% endif %}</b></span>
+                </div>
+                <p class="marketing-disclaimer">All results displayed are estimates only and not guaranteed.</p>
+            </article>
+
+            <article class="marketing-map-card">
+                <div class="section-title">
+                    <div>
+                        <h2>Campaign Reach Map</h2>
+                        <p>Live global acquisition activity.</p>
+                    </div>
+                    <span class="live-dot">Live</span>
+                </div>
+                <div class="marketing-world-map" aria-label="Campaign global reach map">
+                    <svg viewBox="0 0 780 420" role="img">
+                        <defs>
+                            <linearGradient id="marketingLand" x1="0" x2="1">
+                                <stop offset="0%" stop-color="#dfeaff"/>
+                                <stop offset="55%" stop-color="#c9f8e5"/>
+                                <stop offset="100%" stop-color="#edf7ff"/>
+                            </linearGradient>
+                            <filter id="marketingGlow"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        </defs>
+                        <path class="land" d="M115 105c55-48 139-41 179-15 23 15 40 6 69 7 31 1 51 20 85 17 50-5 99-25 151 15 40 31 75 86 40 130-33 42-106 24-141 59-49 50-101 53-152 19-36-24-67-19-111-17-58 3-101-36-96-82 3-27-49-30-60-67-7-24 13-46 36-66z"/>
+                        <path class="land land-soft" d="M78 220c23-36 82-54 122-39 33 12 50 48 33 74-19 29-72 47-116 31-39-14-61-33-39-66z"/>
+                        <path class="land land-soft" d="M556 244c36-25 89-17 119 15 24 26 27 61 0 79-41 27-111 12-131-24-11-20-5-50 12-70z"/>
+                        <path class="route r1" d="M170 150 C280 80, 360 98, 435 145"/>
+                        <path class="route r2" d="M435 145 C500 165, 536 202, 575 238"/>
+                        <path class="route r3" d="M575 238 C615 205, 646 188, 700 182"/>
+                        <path class="route r4" d="M385 170 C330 210, 286 248, 220 285"/>
+                        <g class="map-points">
+                            <circle cx="170" cy="150" r="7"/><circle cx="435" cy="145" r="7"/><circle cx="475" cy="178" r="7"/><circle cx="575" cy="238" r="7"/><circle cx="700" cy="182" r="7"/><circle cx="220" cy="285" r="7"/><circle cx="385" cy="170" r="7"/>
+                        </g>
+                    </svg>
+                    <span class="map-label uk">United Kingdom</span>
+                    <span class="map-label fr">France</span>
+                    <span class="map-label dz">Algeria</span>
+                    <span class="map-label eg">Egypt</span>
+                    <span class="map-label sa">Saudi Arabia</span>
+                    <span class="map-label ae">UAE</span>
+                </div>
+                <div class="marketing-map-stats">
+                    <span>Live Campaigns <b>{{ marketing_active_campaigns }}</b></span>
+                    <span>Target Countries <b>{{ marketing_countries|length }}</b></span>
+                    <span>Total Reach <b>{{ marketing_expected_leads }}+</b></span>
+                </div>
+            </article>
+        </section>
+
+        <section class="marketing-lower-grid">
+            <article class="marketing-analytics-card">
+                <div class="section-title">
+                    <div><h2>Campaign Performance</h2><p>Reach, leads, and conversion trend.</p></div>
+                    <span>This Month</span>
+                </div>
+                <div class="marketing-chart">
+                    <span class="chart-line reach"></span>
+                    <span class="chart-line leads"></span>
+                    <span class="chart-line clicks"></span>
+                    <div class="chart-bars">
+                        {% for h in [22,35,54,48,66,74,58,82,64,44,38] %}
+                        <i style="height: {{ h }}%"></i>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="chart-legend"><span>Reach</span><span>Leads</span><span>Conversions</span></div>
+            </article>
+
+            <article class="marketing-campaigns-table-card">
+                <div class="section-title">
+                    <div><h2>Campaign Management</h2><p>Campaign Status, Campaign Progress, Budget and countries.</p></div>
+                    <span>{{ marketing_campaigns|length }} Total</span>
+                </div>
+                <div class="table-wrap marketing-table-wrap"><table>
+                    <thead><tr><th>Campaign ID</th><th>Campaign Name</th><th>Campaign Budget</th><th>Target Countries</th><th>Campaign Status</th><th>Campaign Progress</th></tr></thead>
+                    <tbody>
+                    {% for campaign in marketing_campaigns %}
+                    <tr>
+                        <td><a href="{{ url_for('marketing_campaign_detail', campaign_id=campaign.id) }}">CMP-{{ "%04d"|format(campaign.id) }}</a></td>
+                        <td>{{ campaign.campaign_name }}</td>
+                        <td>${{ "%.2f"|format(campaign.budget) }}</td>
+                        <td>{{ campaign.countries }}</td>
+                        <td><span class="status-pill {{ 'good' if campaign.status in ['Approved','Running','Completed'] else 'bad' if campaign.status == 'Rejected' else 'warn' }}">{{ campaign.status }}</span></td>
+                        <td><div class="marketing-progress admin-mini-progress"><span style="width: {{ campaign.progress }}%"></span></div>{{ campaign.progress }}%</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6">لا توجد حملات بعد. استخدم زر Create New Campaign للبدء.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table></div>
+            </article>
+        </section>
+
+        <section class="marketing-bottom-grid">
+            <article><i>AI</i><b>AI-Powered Targeting</b><span>Smart audience selection using guided campaign data.</span></article>
+            <article><i>↗</i><b>Real-Time Analytics</b><span>Campaign insights, progress tracking, and live estimates.</span></article>
+            <article><i>✓</i><b>Secure Transactions</b><span>Wallet recharge requests reviewed by administration.</span></article>
+            <article><i>☊</i><b>Marketing Tickets</b><span>Campaign updates arrive through dedicated marketing tickets.</span></article>
+        </section>
+
+        <section class="grid two marketing-support-grid">
+            <article class="panel marketing-ticket-panel">
+                <h2>Marketing Tickets</h2>
+                <div class="marketing-ticket-list">
+                    {% for ticket in marketing_tickets %}
+                    <div class="marketing-ticket">
+                        <span class="status-pill {{ 'good' if ticket.status in ['Approved','Running','Completed'] else 'bad' if ticket.status == 'Rejected' else 'warn' }}">{{ ticket.status }}</span>
+                        <h3>{{ ticket.title }}</h3>
+                        <p>{{ ticket.message }}</p>
+                        <small>{{ ticket.campaign_name or "Marketing Wallet" }} • {{ ticket.created_at }}</small>
+                    </div>
+                    {% else %}
+                    <p>لا توجد تذاكر تسويق بعد.</p>
+                    {% endfor %}
+                </div>
+            </article>
+            <article class="panel marketing-recharge-panel">
+                <h2>Recharge Marketing Wallet</h2>
+                <div class="table-wrap"><table><thead><tr><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead><tbody>
+                {% for recharge in marketing_recharges %}
+                <tr><td>${{ "%.2f"|format(recharge.amount) }}</td><td>{{ recharge.payment_method }}</td><td>{{ recharge.status }}</td><td>{{ recharge.created_at }}</td></tr>
+                {% else %}
+                <tr><td colspan="4">لا توجد طلبات شحن بعد.</td></tr>
+                {% endfor %}
+                </tbody></table></div>
+            </article>
+        </section>
+    </section>
+
+    <dialog class="marketing-dialog" data-marketing-dialog="campaign">
+        <form action="{{ url_for('create_marketing_campaign') }}" method="post" class="marketing-wizard" data-marketing-form>
+            <button type="button" class="dialog-close" data-marketing-dialog-close>×</button>
+            <span class="pill">Create New Campaign</span>
+            <h2>إنشاء حملة تسويقية جديدة</h2>
+            <label>اسم الحملة<input name="campaign_name" placeholder="مثال: Gulf Growth Campaign"></label>
+            <div class="marketing-step">
+                <h3>1. اختيار الدولة المستهدفة</h3>
+                <div class="marketing-country-grid">
+                    {% for country in marketing_countries %}
+                    <label><input type="checkbox" name="countries" value="{{ country }}"> {{ country }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="marketing-step">
+                <h3>2. اختيار الميزانية</h3>
+                <div class="marketing-budget-grid">
+                    {% for budget in marketing_budgets %}
+                    <label><input type="radio" name="budget" value="{{ budget }}" {% if loop.first %}checked{% endif %}> ${{ budget }}</label>
+                    {% endfor %}
+                    <label><input type="radio" name="budget" value="custom"> Custom <input name="custom_budget" type="number" step="0.01" min="1" placeholder="$"></label>
+                </div>
+            </div>
+            <div class="marketing-step">
+                <h3>3. اختيار مدة الحملة</h3>
+                <select name="duration_days">
+                    {% for days in marketing_durations %}
+                    <option value="{{ days }}">{{ days }} أيام</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="marketing-step marketing-estimates">
+                <h3>4. النتائج التقديرية</h3>
+                <div class="marketing-estimate-grid">
+                    <span>Estimated Reach <b data-estimated-reach>0 - 0</b></span>
+                    <span>Expected Leads <b data-expected-leads>0 - 0</b></span>
+                    <span>Estimated Clicks <b data-estimated-clicks>0 - 0</b></span>
+                    <span>Estimated Conversion Rate <b data-estimated-conversion>2% - 5%</b></span>
+                </div>
+                <p class="notice danger-notice">جميع النتائج المعروضة تقديرية فقط وليست ضماناً لأي أرباح أو نتائج فعلية.</p>
+            </div>
+            <button class="primary marketing-main-btn">Create Campaign</button>
+        </form>
+    </dialog>
+
+    <dialog class="marketing-dialog" data-marketing-dialog="recharge">
+        <form action="{{ url_for('recharge_marketing_wallet') }}" method="post" enctype="multipart/form-data" class="marketing-wizard">
+            <button type="button" class="dialog-close" data-marketing-dialog-close>×</button>
+            <span class="pill">Recharge Marketing Wallet</span>
+            <h2>شحن محفظة التسويق</h2>
+            <input name="amount" type="number" step="0.01" min="1" placeholder="المبلغ" required>
+            <select name="payment_method" required>
+                <option value="">اختر وسيلة الدفع</option>
+                <option>USDT (TRC20)</option>
+                <option>BNB</option>
+                <option>Vodafone Cash</option>
+                <option>InstaPay</option>
+                <option>Telegram Agent</option>
+            </select>
+            <input name="transaction_number" placeholder="رقم العملية" required>
+            <label>صورة الدفع<input name="proof" type="file" accept="image/*,.pdf"></label>
+            <p class="notice">الحالة الافتراضية: Pending Review، ويضاف الرصيد بعد موافقة الأدمن.</p>
+            <button class="primary">Send Recharge Request</button>
+        </form>
+    </dialog>
+    {% endif %}
+
+    {% if page == "marketing_detail" %}
+    <section class="panel marketing-detail-hero">
+        <a class="secondary" href="{{ url_for('marketing_page') }}">العودة إلى مركز التسويق</a>
+        <div>
+            <span class="pill">Campaign Dashboard</span>
+            <h2>{{ campaign.campaign_name }}</h2>
+            <p>Campaign ID: #{{ campaign.id }}</p>
+        </div>
+        <span class="status-pill {{ 'good' if campaign.status in ['Approved','Running','Completed'] else 'bad' if campaign.status == 'Rejected' else 'warn' }}">{{ campaign.status }}</span>
+    </section>
+    <section class="grid two">
+        <article class="panel">
+            <h2>لوحة متابعة الحملة</h2>
+            <div class="account-info-grid">
+                <span>الميزانية <b>${{ "%.2f"|format(campaign.budget) }}</b></span>
+                <span>الدول المستهدفة <b>{{ campaign.countries }}</b></span>
+                <span>تاريخ البداية <b>{{ campaign.start_date or "لم يبدأ بعد" }}</b></span>
+                <span>تاريخ النهاية <b>{{ campaign.end_date or "غير محدد" }}</b></span>
+                <span>المدة <b>{{ campaign.duration_days }} أيام</b></span>
+                <span>الحالة الحالية <b>{{ campaign.status }}</b></span>
+            </div>
+            <div class="marketing-progress large"><span style="width: {{ campaign.progress }}%"></span></div>
+            <p>نسبة الإنجاز: <b>{{ campaign.progress }}%</b></p>
+        </article>
+        <article class="panel">
+            <h2>قسم الإحصائيات</h2>
+            <div class="marketing-estimate-grid">
+                <span>Estimated Reach <b>{{ campaign.estimated_reach }}</b></span>
+                <span>Estimated Leads <b>{{ campaign.expected_leads }}</b></span>
+                <span>Estimated Clicks <b>{{ campaign.estimated_clicks }}</b></span>
+                <span>Campaign Activity <b>{{ campaign.status }}</b></span>
+            </div>
+            <p class="notice">{{ campaign.agent_notes or "لا توجد ملاحظات من الوكيل بعد." }}</p>
+        </article>
+    </section>
+    <section class="panel">
+        <h2>Marketing Tickets</h2>
+        <div class="marketing-ticket-list">
+            {% for ticket in campaign_tickets %}
+            <div class="marketing-ticket">
+                <span class="status-pill {{ 'good' if ticket.status in ['Approved','Running','Completed'] else 'bad' if ticket.status == 'Rejected' else 'warn' }}">{{ ticket.status }}</span>
+                <h3>{{ ticket.title }}</h3>
+                <p>{{ ticket.message }}</p>
+                <small>{{ ticket.created_at }}</small>
+            </div>
+            {% else %}
+            <p>لا توجد تحديثات لهذه الحملة بعد.</p>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if page == "tickets" %}
+    <section class="panel">
+        <div class="section-title">
+            <div>
+                <h2>حالة حساب التداول</h2>
+                <p>متابعة مباشرة للحسابات المرتبطة بالبطاقات مع تحليل مبسط للمخاطرة.</p>
+            </div>
+            <span>{{ trading_tickets|length }} تذكرة</span>
+        </div>
+        <div class="trading-ticket-grid">
+            {% for item in trading_tickets %}
+            <article class="trading-ticket-card">
+                <div class="ticket-status-row">
+                    <span class="account-status {{ 'live' if item.status == 'Live' else 'review' if item.status == 'تحت المراجعة' else 'off' }}">
+                        {{ "🟢 Live" if item.status == "Live" else "🟡 تحت المراجعة" if item.status == "تحت المراجعة" else "🔴 غير نشط" }}
+                    </span>
+                    <small>{{ item.created_at }}</small>
+                </div>
+                <div class="account-info-grid">
+                    <span>رقم البطاقة <b>{{ item.card_code or item.card_id }}</b></span>
+                    <span>حساب التداول <b>{{ item.mt_account_number }}</b></span>
+                    <span>شركة الوساطة <b>{{ item.broker_name }}</b></span>
+                    <span>نوع الحساب <b>{{ item.card_type }}</b></span>
+                    <span>الرافعة المالية <b>{{ item.leverage }}</b></span>
+                    <span>الرصيد الحالي <b>${{ "%.2f"|format(item.balance) }}</b></span>
+                </div>
+                <div class="trade-analysis">
+                    <h3>تحليل الصفقة الحالية</h3>
+                    <p>زوج التداول: <b>{{ item.trading_pair }}</b></p>
+                    <p>نوع العملية: <b>{{ item.trade_type }}</b></p>
+                    <p>اللوت المستخدم: <b>{{ item.lot_size }}</b></p>
+                    <p>نسبة المخاطرة: <b>{{ "%.2f"|format(item.risk_percentage) }}%</b></p>
+                    <p>التحليل النصي: <b>{{ item.analysis_note }}</b></p>
+                    <p class="notice">{{ item.analysis_note }}</p>
+                    {% if item.analysis_image %}
+                    <a href="{{ url_for('static', filename='uploads/trading_analysis/' ~ item.analysis_image) }}" target="_blank" class="analysis-image-link">
+                        <img src="{{ url_for('static', filename='uploads/trading_analysis/' ~ item.analysis_image) }}" alt="صورة تحليل الصفقة" class="analysis-image">
+                    </a>
+                    {% endif %}
+                </div>
+            </article>
+            {% else %}
+            <article class="service-card">لا توجد تذاكر تداول حتى الآن. ستظهر هنا بعد إنشاء الأدمن لتذكرة مرتبطة ببطاقتك النشطة.</article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>التذاكر وبطاقات Visa الذكية</h2>
+        <div class="cards three">
+            {% for ticket in tickets %}
+            <article class="ticket-card">
+                <span>{{ ticket.service_type }}</span>
+                <h3>{{ ticket.title }}</h3>
+                <b>$ {{ "%.2f"|format(ticket.current_balance) }}</b>
+                <small>{{ ticket.issue_date }} • {{ ticket.status }}</small>
+            </article>
+            {% else %}
+            <article class="ticket-card">لا توجد تذاكر مخصصة حتى الآن.</article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if page == "settings" %}
+    <section class="panel">
+        <h2>الإعدادات</h2>
+        <div class="settings-profile-grid">
+            <form action="{{ url_for('update_profile_image') }}" method="post" enctype="multipart/form-data" class="stack">
+                <img src="{{ profile_image_url }}" alt="صورة الحساب" class="profile-avatar large">
+                <label>صورة الحساب الشخصية<input name="profile_image" type="file" accept="image/*" required></label>
+                <button class="primary">رفع الصورة</button>
+            </form>
+            <form action="{{ url_for('update_local_withdraw_method') }}" method="post" class="stack">
+                <h2>طريقة السحب المحلية</h2>
+                <p>اكتب طريقة مثل: فودافون كاش، بريدي موب، CCP، تحويل بنكي، وكيل محلي.</p>
+                <input name="local_withdraw_method" value="{{ user.local_withdraw_method or '' }}" placeholder="مثال: بريدي موب">
+                <button class="primary">اعتماد كطريقة سحب محلية</button>
+            </form>
+        </div>
+        <div class="settings-list">
+            <p>الاسم: <b>{{ user.full_name }}</b></p>
+            <p>البريد: <b>{{ user.email }}</b></p>
+            <p>اسم المستخدم: <b>{{ user.username }}</b></p>
+            <p>الباقة الحالية: <b>{{ user.plan }}</b></p>
+            <p>حالة الاشتراك: <b>{{ "نشط" if user.subscription_active else "تجريبي" }}</b></p>
+            <p>طريقة السحب المحلية: <b>{{ user.local_withdraw_method or "غير محددة" }}</b></p>
+        </div>
+    </section>
+    <section class="panel global-map-card">
+        <div class="section-title">
+            <h2>Live Global Activity Map</h2>
+            <span class="live-dot">LIVE</span>
+        </div>
+        <div class="world-map-3d" data-live-map>
+            <span class="map-point p1"></span><span class="map-point p2"></span><span class="map-point p3"></span><span class="map-point p4"></span><span class="map-point p5"></span>
+            <p class="live-activity-text" data-live-activity>عميل من الجزائر قام بإيداع</p>
+        </div>
+        <div class="country-marquee"><span>مصر • الجزائر • المغرب • تونس • لبنان • العراق • فلسطين • ليبيا • موريتانيا • السعودية • سوريا • فرنسا • بريطانيا • النيجر • إثيوبيا • الهند • أمريكا</span></div>
+    </section>
+    {% endif %}
+</main>
+{% endblock %}

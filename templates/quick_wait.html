@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}جاري تجهيز الربط{% endblock %}
+{% block body_class %}wait-page{% endblock %}
+{% block content %}
+<main class="wait-box">
+    <div class="robot">🤖</div>
+    <h1>جاري تجهيز نظام الربط...</h1>
+    <p>يتم إعداد نموذج الربط السريع الآن.</p>
+</main>
+<script>setTimeout(() => { window.location.href = "{{ url_for('quick_link_new') }}"; }, 2000);</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}برنامج الإحالة | TrBridgo.io{% endblock %}
+{% block body_class %}landing-page premium-landing{% endblock %}
+{% block content %}
+<main class="landing-shell referral-program-page">
+    <div class="digital-stars"></div>
+    <nav class="top-nav landing-nav">
+        <strong class="brand">TrBridgo<span>.io</span></strong>
+        <a href="{{ url_for('index') }}">الرئيسية</a>
+        <a href="{{ url_for('index') }}#pricing">البطاقات</a>
+        <a href="/referral-program">برنامج الإحالة</a>
+        <a href="{{ url_for('index') }}#security">الدعم</a>
+        <a class="main-login" href="{{ url_for('login') }}">تسجيل الدخول</a>
+    </nav>
+
+    <section class="section referral-visual-section">
+        <div class="referral-visual-frame standalone-referral-image">
+            <img src="{{ url_for('static', filename='img/referral-program-display.jpg') }}" alt="برنامج الإحالة في TrBridgo.io">
+        </div>
+    </section>
+
+    <section class="section referral-explainer">
+        <h1>كيف يعمل برنامج الإحالة؟</h1>
+        <ol class="referral-steps">
+            <li>انسخ رابط الإحالة الخاص بك.</li>
+            <li>شارك الرابط مع أصدقائك.</li>
+            <li>يقوم الصديق بالتسجيل.</li>
+            <li>يربط حساب التداول.</li>
+            <li>يشترك في إحدى البطاقات.</li>
+            <li>تحصل على العمولة حسب مستواك.</li>
+        </ol>
+    </section>
+
+    <section class="section referral-table-section">
+        <div class="section-title referral-table-title">
+            <div>
+                <span class="pill">Referral Levels</span>
+                <h2>جدول مستويات الإحالة</h2>
+            </div>
+        </div>
+        {% include "_referral_levels_table.html" %}
+    </section>
+
+    <section class="section referral-benefits">
+        <h2>مزايا برنامج الإحالة</h2>
+        <div class="cards three glass-grid">
+            <article>عمولات مدى الحياة.</article>
+            <article>تتبع مباشر للإحالات.</article>
+            <article>ترقيات تلقائية للمستويات.</article>
+            <article>لوحة تحكم متقدمة.</article>
+            <article>سحب الأرباح من المحفظة.</article>
+        </div>
+    </section>
+</main>
+{% endblock %}

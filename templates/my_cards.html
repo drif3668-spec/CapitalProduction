@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}بطاقاتي | TriBridge.io{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+{% block content %}
+<aside class="side-nav">
+    <strong>TriBridge.io</strong>
+    <a href="{{ url_for('dashboard') }}">لوحة التحكم</a>
+    <a href="{{ url_for('dashboard') }}#subscriptions">الاشتراكات</a>
+    <a href="{{ url_for('dashboard') }}#quick">الربط السريع</a>
+    <form action="{{ url_for('logout') }}" method="post"><button>تسجيل الخروج</button></form>
+</aside>
+<main class="dash">
+    <header class="dash-header">
+        <div>
+            <span class="pill">بطاقات {{ user.full_name }}</span>
+            <h1>بطاقاتي</h1>
+        </div>
+        <a class="primary" href="{{ url_for('dashboard') }}#subscriptions">اعتماد بطاقة جديدة</a>
+    </header>
+
+    <section class="cards-page-grid">
+        {% for card in subscription_cards %}
+        <article class="premium-card full-card {{ card.card_type|lower }} {% if card.status == 'نشطة' %}live{% endif %}">
+            <span>{{ card.card_type }}</span>
+            <strong>
+                {% if card.status == 'نشطة' and card.visible_balance is not none %}
+                    $ {{ "%.2f"|format(card.visible_balance) }}
+                {% else %}
+                    {{ user.full_name }}
+                {% endif %}
+            </strong>
+            <small>الحالة: {{ card.status }}</small>
+            <div class="card-details">
+                <b>رمز البطاقة</b><em>{{ card.card_code or "غير محدد" }}</em>
+                <b>المنصة</b><em>{{ card.platform or "غير مرتبطة" }}</em>
+                <b>الوسيط</b><em>{{ card.broker or "غير مرتبط" }}</em>
+                <b>رقم الحساب</b><em>{{ card.trading_account_number or "غير مرتبط" }}</em>
+            </div>
+        </article>
+        {% else %}
+        <article class="panel">
+            <h2>لا توجد بطاقات بعد</h2>
+            <p>ارجع إلى لوحة التحكم واعتمد بطاقة Basic أو Pro أو Ultra.</p>
+        </article>
+        {% endfor %}
+    </section>
+</main>
+{% endblock %}

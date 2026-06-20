@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}نموذج الربط | TriBridge.io{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block content %}
+<main class="auth-box wide">
+    <form method="post" class="panel">
+        <h1>إرسال طلب الربط</h1>
+        <div class="form-grid">
+            <label>البطاقة
+                <select name="subscription_card_id" required>
+                    <option value="">اختر البطاقة</option>
+                    {% for card in subscription_cards %}
+                    <option value="{{ card.id }}" {% if data.subscription_card_id|string == card.id|string %}selected{% endif %}>{{ card.card_type }} - {{ card.status }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>رمز خاص للبطاقة مكون من 8 أرقام<input name="card_code" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" required placeholder="12345678"></label>
+            <label>رقم حساب MT4/MT5<input name="account_number" required></label>
+            <label>كلمة مرور المستثمر<input name="investor_password" required></label>
+            <label>شركة الوساطة<input name="broker" value="{{ data.broker or '' }}" required></label>
+            <label>نوع المنصة<select name="platform"><option {% if data.account_type == 'MT5' %}selected{% endif %}>MT5</option><option {% if data.account_type == 'MT4' %}selected{% endif %}>MT4</option></select></label>
+            <label>نوع الحساب<input name="account_type" required placeholder="Real / Demo / Standard"></label>
+            <label>الرافعة المالية<input name="leverage" value="{{ data.leverage or '' }}"></label>
+            <label>الرصيد الحالي<input name="balance" type="number" step="0.01" value="{{ data.balance or 0 }}"></label>
+            <label>البريد الإلكتروني<input name="email" type="email" value="{{ user.email }}" required></label>
+            <label>معلومات إضافية<textarea name="extra_info"></textarea></label>
+        </div>
+        <button class="primary" type="submit">إرسال طلب الربط</button>
+    </form>
+</main>
+{% endblock %}

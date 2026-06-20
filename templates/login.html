@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}تسجيل الدخول | TriBridge.io{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block content %}
+<main class="auth-box">
+    <form method="post" class="panel">
+        <h1>تسجيل الدخول</h1>
+        <p>يمكنك الدخول بالبريد الإلكتروني أو اسم المستخدم.</p>
+        <label>البريد الإلكتروني أو اسم المستخدم<input name="identifier" required></label>
+        <label>كلمة المرور<input name="password" type="password" required></label>
+        <button class="primary" type="submit">دخول</button>
+        <a href="{{ url_for('register') }}">إنشاء حساب جديد</a>
+        <a class="secondary home-return" href="{{ url_for('index') }}">العودة إلى الصفحة الرئيسية</a>
+        <small>حساب الأدمن التجريبي: admin@tribridge.io / Admin12345</small>
+    </form>
+</main>
+{% endblock %}
