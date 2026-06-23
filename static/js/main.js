@@ -38,15 +38,13 @@ document.querySelectorAll(".pick-card input").forEach((input) => {
     }
 });
 
-document.querySelectorAll("#pricing [data-pricing-card]").forEach((card) => {
+/* ─── Web3 Pricing Card Interaction ─── */
+document.querySelectorAll("#pricing [data-plan]").forEach((card) => {
     card.addEventListener("click", () => {
-        document.querySelectorAll("#pricing [data-pricing-card]").forEach((item) => {
-            item.classList.remove("active", "basic-active", "pro-active", "ultra-active");
+        document.querySelectorAll("#pricing [data-plan]").forEach((item) => {
+            item.classList.remove("web3-plan-active");
         });
-        card.classList.add("active");
-        if (card.classList.contains("basic")) card.classList.add("basic-active");
-        if (card.classList.contains("pro")) card.classList.add("pro-active");
-        if (card.classList.contains("ultra")) card.classList.add("ultra-active");
+        card.classList.add("web3-plan-active");
     });
 });
 

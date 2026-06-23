@@ -250,63 +250,133 @@
         </div>
     </section>
 
-    <!-- ═══════════════════════ PRICING ═══════════════════════ -->
-    <section id="pricing" class="v2-section v2-pricing-section">
-        <div class="v2-section-head">
-            <div>
-                <span class="v2-section-pill">الباقات</span>
-                <h2>اختر الخطة المناسبة لك</h2>
-                <p>باقات مرنة تناسب جميع مستويات التداول — ابدأ مجاناً 14 يوم</p>
+        <!-- ═══════════════════ PRICING — Web3 Premium Redesign ═══════════════════ -->
+    <section id="pricing" class="web3-pricing-section">
+      <div class="web3-pricing-bg" aria-hidden="true">
+        <div class="web3-pricing-orb web3-orb-1"></div>
+        <div class="web3-pricing-orb web3-orb-2"></div>
+        <div class="web3-pricing-orb web3-orb-3"></div>
+        <div class="web3-pricing-grid-lines"></div>
+      </div>
+
+      <div class="web3-pricing-inner">
+        <header class="web3-pricing-header">
+          <div class="web3-pricing-pill">Subscription Plans</div>
+          <h2>Choose Your <span class="web3-gradient-text">Perfect Plan</span></h2>
+          <p>Flexible subscription cards tailored to your trading goals — start with a 14-day free trial.</p>
+        </header>
+
+        <div class="web3-plan-grid">
+          <!-- BASIC -->
+          <article class="web3-plan-card" data-plan="basic">
+            <div class="web3-plan-glow"></div>
+            <div class="web3-plan-shine"></div>
+            <div class="web3-plan-badge">Starter</div>
+            <div class="web3-plan-header">
+              <span class="web3-plan-icon">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+              </span>
+              <h3 class="web3-plan-name">Basic</h3>
+              <div class="web3-plan-price">
+                <span class="web3-price-currency">$</span>
+                <span class="web3-price-amount" data-count-to="25">25</span>
+                <span class="web3-price-period">/month</span>
+              </div>
             </div>
-            <a class="v2-btn-ghost" href="{{ url_for('register') }}">ابدأ الآن مجاناً</a>
-        </div>
-        <div class="subscription-picker public-picker v2-pricing-grid">
-            <article class="premium-card pricing-card basic v2-plan-card" data-pricing-card>
-                <div class="pricing-power" style="--power: 20%"><b>Power 20%</b><i></i></div>
-                <span>BASIC</span>
-                <strong>$25 <em class="v2-per">/ شهريًا</em></strong>
-                <ul class="v2-plan-list">
-                    <li><span>✓</span> ربط حساب تداول واحد</li>
-                    <li><span>✓</span> تجربة الربط السريع</li>
-                    <li><span>✓</span> لوحة متابعة أساسية</li>
-                    <li><span>✓</span> دعم فني</li>
-                </ul>
-                <a class="pricing-plan-button diamond-blue" href="{{ url_for('register') }}" data-i18n="buttons.choosePlan">اختر الباقة</a>
-            </article>
+            <ul class="web3-plan-features">
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>1 trading account link</span></li>
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>Quick link monitoring</span></li>
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>Basic analysis tools</span></li>
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>Standard support</span></li>
+            </ul>
+            <div class="web3-plan-power">
+              <span class="web3-power-label">Power 20%</span>
+              <span class="web3-power-bar"><span class="web3-power-fill" style="width:20%"></span></span>
+            </div>
+            <a href="{{ url_for('register') }}" class="web3-plan-cta">
+              <span>Choose Basic</span>
+              <svg class="web3-cta-arrow" viewBox="0 0 20 12" fill="none"><path d="M1 6h16M13 1l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </article>
 
-            <article class="premium-card pricing-card pro v2-plan-card v2-plan-popular" data-pricing-card>
-                <div class="v2-popular-tag">الأكثر طلبًا</div>
-                <div class="pricing-power" style="--power: 50%"><b>Power 50%</b><i></i></div>
-                <span>PRO</span>
-                <strong>$120 <em class="v2-per">/ شهريًا</em></strong>
-                <ul class="v2-plan-list">
-                    <li><span>✓</span> ربط عدة حسابات</li>
-                    <li><span>✓</span> لوحة متابعة متقدمة</li>
-                    <li><span>✓</span> أولوية في المراجعة</li>
-                    <li><span>✓</span> تذاكر وتحليلات أكثر</li>
-                    <li><span>✓</span> دعم ذو أولوية</li>
-                </ul>
-                <a class="pricing-plan-button diamond-blue" href="{{ url_for('register') }}" data-i18n="buttons.choosePlan">اختر الباقة</a>
-            </article>
+          <!-- PRO (Featured) -->
+          <article class="web3-plan-card web3-plan-featured" data-plan="pro">
+            <div class="web3-plan-glow"></div>
+            <div class="web3-plan-shine"></div>
+            <div class="web3-featured-badge">
+              <svg viewBox="0 0 14 14" fill="none"><path d="M7 1l1.7 3.5L12.5 5 10 7.5l.6 3.8L7 9.7 3.4 11.3 4 7.5 1.5 5l3.8-.5L7 1z" fill="currentColor"/></svg>
+              Most Popular
+            </div>
+            <div class="web3-plan-header">
+              <span class="web3-plan-icon">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 20V10M18 20V4M6 20v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <h3 class="web3-plan-name">Pro</h3>
+              <div class="web3-plan-price">
+                <span class="web3-price-currency">$</span>
+                <span class="web3-price-amount" data-count-to="120">120</span>
+                <span class="web3-price-period">/month</span>
+              </div>
+            </div>
+            <ul class="web3-plan-features">
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>Up to 5 trading accounts</span></li>
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>Advanced analysis tools</span></li>
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>Priority review queue</span></li>
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>Unlimited trading tickets</span></li>
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>Priority smart support</span></li>
+            </ul>
+            <div class="web3-plan-power">
+              <span class="web3-power-label">Power 50%</span>
+              <span class="web3-power-bar"><span class="web3-power-fill" style="width:50%"></span></span>
+            </div>
+            <a href="{{ url_for('register') }}" class="web3-plan-cta">
+              <span>Choose Pro</span>
+              <svg class="web3-cta-arrow" viewBox="0 0 20 12" fill="none"><path d="M1 6h16M13 1l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </article>
 
-            <article class="premium-card pricing-card ultra v2-plan-card" data-pricing-card>
-                <div class="v2-vip-tag">VIP</div>
-                <div class="pricing-power" style="--power: 100%"><b>Power 100%</b><i></i></div>
-                <span>ULTRA</span>
-                <strong>$350 <em class="v2-per">/ شهريًا</em></strong>
-                <ul class="v2-plan-list">
-                    <li><span>✓</span> إدارة متقدمة بلا حدود</li>
-                    <li><span>✓</span> أولوية كاملة وسرعة تنفيذ</li>
-                    <li><span>✓</span> دعم VIP على مدار الساعة</li>
-                    <li><span>✓</span> بطاقات متعددة</li>
-                    <li><span>✓</span> مميزات حصرية</li>
-                </ul>
-                <a class="pricing-plan-button diamond-blue" href="{{ url_for('register') }}" data-i18n="buttons.choosePlan">اختر الباقة</a>
-            </article>
+          <!-- ULTRA -->
+          <article class="web3-plan-card" data-plan="ultra">
+            <div class="web3-plan-glow"></div>
+            <div class="web3-plan-shine"></div>
+            <div class="web3-plan-badge web3-vip-badge">VIP</div>
+            <div class="web3-plan-header">
+              <span class="web3-plan-icon">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.8"/></svg>
+              </span>
+              <h3 class="web3-plan-name">Ultra</h3>
+              <div class="web3-plan-price">
+                <span class="web3-price-currency">$</span>
+                <span class="web3-price-amount" data-count-to="350">350</span>
+                <span class="web3-price-period">/month</span>
+              </div>
+            </div>
+            <ul class="web3-plan-features">
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>Unlimited account links</span></li>
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>Professional marketing campaigns</span></li>
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>24/7 VIP dedicated support</span></li>
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>Exclusive premium cards</span></li>
+              <li class="web3-feature-item"><span class="web3-feature-check">✓</span><span>All exclusive features</span></li>
+            </ul>
+            <div class="web3-plan-power">
+              <span class="web3-power-label">Power 100%</span>
+              <span class="web3-power-bar"><span class="web3-power-fill" style="width:100%"></span></span>
+            </div>
+            <a href="{{ url_for('register') }}" class="web3-plan-cta">
+              <span>Choose Ultra</span>
+              <svg class="web3-cta-arrow" viewBox="0 0 20 12" fill="none"><path d="M1 6h16M13 1l5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </article>
         </div>
+
+        <footer class="web3-pricing-footer">
+          <p>All plans include a <strong>14-day free trial</strong>. No credit card required. Cancel anytime.</p>
+          <a href="{{ url_for('register') }}" class="web3-trial-cta">Start Free Trial →</a>
+        </footer>
+      </div>
     </section>
 
-    <!-- ═══════════════════════ TRUSTED CLIENTS ═══════════════════════ -->
+    <!-- 屯屯屯屯屯屯屯屯屯屯屯� TRUSTED CLIENTS 屯屯屯屯屯屯屯屯屯屯屯� -->
     <section class="v2-section">
         <a class="trusted-clients-launch" href="{{ url_for('trusted_clients') }}">
             <div class="trusted-avatar-stack" aria-hidden="true">

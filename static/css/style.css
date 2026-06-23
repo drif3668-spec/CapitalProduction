@@ -1543,3 +1543,676 @@ button:disabled, .primary:disabled { opacity: .45; cursor: not-allowed; filter: 
     .v2-hero-body { padding-inline: 16px; }
     .v2-brokers-bar { padding: 10px 16px; }
 }
+
+
+/* ════════════════════════════════════════════
+   WEB3 PRICING SECTION — Premium Redesign
+   ════════════════════════════════════════════ */
+
+/* ─── Override old #pricing styles for new design ─── */
+#pricing.web3-pricing-section::before {
+  display: none !important;
+}
+
+/* ─── Container ─── */
+.web3-pricing-section {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(50px, 8vw, 100px) clamp(16px, 4vw, 48px);
+  background: #060b18;
+  color: #eef2ff;
+  isolation: isolate;
+}
+
+/* ─── Background Atmosphere ─── */
+.web3-pricing-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.web3-pricing-grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 20%, transparent 70%);
+}
+
+.web3-pricing-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: .35;
+  animation: web3OrbFloat 12s ease-in-out infinite;
+}
+
+.web3-orb-1 {
+  width: 600px;
+  height: 600px;
+  top: -20%;
+  left: -10%;
+  background: radial-gradient(circle, rgba(0,198,255,.5), rgba(32,77,255,.2) 60%, transparent);
+  animation-delay: -2s;
+}
+
+.web3-orb-2 {
+  width: 500px;
+  height: 500px;
+  bottom: -15%;
+  right: -8%;
+  background: radial-gradient(circle, rgba(161,0,230,.5), rgba(103,255,74,.15) 60%, transparent);
+  animation-delay: -6s;
+}
+
+.web3-orb-3 {
+  width: 300px;
+  height: 300px;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,205,64,.3), transparent 60%);
+  animation-delay: -10s;
+  opacity: .15;
+}
+
+@keyframes web3OrbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.08); }
+  66% { transform: translate(-20px, 20px) scale(.95); }
+}
+
+/* ─── Inner Container ─── */
+.web3-pricing-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ─── Header ─── */
+.web3-pricing-header {
+  text-align: center;
+  margin-bottom: clamp(36px, 6vw, 60px);
+}
+
+.web3-pricing-pill {
+  display: inline-block;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.7);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  backdrop-filter: blur(8px);
+}
+
+.web3-pricing-header h2 {
+  margin: 0 0 12px;
+  font-size: clamp(30px, 5vw, 52px);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -.03em;
+  color: #fff;
+}
+
+.web3-gradient-text {
+  background: linear-gradient(135deg, #00c6ff, #a100e6, #ffcd40);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.web3-pricing-header p {
+  max-width: 580px;
+  margin: 0 auto;
+  color: rgba(255,255,255,.5);
+  font-size: clamp(14px, 1.6vw, 17px);
+  line-height: 1.65;
+}
+
+/* ─── Plan Grid ─── */
+.web3-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(16px, 2vw, 28px);
+}
+
+/* ─── Plan Card ─── */
+.web3-plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 28px;
+  padding: clamp(24px, 3vw, 36px) clamp(20px, 2.5vw, 30px);
+  backdrop-filter: blur(12px);
+  transition: transform .45s cubic-bezier(.22,1,.36,1),
+              border-color .45s ease,
+              box-shadow .45s ease,
+              background .45s ease;
+  transform: translateY(0) perspective(1200px) rotateX(0);
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.web3-plan-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,.06) 0%, transparent 100%);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity .45s ease;
+}
+
+.web3-plan-card:hover {
+  transform: translateY(-10px) perspective(1200px) rotateX(1deg) scale(1.015);
+  border-color: rgba(255,255,255,.2);
+  background: rgba(255,255,255,.07);
+  box-shadow: 0 30px 80px rgba(0,0,0,.5), 0 0 60px rgba(0,198,255,.08);
+}
+
+.web3-plan-card:hover::before {
+  opacity: 1;
+}
+
+/* ─── Glow / Shine effects ─── */
+.web3-plan-glow {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  top: -60px;
+  right: -60px;
+  background: radial-gradient(circle, rgba(0,198,255,.12), transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+
+.web3-plan-card:hover .web3-plan-glow {
+  opacity: 1;
+}
+
+.web3-plan-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  pointer-events: none;
+  background: linear-gradient(105deg,
+    transparent 30%,
+    rgba(255,255,255,.04) 45%,
+    rgba(255,255,255,.06) 50%,
+    rgba(255,255,255,.04) 55%,
+    transparent 70%);
+  opacity: 0;
+  transition: opacity .5s ease;
+}
+
+.web3-plan-card:hover .web3-plan-shine {
+  opacity: 1;
+  animation: web3ShineSweep 2.5s ease-in-out infinite;
+}
+
+@keyframes web3ShineSweep {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(30%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ─── Featured Card ─── */
+.web3-plan-featured {
+  border: 1px solid rgba(161,0,230,.3);
+  background: rgba(161,0,230,.06);
+  transform: translateY(-8px) perspective(1200px) rotateX(1deg);
+  box-shadow: 0 20px 60px rgba(0,0,0,.4), 0 0 40px rgba(161,0,230,.1);
+}
+
+.web3-plan-featured:hover {
+  transform: translateY(-16px) perspective(1200px) rotateX(1.5deg) scale(1.025);
+  border-color: rgba(161,0,230,.5);
+  box-shadow: 0 40px 100px rgba(0,0,0,.5), 0 0 80px rgba(161,0,230,.18);
+  background: rgba(161,0,230,.08);
+}
+
+.web3-featured-badge {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(161,0,230,.2), rgba(0,198,255,.15));
+  border: 1px solid rgba(161,0,230,.3);
+  color: #c084fc;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(161,0,230,.15);
+}
+
+.web3-featured-badge svg {
+  width: 14px;
+  height: 14px;
+  color: #fbbf24;
+}
+
+/* ─── Badge (Starter / VIP) ─── */
+.web3-plan-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.6);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  width: fit-content;
+  margin-bottom: 14px;
+}
+
+.web3-vip-badge {
+  background: linear-gradient(135deg, rgba(255,205,64,.15), rgba(255,154,0,.1));
+  border-color: rgba(255,205,64,.3);
+  color: #fbbf24;
+}
+
+/* ─── Plan Header ─── */
+.web3-plan-header {
+  margin-bottom: 20px;
+}
+
+.web3-plan-icon {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.7);
+  margin-bottom: 10px;
+}
+
+.web3-plan-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.web3-plan-featured .web3-plan-icon {
+  background: rgba(161,0,230,.12);
+  border-color: rgba(161,0,230,.2);
+  color: #c084fc;
+}
+
+.web3-plan-name {
+  margin: 0 0 6px;
+  font-size: clamp(18px, 2.2vw, 24px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -.02em;
+}
+
+.web3-plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.web3-price-currency {
+  font-size: clamp(16px, 1.8vw, 22px);
+  font-weight: 700;
+  color: rgba(255,255,255,.5);
+}
+
+.web3-price-amount {
+  font-size: clamp(32px, 4.5vw, 52px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.04em;
+  color: #fff;
+}
+
+.web3-plan-featured .web3-price-amount {
+  background: linear-gradient(135deg, #c084fc, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.web3-price-period {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,.35);
+  margin-left: 4px;
+}
+
+/* ─── Features ─── */
+.web3-plan-features {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.web3-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: rgba(255,255,255,.65);
+  line-height: 1.4;
+}
+
+.web3-feature-check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(103,255,74,.1);
+  color: #67ff4a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.web3-plan-featured .web3-feature-check {
+  background: rgba(161,0,230,.15);
+  color: #c084fc;
+}
+
+/* ─── Power Bar ─── */
+.web3-plan-power {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+.web3-power-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,.45);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+.web3-power-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+}
+
+.web3-power-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3b82f6, #a100e6);
+  transition: width .6s cubic-bezier(.22,1,.36,1);
+  box-shadow: 0 0 12px rgba(161,0,230,.3);
+}
+
+.web3-plan-card:hover .web3-power-fill {
+  box-shadow: 0 0 24px rgba(161,0,230,.5);
+}
+
+.web3-plan-featured .web3-power-fill {
+  background: linear-gradient(90deg, #a100e6, #fbbf24);
+}
+
+/* ─── CTA Button ─── */
+.web3-plan-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #eef2ff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all .35s cubic-bezier(.22,1,.36,1);
+  position: relative;
+  overflow: hidden;
+}
+
+.web3-plan-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(0,198,255,.15), rgba(161,0,230,.1));
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+
+.web3-plan-cta:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.2);
+  box-shadow: 0 8px 30px rgba(0,0,0,.4), 0 0 30px rgba(0,198,255,.1);
+  color: #fff;
+}
+
+.web3-plan-cta:hover::before {
+  opacity: 1;
+}
+
+.web3-cta-arrow {
+  width: 16px;
+  height: 12px;
+  transition: transform .3s ease;
+}
+
+.web3-plan-cta:hover .web3-cta-arrow {
+  transform: translateX(4px);
+}
+
+.web3-plan-featured .web3-plan-cta {
+  background: linear-gradient(135deg, rgba(161,0,230,.25), rgba(0,198,255,.15));
+  border-color: rgba(161,0,230,.3);
+  color: #c084fc;
+}
+
+.web3-plan-featured .web3-plan-cta:hover {
+  background: linear-gradient(135deg, rgba(161,0,230,.35), rgba(0,198,255,.2));
+  border-color: rgba(161,0,230,.5);
+  box-shadow: 0 8px 30px rgba(0,0,0,.4), 0 0 40px rgba(161,0,230,.2);
+  color: #e9d5ff;
+}
+
+.web3-plan-featured .web3-plan-cta::before {
+  background: linear-gradient(135deg, rgba(161,0,230,.3), rgba(0,198,255,.2));
+}
+
+/* ─── Active Click State ─── */
+.web3-plan-active {
+  border-color: rgba(255,255,255,.3) !important;
+  box-shadow: 0 30px 80px rgba(0,0,0,.5), 0 0 60px rgba(0,198,255,.12) !important;
+}
+
+.web3-plan-featured.web3-plan-active {
+  border-color: rgba(161,0,230,.5) !important;
+  box-shadow: 0 40px 100px rgba(0,0,0,.5), 0 0 80px rgba(161,0,230,.2) !important;
+}
+
+/* ─── Footer ─── */
+.web3-pricing-footer {
+  text-align: center;
+  margin-top: clamp(32px, 5vw, 56px);
+  padding-top: clamp(20px, 3vw, 32px);
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.web3-pricing-footer p {
+  color: rgba(255,255,255,.4);
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+
+.web3-pricing-footer p strong {
+  color: rgba(255,255,255,.7);
+  font-weight: 700;
+}
+
+.web3-trial-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #00c6ff, #0072ff, #a100e6);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  text-decoration: none;
+  letter-spacing: .02em;
+  border: none;
+  box-shadow: 0 8px 32px rgba(0,114,255,.3), 0 0 40px rgba(161,0,230,.15);
+  transition: all .35s cubic-bezier(.22,1,.36,1);
+}
+
+.web3-trial-cta:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 16px 48px rgba(0,114,255,.4), 0 0 60px rgba(161,0,230,.2);
+  color: #fff;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 1024px) {
+  .web3-plan-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .web3-plan-card {
+    padding: 20px 18px;
+  }
+
+  .web3-plan-featured {
+    transform: translateY(-4px);
+  }
+
+  .web3-plan-featured:hover {
+    transform: translateY(-10px);
+  }
+}
+
+@media (max-width: 860px) {
+  .web3-plan-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .web3-plan-card {
+    padding: 26px 24px;
+  }
+
+  .web3-plan-featured {
+    transform: none;
+    order: -1;
+  }
+
+  .web3-plan-featured:hover {
+    transform: translateY(-8px);
+  }
+
+  .web3-pricing-header h2 {
+    font-size: 28px;
+  }
+
+  .web3-pricing-section {
+    padding: 40px 16px;
+  }
+
+  .web3-plan-card:hover {
+    transform: translateY(-6px);
+  }
+}
+
+@media (max-width: 480px) {
+  .web3-plan-card {
+    padding: 20px 16px;
+    border-radius: 20px;
+  }
+
+  .web3-pricing-pill {
+    font-size: 10px;
+    padding: 4px 14px;
+  }
+
+  .web3-pricing-header h2 {
+    font-size: 24px;
+  }
+
+  .web3-price-amount {
+    font-size: 36px;
+  }
+
+  .web3-plan-features {
+    gap: 8px;
+  }
+
+  .web3-feature-item {
+    font-size: 12.5px;
+  }
+
+  .web3-plan-cta {
+    padding: 12px 20px;
+    font-size: 13px;
+  }
+
+  .web3-plan-power {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 10px 12px;
+  }
+
+  .web3-power-bar {
+    width: 100%;
+  }
+
+  .web3-trial-cta {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+}
