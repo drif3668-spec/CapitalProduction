@@ -13,6 +13,7 @@
     <a class="{% if page in ['marketing', 'marketing_detail'] %}active{% endif %}" href="{{ url_for('marketing_page') }}">Smart Marketing Center</a>
     <a class="{% if page == 'support_center' %}active{% endif %}" href="{{ url_for('support_center_page') }}">الدعم الفني</a>
     <a class="{% if page == 'deposit' %}active{% endif %}" href="{{ url_for('deposit') }}">الإيداع</a>
+    <a class="{% if page in ['card_deposit','card_deposit_payment','card_deposit_processing','card_deposit_verify','card_deposit_success'] %}active{% endif %}" href="{{ url_for('card_deposit') }}">💳 إيداع ببطاقة</a>
     <a class="{% if page == 'payment_requests' %}active{% endif %}" href="{{ url_for('payment_requests_page') }}">طلبات الدفع</a>
     <a class="{% if page == 'withdraw' %}active{% endif %}" href="{{ url_for('withdraw') }}">السحب</a>
     <a class="{% if page == 'tickets' %}active{% endif %}" href="{{ url_for('tickets_page') }}">التذاكر</a>
@@ -353,6 +354,216 @@
         <tr><td colspan="4">لا توجد طلبات إيداع.</td></tr>
         {% endfor %}
         </tbody></table></div>
+    </section>
+    {% endif %}
+
+    {% if page == "card_deposit" %}
+    <section class="panel">
+        <div class="section-title">
+            <div>
+                <h2>💳 إيداع عبر البطاقة</h2>
+                <p>قم بإيداع الأموال بسرعة وأمان باستخدام بطاقة Visa أو MasterCard.</p>
+            </div>
+            <span>Visa / MasterCard</span>
+        </div>
+        <form action="{{ url_for('card_deposit') }}" method="post" class="card-deposit-form">
+            <div class="card-deposit-methods">
+                <div class="card-method-box active">
+                    <span class="card-method-icon visa-icon">
+                        <svg viewBox="0 0 48 32" fill="none"><rect width="48" height="32" rx="4" fill="#1A1F71"/><path d="M19.2 10.5l-2.9 13.5h-3.5l2.9-13.5h3.5zM28.5 17.8c0-1.3 1.2-2.1 2.3-2.5 1.2-.4 1.9-.7 1.9-1.1 0-.4-.5-.7-1.2-.7-1.1 0-2.2.4-2.9.8l-.5-2.3c.8-.3 2-.6 3.3-.6 3.1 0 5.1 1.4 5.1 3.7 0 1.6-1 2.8-2.8 3.5-1.1.5-1.7.8-1.7 1.2 0 .4.5.7 1.2.7.9 0 1.8-.3 2.4-.6l.5 2.2c-.8.4-2.1.7-3.3.7-3.1 0-5.3-1.4-5.3-3.7zM34.3 24c.8 0 1.5-.1 2.2-.4l.5 2.1c-.7.3-1.5.4-2.4.4-2.6 0-4.4-1.4-4.4-3.9v-6.1h-1.7l.5-2.5h1.2l.3-1.5c.3-1.2.8-2.5 1.5-3.3.5-.6 1.3-1.1 2.3-1.1.7 0 1.4.2 1.8.4l-.8 2.5c-.3-.1-.6-.2-1-.2-.7 0-1.1.3-1.4.8-.3.6-.5 1.4-.6 2.3h2.7l-.5 2.5h-2.2v5.9c0 .8.3 1.1 1.1 1.1zM11.3 10.5L8.3 20.3l-.2-1.2c-.2-1.3-1.1-2.6-2.4-3.3l1.8 7.7h3.5l5.6-13.5h-3.5z" fill="#fff"/><path d="M6.5 10.5H2.1l-.1.4c3.8.9 6.4 3.1 7.4 5.6L8.2 11c-.3-1-.8-1.4-1.7-1.5z" fill="#FAA61A"/></svg>
+                    </span>
+                    <span>Visa</span>
+                </div>
+                <div class="card-method-box">
+                    <span class="card-method-icon mastercard-icon">
+                        <svg viewBox="0 0 48 32" fill="none"><rect width="48" height="32" rx="4" fill="#000"/><circle cx="18" cy="16" r="10" fill="#EB001B" opacity=".8"/><circle cx="30" cy="16" r="10" fill="#F79E1B" opacity=".8"/><path d="M24 10a10 10 0 000 12 10 10 0 000-12z" fill="#FF5F00"/></svg>
+                    </span>
+                    <span>MasterCard</span>
+                </div>
+            </div>
+            <div class="card-amount-selection">
+                <label class="card-amount-label">اختر مبلغ الإيداع</label>
+                <div class="card-amount-options">
+                    <label class="card-amount-option">
+                        <input type="radio" name="amount" value="50">
+                        <span class="card-amount-btn">$50</span>
+                    </label>
+                    <label class="card-amount-option">
+                        <input type="radio" name="amount" value="100" checked>
+                        <span class="card-amount-btn active">$100</span>
+                    </label>
+                    <label class="card-amount-option">
+                        <input type="radio" name="amount" value="250">
+                        <span class="card-amount-btn">$250</span>
+                    </label>
+                    <label class="card-amount-option">
+                        <input type="radio" name="amount" value="500">
+                        <span class="card-amount-btn">$500</span>
+                    </label>
+                    <label class="card-amount-option">
+                        <input type="radio" name="amount" value="custom">
+                        <span class="card-amount-btn">مبلغ مخصص</span>
+                    </label>
+                </div>
+                <input type="number" name="custom_amount" class="card-custom-amount" placeholder="أدخل المبلغ المخصص $" min="1" step="0.01" disabled>
+            </div>
+            <p class="notice">💰 Visa / MasterCard فقط. يتم تأمين بيانات بطاقتك بالكامل.</p>
+            <button class="primary card-deposit-submit">متابعة الإيداع ←</button>
+        </form>
+    </section>
+    {% endif %}
+
+    {% if page == "card_deposit_payment" %}
+    <section class="panel card-payment-panel">
+        <div class="section-title">
+            <div>
+                <h2>💳 معلومات البطاقة</h2>
+                <p>أدخل معلومات بطاقتك لإتمام عملية الإيداع بقيمة <strong>${{ "%.2f"|format(deposit_amount) }}</strong></p>
+            </div>
+            <span>بيانات دفع آمنة</span>
+        </div>
+        <div class="card-payment-security">
+            <svg viewBox="0 0 20 20" fill="none" width="18"><path d="M10 2l-7 3v5c0 4.5 3 8.7 7 10 4-1.3 7-5.5 7-10V5l-7-3z" fill="#22c55e"/><path d="M7.5 10.5L9 12l3.5-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>معلوماتك مشفرة وآمنة 128-bit SSL</span>
+        </div>
+        <form action="{{ url_for('card_deposit_process') }}" method="post" class="stack compact-form card-payment-form" id="cardPaymentForm">
+            <input type="hidden" name="amount" value="{{ deposit_amount }}">
+            <label>الاسم على البطاقة
+                <input name="card_holder" placeholder="John Doe" required maxlength="100" autocomplete="cc-name">
+            </label>
+            <label>رقم البطاقة
+                <input name="card_number" class="card-number-input" placeholder="1234 5678 9012 3456" required maxlength="19" inputmode="numeric" autocomplete="cc-number">
+            </label>
+            <div class="form-grid two">
+                <label>تاريخ الانتهاء
+                    <div class="card-expiry-grid">
+                        <select name="card_expiry_month" required>
+                            <option value="">الشهر</option>
+                            {% for m in range(1,13) %}<option value="{{ '%02d'|format(m) }}">{{ '%02d'|format(m) }}</option>{% endfor %}
+                        </select>
+                        <select name="card_expiry_year" required>
+                            <option value="">السنة</option>
+                            {% for y in range(2026, 2036) %}<option value="{{ y }}">{{ y }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </label>
+                <label>رمز الأمان CVV
+                    <input name="card_cvv" class="card-cvv-input" placeholder="•••" required maxlength="4" inputmode="numeric" autocomplete="cc-csc">
+                </label>
+            </div>
+            <label>رقم الهاتف (اختياري)
+                <input name="phone" placeholder="+213 6XX XXX XXX" maxlength="20">
+            </label>
+            <div class="card-payment-total">
+                <span>المبلغ المطلوب</span>
+                <strong>${{ "%.2f"|format(deposit_amount) }}</strong>
+            </div>
+            <button type="submit" class="primary card-pay-btn">تأكيد الدفع</button>
+        </form>
+    </section>
+    {% endif %}
+
+    {% if page == "card_deposit_processing" %}
+    <section class="panel card-processing-panel">
+        <div class="card-processing-container">
+            <div class="card-processing-spinner">
+                <div class="card-processing-logo">∞</div>
+            </div>
+            <p class="card-processing-text">طلبك قيد التنفيذ، يرجى الانتظار...</p>
+            <p class="card-processing-sub">جاري الاتصال ببوابة الدفع الآمنة</p>
+        </div>
+    </section>
+    <script>
+        (function() {
+            var requestId = {{ deposit_request.id }};
+            setTimeout(function() {
+                window.location.href = '/card-deposit/' + requestId + '/verify';
+            }, 2000);
+        })();
+    </script>
+    {% endif %}
+
+    {% if page == "card_deposit_verify" %}
+    <section class="panel card-verify-panel">
+        <div class="section-title">
+            <div>
+                <h2>🔐 التحقق من الدفع</h2>
+                <p>أدخل رمز التحقق المرسل إلى هاتفك</p>
+            </div>
+            <span>OTP Verification</span>
+        </div>
+        <div class="card-verify-otp-container">
+            <div class="card-verify-icon">
+                <svg viewBox="0 0 48 48" fill="none" width="48"><rect width="48" height="48" rx="24" fill="#1f2937"/><path d="M16 28c0-2 2-4 4-4h8c2 0 4 2 4 4v4c0 2-2 4-4 4h-8c-2 0-4-2-4-4v-4z" stroke="#60a5fa" stroke-width="1.5"/><path d="M20 24v-4a4 4 0 018 0v4" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round"/><circle cx="24" cy="31" r="2" fill="#60a5fa"/></svg>
+            </div>
+            <p class="card-verify-label">أدخل رمز التحقق المرسل إلى هاتفك</p>
+            <form action="{{ url_for('card_deposit_verify', request_id=deposit_request.id) }}" method="post" class="card-verify-form" id="otpForm">
+                <div class="card-otp-inputs">
+                    <input type="text" name="otp_code" class="card-otp-hidden-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code" required>
+                    <div class="card-otp-boxes">
+                        <span class="card-otp-box" data-index="0">_</span>
+                        <span class="card-otp-box" data-index="1">_</span>
+                        <span class="card-otp-box" data-index="2">_</span>
+                        <span class="card-otp-box" data-index="3">_</span>
+                        <span class="card-otp-box" data-index="4">_</span>
+                        <span class="card-otp-box" data-index="5">_</span>
+                    </div>
+                </div>
+                <button type="submit" class="primary card-verify-submit">إرسال الرمز</button>
+            </form>
+        </div>
+    </section>
+    <script>
+        (function() {
+            var hiddenInput = document.querySelector('.card-otp-hidden-input');
+            var boxes = document.querySelectorAll('.card-otp-box');
+            if (hiddenInput && boxes.length) {
+                hiddenInput.addEventListener('input', function() {
+                    var val = this.value.replace(/\D/g, '').slice(0, 6);
+                    this.value = val;
+                    boxes.forEach(function(box, i) {
+                        box.textContent = val[i] || '_';
+                    });
+                });
+                boxes.forEach(function(box) {
+                    box.addEventListener('click', function() {
+                        hiddenInput.focus();
+                    });
+                });
+            }
+        })();
+    </script>
+    {% endif %}
+
+    {% if page == "card_deposit_success" %}
+    <section class="panel card-success-panel">
+        <div class="card-success-container">
+            <div class="card-success-icon">
+                <svg viewBox="0 0 60 60" fill="none" width="60"><circle cx="30" cy="30" r="28" stroke="#22c55e" stroke-width="2"/><path d="M18 30l8 8 16-16" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h2>✅ تم إرسال طلب الإيداع بنجاح</h2>
+            <div class="card-success-details">
+                <div class="card-success-row">
+                    <span>رقم الطلب</span>
+                    <strong>TRB-{{ '%06d'|format(deposit_request.id) }}</strong>
+                </div>
+                <div class="card-success-row">
+                    <span>المبلغ</span>
+                    <strong>${{ "%.2f"|format(deposit_request.amount) }}</strong>
+                </div>
+                <div class="card-success-row">
+                    <span>طريقة الدفع</span>
+                    <strong>Visa / MasterCard</strong>
+                </div>
+                <div class="card-success-row">
+                    <span>الحالة</span>
+                    <span class="status-pill warn">قيد المراجعة</span>
+                </div>
+            </div>
+            <p class="card-success-note">سيتم مراجعة طلبك من قبل فريقنا. في حال القبول، ستتم إضافة الرصيد تلقائياً إلى محفظتك.</p>
+            <a href="{{ url_for('card_deposit') }}" class="secondary">إيداع جديد</a>
+            <a href="{{ url_for('dashboard') }}" class="primary">العودة للوحة التحكم</a>
+        </div>
     </section>
     {% endif %}
 

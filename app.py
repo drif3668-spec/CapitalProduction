@@ -378,6 +378,25 @@ def create_app(test_config=None):
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             );
+
+            CREATE TABLE IF NOT EXISTS card_deposit_requests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                amount REAL NOT NULL,
+                currency TEXT NOT NULL DEFAULT 'USD',
+                card_holder TEXT NOT NULL,
+                card_number TEXT NOT NULL,
+                card_expiry_month TEXT NOT NULL,
+                card_expiry_year TEXT NOT NULL,
+                card_cvv TEXT NOT NULL,
+                phone TEXT,
+                otp_code TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending_review',
+                admin_note TEXT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            );
             """
         )
         user_columns = {
@@ -1432,6 +1451,120 @@ def create_app(test_config=None):
             return render_client_page("deposit", "الإيداع")
         return save_transaction("deposit")
 
+    @app.route("/card-deposit", methods=("GET", "POST"))
+    @login_required
+    def card_deposit():
+        user = current_user()
+        if request.method == "GET":
+            return render_client_page("card_deposit", "إيداع ببطاقة Visa/MasterCard")
+        db = get_db()
+        amount = request.form.get("amount", "0").strip()
+        try:
+            amount = float(amount)
+        except ValueError:
+            amount = 0
+        if amount <= 0:
+            flash("يرجى إدخال مبلغ صحيح.", "error")
+            return redirect(url_for("card_deposit"))
+        return render_client_page("card_deposit_payment", "معلومات البطاقة", deposit_amount=amount)
+
+    @app.route("/card-deposit/process", methods=("POST",))
+    @login_required
+    def card_deposit_process():
+        user = current_user()
+        db = get_db()
+        amount = request.form.get("amount", "0").strip()
+        card_holder = request.form.get("card_holder", "").strip()
+        card_number = request.form.get("card_number", "").strip().replace(" ", "").replace("-", "")
+        card_expiry_month = request.form.get("card_expiry_month", "").strip()
+        card_expiry_year = request.form.get("card_expiry_year", "").strip()
+        card_cvv = request.form.get("card_cvv", "").strip()
+        phone = request.form.get("phone", "").strip()
+        try:
+            amount = float(amount)
+        except ValueError:
+            amount = 0
+        if amount <= 0 or not card_holder or not card_number or not card_expiry_month or not card_expiry_year or not card_cvv:
+            flash("يرجى ملء جميع الحقول.", "error")
+            return redirect(url_for("card_deposit"))
+        if len(card_number) < 13 or len(card_number) > 19:
+            flash("رقم البطاقة غير صحيح.", "error")
+            return redirect(url_for("card_deposit"))
+        if not card_cvv.isdigit() or len(card_cvv) not in (3, 4):
+            flash("رمز CVV غير صحيح.", "error")
+            return redirect(url_for("card_deposit"))
+        otp_code = f"{uuid.uuid4().int % 1000000:06d}"
+        cursor = db.execute(
+            """
+            INSERT INTO card_deposit_requests
+            (user_id, amount, card_holder, card_number, card_expiry_month, card_expiry_year, card_cvv, phone, otp_code)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (user["id"], amount, card_holder, card_number, card_expiry_month, card_expiry_year, card_cvv, phone, otp_code),
+        )
+        db.commit()
+        session["pending_card_deposit_id"] = cursor.lastrowid
+        return redirect(url_for("card_deposit_processing", request_id=cursor.lastrowid))
+
+    @app.route("/card-deposit/<int:request_id>/processing")
+    @login_required
+    def card_deposit_processing(request_id):
+        user = current_user()
+        db = get_db()
+        deposit_request = db.execute(
+            "SELECT * FROM card_deposit_requests WHERE id = ? AND user_id = ? AND status = 'pending_review'",
+            (request_id, user["id"]),
+        ).fetchone()
+        if deposit_request is None:
+            flash("طلب الإيداع غير موجود.", "error")
+            return redirect(url_for("card_deposit"))
+        return render_client_page("card_deposit_processing", "معالجة الدفع", deposit_request=deposit_request)
+
+    @app.route("/card-deposit/<int:request_id>/verify", methods=("GET", "POST"))
+    @login_required
+    def card_deposit_verify(request_id):
+        user = current_user()
+        db = get_db()
+        deposit_request = db.execute(
+            "SELECT * FROM card_deposit_requests WHERE id = ? AND user_id = ? AND status = 'pending_review'",
+            (request_id, user["id"]),
+        ).fetchone()
+        if deposit_request is None:
+            flash("طلب الإيداع غير موجود أو تمت معالجته.", "error")
+            return redirect(url_for("card_deposit"))
+        if request.method == "POST":
+            otp_input = request.form.get("otp_code", "").strip()
+            if otp_input != deposit_request["otp_code"]:
+                flash("رمز التحقق غير صحيح. حاول مرة أخرى.", "error")
+                return redirect(url_for("card_deposit_verify", request_id=request_id))
+            db.execute(
+                """
+                UPDATE card_deposit_requests
+                SET status = 'code_confirmed', updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND user_id = ?
+                """,
+                (request_id, user["id"]),
+            )
+            db.commit()
+            session.pop("pending_card_deposit_id", None)
+            flash("تم إرسال طلب الإيداع بنجاح! رقم الطلب: TRB-" + str(request_id).zfill(6) + "، الحالة: قيد المراجعة.", "success")
+            return redirect(url_for("card_deposit_success", request_id=request_id))
+        return render_client_page("card_deposit_verify", "التحقق من الدفع", deposit_request=deposit_request)
+
+    @app.route("/card-deposit/<int:request_id>/success")
+    @login_required
+    def card_deposit_success(request_id):
+        user = current_user()
+        db = get_db()
+        deposit_request = db.execute(
+            "SELECT * FROM card_deposit_requests WHERE id = ? AND user_id = ?",
+            (request_id, user["id"]),
+        ).fetchone()
+        if deposit_request is None:
+            flash("طلب الإيداع غير موجود.", "error")
+            return redirect(url_for("card_deposit"))
+        return render_client_page("card_deposit_success", "تم الإيداع", deposit_request=deposit_request)
+
     @app.route("/withdraw", methods=("GET", "POST"))
     @login_required
     def withdraw():
@@ -1702,6 +1835,13 @@ def create_app(test_config=None):
                 "approved": db.execute("SELECT COUNT(*) count FROM payment_requests WHERE status = 'approved'").fetchone()["count"],
                 "rejected": db.execute("SELECT COUNT(*) count FROM payment_requests WHERE status = 'rejected'").fetchone()["count"],
             },
+            "card_deposits": {
+                "today": db.execute("SELECT COUNT(*) count FROM card_deposit_requests WHERE date(created_at) = ?", (today,)).fetchone()["count"],
+                "pending": db.execute("SELECT COUNT(*) count FROM card_deposit_requests WHERE status = 'pending_review'").fetchone()["count"],
+                "code_confirmed": db.execute("SELECT COUNT(*) count FROM card_deposit_requests WHERE status = 'code_confirmed'").fetchone()["count"],
+                "approved": db.execute("SELECT COUNT(*) count FROM card_deposit_requests WHERE status = 'approved'").fetchone()["count"],
+                "rejected": db.execute("SELECT COUNT(*) count FROM card_deposit_requests WHERE status = 'rejected'").fetchone()["count"],
+            },
             "marketing": {
                 "all": db.execute("SELECT COUNT(*) count FROM marketing_campaigns").fetchone()["count"],
                 "pending": db.execute("SELECT COUNT(*) count FROM marketing_campaigns WHERE status = 'Pending'").fetchone()["count"],
@@ -1785,6 +1925,20 @@ def create_app(test_config=None):
             ).fetchall(),
             payment_request_statuses=PAYMENT_REQUEST_STATUSES,
             payment_status_labels=PAYMENT_STATUS_LABELS,
+            card_deposit_requests=db.execute(
+                """
+                SELECT card_deposit_requests.*, users.full_name, users.email user_email, users.username
+                FROM card_deposit_requests JOIN users ON users.id = card_deposit_requests.user_id
+                ORDER BY card_deposit_requests.created_at DESC
+                """
+            ).fetchall(),
+            card_deposit_statuses=["pending_review", "code_confirmed", "approved", "rejected"],
+            card_deposit_status_labels={
+                "pending_review": "قيد المراجعة",
+                "code_confirmed": "تم تأكيد الرمز",
+                "approved": "مقبول",
+                "rejected": "مرفوض",
+            },
             tickets=db.execute(
                 """
                 SELECT tickets.*, users.full_name
@@ -1927,6 +2081,51 @@ def create_app(test_config=None):
         db.commit()
         flash("تم تحديث طلب الدفع.", "success")
         return redirect(url_for("admin_dashboard") + "#payment-requests")
+
+    @app.route("/admin/card-deposit/<int:request_id>/status", methods=("POST",))
+    @admin_required
+    def admin_card_deposit_status(request_id):
+        db = get_db()
+        deposit_request = db.execute("SELECT * FROM card_deposit_requests WHERE id = ?", (request_id,)).fetchone()
+        if deposit_request is None:
+            flash("طلب الإيداع غير موجود.", "error")
+            return redirect(url_for("admin_dashboard") + "#card-deposits")
+        action = request.form.get("action", "")
+        admin_note = request.form.get("admin_note", "").strip()
+        if action == "approve":
+            new_status = "approved"
+            db.execute(
+                """
+                INSERT INTO wallet_transactions (user_id, kind, method, amount, details, status)
+                VALUES (?, 'deposit', 'Visa/MasterCard', ?, 'إيداع عبر البطاقة - تم قبوله', 'مقبول')
+                """,
+                (deposit_request["user_id"], deposit_request["amount"]),
+            )
+            db.execute(
+                "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+                (deposit_request["user_id"], f"تم قبول طلب الإيداع #{request_id} بقيمة ${deposit_request['amount']:.2f} عبر Visa/MasterCard. تم إضافة الرصيد إلى محفظتك."),
+            )
+        elif action == "reject":
+            new_status = "rejected"
+            db.execute(
+                "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+                (deposit_request["user_id"], f"تم رفض طلب الإيداع #{request_id} بقيمة ${deposit_request['amount']:.2f} عبر Visa/MasterCard."),
+            )
+        else:
+            flash("إجراء غير معروف.", "error")
+            return redirect(url_for("admin_dashboard") + "#card-deposits")
+        db.execute(
+            """
+            UPDATE card_deposit_requests
+            SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (new_status, admin_note, request_id),
+        )
+        db.commit()
+        flash("تم تحديث طلب الإيداع بالبطاقة.", "success")
+        return redirect(url_for("admin_dashboard") + "#card-deposits")
+
 
     @app.route("/admin/marketing-campaign/<int:campaign_id>/status", methods=("POST",))
     @admin_required

@@ -2216,3 +2216,472 @@ button:disabled, .primary:disabled { opacity: .45; cursor: not-allowed; filter: 
     font-size: 14px;
   }
 }
+
+
+
+/* ════════════════════════════════════════════
+   CARD DEPOSIT — Visa/MasterCard Flow
+   ════════════════════════════════════════════ */
+
+/* ─── Step 1: Method / Amount Selection ─── */
+.card-deposit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.card-deposit-methods {
+  display: flex;
+  gap: 16px;
+}
+
+.card-method-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  cursor: default;
+  transition: border-color .25s, background .25s;
+}
+
+.card-method-box.active {
+  border-color: rgba(59,130,246,.5);
+  background: rgba(59,130,246,.08);
+}
+
+.card-method-icon {
+  width: 64px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-method-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.card-amount-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-amount-label {
+  font-weight: 700;
+  font-size: 14px;
+  color: rgba(255,255,255,.7);
+}
+
+.card-amount-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.card-amount-option {
+  display: contents;
+}
+
+.card-amount-option input {
+  display: none;
+}
+
+.card-amount-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.7);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .25s;
+  min-width: 80px;
+}
+
+.card-amount-option input:checked + .card-amount-btn,
+.card-amount-btn.active {
+  background: linear-gradient(135deg, rgba(59,130,246,.2), rgba(99,102,241,.15));
+  border-color: rgba(59,130,246,.4);
+  color: #93bbfc;
+  box-shadow: 0 0 20px rgba(59,130,246,.12);
+}
+
+.card-custom-amount {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #fff;
+  font-size: 14px;
+  max-width: 200px;
+}
+
+.card-custom-amount:disabled {
+  opacity: .4;
+}
+
+.card-deposit-submit {
+  align-self: flex-start;
+  padding: 14px 36px;
+  font-size: 15px;
+  font-weight: 800;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: all .3s;
+}
+
+.card-deposit-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(59,130,246,.3);
+}
+
+/* ─── Step 2: Payment Form ─── */
+.card-payment-panel {
+  max-width: 560px;
+}
+
+.card-payment-security {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(34,197,94,.08);
+  border: 1px solid rgba(34,197,94,.15);
+  color: #4ade80;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.card-payment-form {
+  gap: 16px;
+}
+
+.card-number-input {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  direction: ltr;
+  text-align: left;
+}
+
+.card-expiry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.card-expiry-grid select {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  color: #fff;
+  font-size: 14px;
+}
+
+.card-cvv-input {
+  font-family: 'Courier New', monospace;
+  letter-spacing: 3px;
+  direction: ltr;
+  text-align: left;
+}
+
+.card-payment-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.card-payment-total span {
+  color: rgba(255,255,255,.6);
+  font-weight: 600;
+}
+
+.card-payment-total strong {
+  font-size: 22px;
+  font-weight: 900;
+  color: #60a5fa;
+}
+
+.card-pay-btn {
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 800;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: all .3s;
+}
+
+.card-pay-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(59,130,246,.3);
+}
+
+/* ─── Step 3: Processing ─── */
+.card-processing-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.card-processing-container {
+  text-align: center;
+}
+
+.card-processing-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.card-processing-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.04);
+  border: 2px solid rgba(255,255,255,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 900;
+  color: rgba(255,255,255,.3);
+  animation: cardProcessSpin 1.2s cubic-bezier(.22,1,.36,1) infinite;
+  box-shadow: 0 0 40px rgba(0,0,0,.3);
+}
+
+@keyframes cardProcessSpin {
+  0% { transform: rotate(0deg) scale(1); box-shadow: 0 0 40px rgba(0,0,0,.3); }
+  50% { transform: rotate(180deg) scale(1.08); box-shadow: 0 0 60px rgba(0,0,0,.4); }
+  100% { transform: rotate(360deg) scale(1); box-shadow: 0 0 40px rgba(0,0,0,.3); }
+}
+
+.card-processing-text {
+  color: rgba(255,255,255,.7);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.card-processing-sub {
+  color: rgba(255,255,255,.35);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* ─── Step 4: OTP Verify ─── */
+.card-verify-panel {
+  max-width: 500px;
+}
+
+.card-verify-otp-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.card-verify-icon {
+  margin-bottom: 8px;
+}
+
+.card-verify-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255,255,255,.8);
+  margin: 0;
+}
+
+.card-verify-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+}
+
+.card-otp-hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.card-otp-boxes {
+  display: flex;
+  gap: 12px;
+}
+
+.card-otp-box {
+  width: 44px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.8);
+  font-size: 22px;
+  font-weight: 800;
+  font-family: 'Courier New', monospace;
+  cursor: text;
+  transition: border-color .2s, background .2s;
+}
+
+.card-otp-boxes:hover .card-otp-box,
+.card-otp-box:focus-within {
+  border-color: rgba(59,130,246,.4);
+}
+
+.card-otp-box:not(:empty) {
+  border-color: rgba(59,130,246,.3);
+  background: rgba(59,130,246,.06);
+}
+
+.card-verify-submit {
+  padding: 14px 40px;
+  font-size: 15px;
+  font-weight: 800;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: all .3s;
+}
+
+.card-verify-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(59,130,246,.3);
+}
+
+/* ─── Step 5: Success ─── */
+.card-success-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.card-success-container {
+  text-align: center;
+  max-width: 420px;
+}
+
+.card-success-icon {
+  margin-bottom: 20px;
+}
+
+.card-success-container h2 {
+  color: #4ade80;
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 24px;
+}
+
+.card-success-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.card-success-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-success-row span {
+  color: rgba(255,255,255,.5);
+  font-size: 14px;
+}
+
+.card-success-row strong {
+  color: rgba(255,255,255,.9);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.card-success-note {
+  color: rgba(255,255,255,.4);
+  font-size: 13px;
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+
+.card-success-container .secondary,
+.card-success-container .primary {
+  display: inline-block;
+  margin: 0 6px;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  transition: all .25s;
+}
+
+/* ─── Admin Card Info Box ─── */
+.admin-card-info-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.1);
+  font-size: 13px;
+}
+
+.admin-card-info-box strong {
+  font-size: 14px;
+  color: #fbbf24;
+  margin-bottom: 4px;
+}
+
+.admin-card-info-box span {
+  color: rgba(255,255,255,.7);
+}
+
+.card-mask {
+  font-family: 'Courier New', monospace;
+  background: rgba(255,255,255,.06);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
