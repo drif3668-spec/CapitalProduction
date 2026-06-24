@@ -6,6 +6,10 @@ from functools import wraps
 from pathlib import Path
 from urllib.parse import quote
 
+from dotenv import load_dotenv
+
+load_dotenv()  # loads .env into os.environ when present (no-op if file absent)
+
 from flask import (
     Flask,
     flash,
@@ -72,6 +76,7 @@ def create_app(test_config=None):
     app = Flask(__name__)
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("SECRET_KEY", "capital-local-development-key"),
+        MCP_API_KEY=os.environ.get("MCP_API_KEY", ""),
         DATABASE=str(BASE_DIR / "instance" / "capital.db"),
         UPLOAD_FOLDER=str(BASE_DIR / "uploads"),
         PROFILE_UPLOAD_FOLDER=str(BASE_DIR / "static" / "uploads" / "profile"),
@@ -2685,6 +2690,32 @@ def create_app(test_config=None):
             award_referral_commission(user_id, plan_to_subscription_type(new_plan))
         db.commit()
         return redirect(url_for("admin_dashboard"))
+
+    # ─── MCP API ────────────────────────────────────────────────────────────────
+    # Endpoint: GET /api/mcp/health
+    # Auth:     Authorization: Bearer <MCP_API_KEY>
+    # Returns:  200 {"status":"ok","site":"TrBridgo.io","mcp_access":true}
+    #           401 {"error":"unauthorized"} when the key is missing or wrong
+    # The key is read from MCP_API_KEY env-var (set in .env / Render env vars).
+    # ────────────────────────────────────────────────────────────────────────────
+    @app.route("/api/mcp/health", methods=["GET"])
+    def mcp_health():
+        """MCP health-check endpoint — validates Bearer token from MCP_API_KEY."""
+        expected = app.config.get("MCP_API_KEY", "")
+        auth_header = request.headers.get("Authorization", "")
+
+        # Extract token from "Bearer <token>"
+        parts = auth_header.split(" ", 1)
+        token = parts[1] if len(parts) == 2 and parts[0].lower() == "bearer" else ""
+
+        if not expected or not token or token != expected:
+            return jsonify({"error": "unauthorized"}), 401
+
+        return jsonify({
+            "status": "ok",
+            "site": "TrBridgo.io",
+            "mcp_access": True,
+        }), 200
 
     @app.errorhandler(404)
     def page_not_found(_error):
