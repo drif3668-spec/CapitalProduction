@@ -208,138 +208,282 @@ if (siteInfinityLogos.length) {
     window.addEventListener("scroll", updateSiteLogoReflection, { passive: true });
 }
 
-document.querySelectorAll("[data-rich-support]").forEach((supportWidget) => {
-    const toggles = supportWidget.querySelectorAll("[data-support-toggle]");
-    const soundToggle = supportWidget.querySelector("[data-support-sound]");
-    const form = supportWidget.querySelector("[data-support-form]");
-    const thread = supportWidget.querySelector("[data-support-thread]");
-    const statusNode = supportWidget.querySelector("[data-support-status]");
-    let audioContext = null;
-    let soundEnabled = true;
-    let soundTimer = null;
+/* ── Support Widget v3 ──────────────────────────────────── */
+document.querySelectorAll("[data-rich-support]").forEach((widget) => {
+    const toggleBtns = widget.querySelectorAll("[data-support-toggle]");
+    const muteBtn    = widget.querySelector("[data-support-mute]");
+    const form       = widget.querySelector("[data-support-form]");
+    const thread     = widget.querySelector("[data-support-thread]");
+    const identity   = widget.querySelector("[data-sw-identity]");
 
-    const escapeHtml = (value) => String(value || "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    let audioCtx = null;
+    let muted = false;
+    let lastReplyCount = 0;
+    let pollTimer = null;
+    let messageSent = false;
 
-    const beep = () => {
-        if (!soundEnabled) return;
+    const esc = (v) => String(v || "")
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+    /* Soft chime — plays only when agent replies arrive */
+    const playChime = () => {
+        if (muted) return;
         try {
-            audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            oscillator.frequency.value = 740;
-            gain.gain.value = 0.018;
-            oscillator.connect(gain);
-            gain.connect(audioContext.destination);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.08);
-        } catch (_error) {
-            soundEnabled = false;
-        }
+            audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+            const osc  = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(660, audioCtx.currentTime + 0.18);
+            gain.gain.setValueAtTime(0.055, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.45);
+        } catch (_) {}
     };
 
-    const startSound = () => {
-        if (soundTimer || !soundEnabled) return;
-        beep();
-        soundTimer = setInterval(beep, 5000);
-    };
-
-    const renderMessages = (messages) => {
+    const renderMessages = (messages, checkSound = false) => {
         if (!thread) return;
+        let replyCount = 0;
         if (!messages.length) {
-            thread.innerHTML = supportWidget.classList.contains("home-support-widget")
-                ? `<div class="support-bubble agent support-intro">أهلاً بك في <b>TrBridgo.io</b> 🌿<br>نقدّم خدمة متكاملة لربط حسابات التداول MT4 و MT5. اكتب رسالتك وسيردّ عليك أحد أعضاء الفريق.</div>`
-                : `<div class="support-bubble agent">مرحبًا، اكتب استفسارك وسنرد عليك قريبًا.</div>`;
+            thread.innerHTML = `<div class="sw-bubble sw-agent sw-intro">
+                <span class="sw-agent-avatar">💬</span>
+                <div class="sw-bubble-body">أهلاً بك في <b>TrBridgo.io</b><br>
+                فريقنا جاهز لمساعدتك في ربط حسابات MT4 و MT5.</div>
+            </div>`;
             return;
         }
-        thread.innerHTML = messages.map((message) => {
-            const replies = (message.replies || []).map((reply) => `
-                <div class="support-bubble agent">
-                    <div class="support-agent-line">
-                        ${reply.agent_image ? `<img src="${escapeHtml(reply.agent_image)}" alt="">` : ""}
-                        <span>${escapeHtml(reply.agent_name || "TrBridgo Support")}</span>
+        thread.innerHTML = messages.map((msg) => {
+            const replies = (msg.replies || []).map((r) => {
+                replyCount++;
+                const avatar = r.agent_image
+                    ? `<img src="${esc(r.agent_image)}" alt="">`
+                    : "🤝";
+                const time = (r.created_at || "").slice(11, 16);
+                return `<div class="sw-bubble sw-agent">
+                    <span class="sw-agent-avatar">${avatar}</span>
+                    <div class="sw-bubble-body">
+                        <span class="sw-agent-name">${esc(r.agent_name || "TrBridgo Support")}</span>
+                        ${esc(r.text)}
+                        <span class="sw-time">${time}</span>
                     </div>
-                    ${escapeHtml(reply.text)}
+                </div>`;
+            }).join("");
+            const statusClass = `sw-status-${(msg.status || "").replace(/\s+/g, "-")}`;
+            const time = (msg.created_at || "").slice(11, 16);
+            return `<div class="sw-bubble sw-user">
+                <div class="sw-bubble-body">
+                    ${esc(msg.message)}
+                    <span class="sw-status-tag ${statusClass}">${esc(msg.status || "جديدة")}</span>
+                    <span class="sw-time">${time}</span>
                 </div>
-            `).join("");
-            return `
-                <div class="support-bubble user">
-                    ${escapeHtml(message.message)}
-                    <small class="support-message-status">${escapeHtml(message.status || "جديدة")}</small>
-                </div>
-                ${replies}
-            `;
+            </div>${replies}`;
         }).join("");
         thread.scrollTop = thread.scrollHeight;
+        if (checkSound && replyCount > lastReplyCount) playChime();
+        lastReplyCount = replyCount;
     };
 
-    const loadMessages = async () => {
-        const response = await fetch("/support/messages", { headers: { "Accept": "application/json" } });
-        const data = await response.json();
-        if (data.ok) renderMessages(data.messages || []);
+    const loadMessages = async (checkSound = false) => {
+        try {
+            const res  = await fetch("/support/messages", { headers: { Accept: "application/json" } });
+            const data = await res.json();
+            if (data.ok) renderMessages(data.messages || [], checkSound);
+        } catch (_) {}
     };
 
-    toggles.forEach((toggle) => toggle.addEventListener("click", async () => {
-        supportWidget.classList.toggle("open");
-        if (supportWidget.classList.contains("open")) {
-            startSound();
-            await loadMessages();
-        }
+    const startPolling = () => {
+        if (pollTimer) return;
+        pollTimer = setInterval(() => loadMessages(true), 8000);
+    };
+    const stopPolling = () => { clearInterval(pollTimer); pollTimer = null; };
+
+    /* Open / close */
+    toggleBtns.forEach((btn) => btn.addEventListener("click", async () => {
+        const opening = !widget.classList.contains("open");
+        widget.classList.toggle("open", opening);
+        widget.querySelector("[data-support-window]")?.setAttribute("aria-hidden", String(!opening));
+        btn.setAttribute("aria-expanded", String(opening));
+        if (opening) { await loadMessages(false); startPolling(); }
+        else          { stopPolling(); }
     }));
 
-    soundToggle?.addEventListener("click", () => {
-        soundEnabled = !soundEnabled;
-        soundToggle.textContent = soundEnabled ? "الصوت: تشغيل" : "الصوت: إيقاف";
-        if (!soundEnabled && soundTimer) {
-            clearInterval(soundTimer);
-            soundTimer = null;
-        } else {
-            startSound();
-        }
+    /* Mute toggle */
+    muteBtn?.addEventListener("click", () => {
+        muted = !muted;
+        muteBtn.dataset.muted = muted ? "1" : "0";
+        muteBtn.setAttribute("title", muted ? "تفعيل الصوت" : "كتم الصوت");
+        muteBtn.textContent = muted ? "🔇" : "🔔";
     });
 
-    form?.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const message = form.message.value.trim();
-        if (!message) return;
-        const response = await fetch("/support/messages", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify({
-                message,
-                guest_name: form.guest_name?.value.trim() || "",
-                guest_email: form.guest_email?.value.trim() || "",
-            }),
-        });
-        const data = await response.json();
-        statusNode.textContent = data.message || data.error || "";
-        if (data.ok) {
-            form.message.value = "";
-            await loadMessages();
-        }
+    /* Send message */
+    form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const msg = form.message?.value.trim();
+        if (!msg) return;
+        try {
+            const res = await fetch("/support/messages", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                body: JSON.stringify({
+                    message: msg,
+                    guest_name:  form.guest_name?.value.trim()  || "",
+                    guest_email: form.guest_email?.value.trim() || "",
+                }),
+            });
+            const data = await res.json();
+            if (data.ok) {
+                form.message.value = "";
+                /* Hide identity section after first successful send */
+                if (!messageSent && identity) {
+                    identity.style.display = "none";
+                    messageSent = true;
+                }
+                await loadMessages(false);
+            }
+        } catch (_) {}
     });
 
-    if (supportWidget.classList.contains("support-center-panel")) {
-        loadMessages();
-    }
+    /* Auto-textarea height */
+    form?.querySelector(".sw-textarea")?.addEventListener("input", function () {
+        this.style.height = "auto";
+        this.style.height = Math.min(this.scrollHeight, 120) + "px";
+    });
+
+    if (widget.classList.contains("support-center-panel")) loadMessages(false);
 });
 
 document.querySelectorAll("[data-open-client-support]").forEach((button) => {
     button.addEventListener("click", () => {
-        const widget = document.querySelector("[data-rich-support]");
-        const toggle = widget?.querySelector("[data-support-toggle]");
-        if (!widget || !toggle) return;
-        if (!widget.classList.contains("open")) {
-            toggle.click();
-        } else {
-            widget.querySelector("[data-support-thread]")?.scrollTo({ top: 99999, behavior: "smooth" });
-        }
+        const w = document.querySelector("[data-rich-support]");
+        const t = w?.querySelector("[data-support-toggle]");
+        if (!w || !t) return;
+        if (!w.classList.contains("open")) t.click();
+        else w.querySelector("[data-support-thread]")?.scrollTo({ top: 99999, behavior: "smooth" });
     });
 });
+
+/* ── Admin Support Inbox ────────────────────────────────── */
+(function initAdminInbox() {
+    const inbox = document.getElementById("adminInbox");
+    if (!inbox) return;
+
+    const items      = inbox.querySelectorAll(".inbox-item");
+    const detail     = document.getElementById("inboxDetail");
+    const searchInput = document.getElementById("inboxSearch");
+    const filterSel  = document.getElementById("inboxFilter");
+
+    const modeLabels = { human: "👤 Human", faq: "📋 FAQ Agent", ai: "🤖 AI Agent" };
+    const modeDots   = { human: "am-human", faq: "am-faq", ai: "am-ai" };
+
+    /* Show conversation */
+    const openConv = (id) => {
+        items.forEach((el) => el.classList.toggle("active", el.dataset.inboxId === id));
+        detail.querySelectorAll(".inbox-conv").forEach((c) => { c.hidden = c.dataset.conv !== id; });
+        const placeholder = detail.querySelector(".inbox-placeholder");
+        if (placeholder) placeholder.hidden = true;
+
+        /* Scroll thread to bottom */
+        const thread = detail.querySelector(`#conv-${id} .inbox-thread`);
+        if (thread) thread.scrollTop = thread.scrollHeight;
+    };
+
+    items.forEach((item) => {
+        item.addEventListener("click", () => openConv(item.dataset.inboxId));
+    });
+
+    /* Search + filter */
+    const filterItems = () => {
+        const q      = (searchInput?.value || "").toLowerCase();
+        const status = (filterSel?.value || "");
+        items.forEach((item) => {
+            const nameMatch    = item.dataset.inboxName?.toLowerCase().includes(q);
+            const previewMatch = item.dataset.inboxPreview?.toLowerCase().includes(q);
+            const statusMatch  = !status || item.dataset.inboxStatus === status;
+            item.style.display = (nameMatch || previewMatch) && statusMatch ? "" : "none";
+        });
+    };
+    searchInput?.addEventListener("input", filterItems);
+    filterSel?.addEventListener("change", filterItems);
+
+    /* Agent mode selectors */
+    inbox.querySelectorAll("[data-mode-select]").forEach((sel) => {
+        const convId    = sel.dataset.modeSelect;
+        const labelEl   = document.getElementById(`am-label-${convId}`);
+        const modeInput = document.querySelector(`[data-reply-form="${convId}"] .inbox-reply-mode-input`);
+
+        sel.addEventListener("change", () => {
+            const mode = sel.value;
+            if (labelEl) {
+                const dot = `<span class="agent-mode-dot ${modeDots[mode] || "am-human"}"></span>`;
+                labelEl.innerHTML = `${dot}${modeLabels[mode] || "Human"}`;
+            }
+            if (modeInput) modeInput.value = mode;
+        });
+    });
+
+    /* AJAX reply forms */
+    inbox.querySelectorAll("[data-reply-form]").forEach((replyForm) => {
+        const msgId     = replyForm.dataset.replyForm;
+        const statusEl  = replyForm.querySelector("[data-reply-status]");
+        const sendBtn   = replyForm.querySelector(".inbox-reply-send");
+
+        replyForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const text      = replyForm.querySelector(".inbox-reply-textarea")?.value.trim();
+            const agentId   = replyForm.querySelector(".inbox-agent-select")?.value || "";
+            const replyMode = replyForm.querySelector(".inbox-reply-mode-input")?.value || "human";
+            if (!text) return;
+
+            if (sendBtn) { sendBtn.disabled = true; sendBtn.style.opacity = ".6"; }
+            try {
+                const res = await fetch(`/admin/support-message/${msgId}/reply`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Accept: "application/json" },
+                    body: JSON.stringify({ reply_text: text, agent_id: agentId, reply_mode: replyMode }),
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    replyForm.querySelector(".inbox-reply-textarea").value = "";
+                    if (statusEl) { statusEl.textContent = "تم إرسال الرد"; }
+                    /* Append reply bubble to thread immediately */
+                    const thread = document.querySelector(`#conv-${msgId} .inbox-thread`);
+                    if (thread) {
+                        const bubble = document.createElement("div");
+                        bubble.className = "inbox-bubble inbox-bubble-agent";
+                        bubble.innerHTML = `
+                            <div class="inbox-bubble-meta">
+                                <span class="inbox-agent-avatar-letter">🤝</span>
+                                <span class="inbox-bubble-agent-name">TrBridgo Support</span>
+                            </div>
+                            <div class="inbox-bubble-body">${text.replace(/</g,"&lt;")}</div>
+                            <span class="inbox-bubble-time">${new Date().toTimeString().slice(0,5)}</span>`;
+                        thread.appendChild(bubble);
+                        thread.scrollTop = thread.scrollHeight;
+                    }
+                    /* Update list item badge to تم الرد */
+                    const listItem = inbox.querySelector(`[data-inbox-id="${msgId}"]`);
+                    if (listItem) {
+                        listItem.classList.remove("inbox-unread");
+                        listItem.dataset.inboxStatus = "تم الرد";
+                        const badge = listItem.querySelector(".inbox-item-badge");
+                        if (badge) { badge.className = "inbox-item-badge inbox-badge-تم-الرد"; badge.textContent = "تم الرد"; }
+                    }
+                    setTimeout(() => { if (statusEl) statusEl.textContent = ""; }, 3000);
+                } else {
+                    if (statusEl) statusEl.textContent = data.error || "حدث خطأ";
+                }
+            } catch (_) {
+                if (statusEl) statusEl.textContent = "تعذّر الإرسال";
+            } finally {
+                if (sendBtn) { sendBtn.disabled = false; sendBtn.style.opacity = ""; }
+            }
+        });
+    });
+}());
 
 document.querySelectorAll("[data-platform-picker]").forEach((picker) => {
     const form = document.querySelector("#quick-form");

@@ -711,37 +711,47 @@
         </div>
     </footer>
 
-    <!-- ═══════════════════════ SUPPORT WIDGET ═══════════════════════ -->
-    <div class="rich-support-widget home-support-widget" data-rich-support>
-        <button class="rich-support-button" type="button" data-support-toggle aria-label="افتح الدردشة">
-            <span class="rich-support-badge" aria-hidden="true">0</span>
-            <span class="rich-support-icon">💬</span>
+    <!-- ═══════════════════════ SUPPORT WIDGET v3 ═══════════════════════ -->
+    <div class="sw-widget home-support-widget" data-rich-support>
+        <button class="sw-fab" type="button" data-support-toggle aria-label="افتح الدردشة" aria-expanded="false">
+            <span class="sw-fab-badge" data-sw-badge aria-hidden="true"></span>
+            <span class="sw-fab-icon">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="currentColor"/></svg>
+            </span>
         </button>
-        <section class="rich-support-window" data-support-window aria-live="polite">
-            <header>
-                <div>
-                    <span class="support-brand-line">📊 <b>TrBridgo.io</b> — TRADING GROUP</span>
-                    <strong>مرحباً 👋</strong>
-                    <p>فريق ربط حسابات MT5 و MT4 جاهز لمساعدتك</p>
+        <div class="sw-window" data-support-window aria-hidden="true">
+            <header class="sw-header">
+                <div class="sw-header-brand">
+                    <div class="sw-header-avatar">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="currentColor"/></svg>
+                    </div>
+                    <div>
+                        <b>TrBridgo.io Support</b>
+                        <span class="sw-header-status"><span class="sw-online-dot" aria-hidden="true"></span>متصل الآن</span>
+                    </div>
                 </div>
-                <button class="support-close-button" type="button" data-support-toggle aria-label="إغلاق">×</button>
+                <div class="sw-header-actions">
+                    <button class="sw-mute-btn" type="button" data-support-mute title="كتم الصوت" aria-label="كتم الصوت">🔔</button>
+                    <button class="sw-close-btn" type="button" data-support-toggle aria-label="إغلاق">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
             </header>
-            <div class="rich-support-thread" data-support-thread></div>
-            <form class="rich-support-form" data-support-form>
-                <div class="home-support-identity">
-                    <label>عرّفنا بنفسك لنخدمك بشكل أفضل</label>
-                    <input name="guest_name" placeholder="الاسم">
-                    <input name="guest_email" type="email" placeholder="البريد الإلكتروني (اختياري)">
+            <div class="sw-thread" data-support-thread aria-live="polite"></div>
+            <form class="sw-form" data-support-form novalidate>
+                <div class="sw-identity" data-sw-identity>
+                    <p class="sw-identity-label">عرّفنا بنفسك للمتابعة</p>
+                    <input class="sw-input" name="guest_name" placeholder="اسمك" autocomplete="name">
+                    <input class="sw-input" name="guest_email" type="email" placeholder="بريدك الإلكتروني (اختياري)" autocomplete="email">
                 </div>
-                <div class="home-support-composer">
-                    <textarea name="message" rows="1" placeholder="اكتب رسالتك..." required></textarea>
-                    <button type="submit" data-keep-text="1" aria-label="إرسال">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+                <div class="sw-composer">
+                    <textarea class="sw-textarea" name="message" rows="1" placeholder="اكتب رسالتك..." required aria-label="رسالة"></textarea>
+                    <button class="sw-send-btn" type="submit" aria-label="إرسال">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </button>
                 </div>
             </form>
-            <p class="rich-support-status" data-support-status></p>
-        </section>
+        </div>
     </div>
 </main>
 {% endblock %}

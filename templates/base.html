@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}TriBridge.io{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sw_inbox.css') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
     {% with messages = get_flashed_messages(with_categories=true) %}

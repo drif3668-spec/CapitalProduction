@@ -433,6 +433,11 @@ def create_app(test_config=None):
         }
         if "assigned_agent_id" not in support_message_columns:
             db.execute("ALTER TABLE support_messages ADD COLUMN assigned_agent_id INTEGER")
+        support_reply_columns = {
+            row["name"] for row in db.execute("PRAGMA table_info(support_replies)").fetchall()
+        }
+        if "reply_mode" not in support_reply_columns:
+            db.execute("ALTER TABLE support_replies ADD COLUMN reply_mode TEXT DEFAULT 'human'")
         admin = db.execute("SELECT id FROM users WHERE is_admin = 1").fetchone()
         if admin is None:
             trial_start = utc_now().isoformat()
@@ -2366,27 +2371,80 @@ def create_app(test_config=None):
         get_db().commit()
         return redirect(url_for("admin_dashboard"))
 
+    @app.route("/admin/support-conversation/<int:message_id>", methods=("GET",))
+    @admin_required
+    def admin_get_support_conversation(message_id):
+        db = get_db()
+        msg = db.execute(
+            """SELECT support_messages.*, users.full_name, users.email user_email
+               FROM support_messages
+               LEFT JOIN users ON users.id = support_messages.user_id
+               WHERE support_messages.id = ?""",
+            (message_id,),
+        ).fetchone()
+        if msg is None:
+            return jsonify({"ok": False, "error": "not found"}), 404
+        replies = db.execute(
+            """SELECT support_replies.*, support_agents.name agent_name, support_agents.image_path agent_image
+               FROM support_replies
+               LEFT JOIN support_agents ON support_agents.id = support_replies.agent_id
+               WHERE support_replies.message_id = ?
+               ORDER BY support_replies.created_at ASC""",
+            (message_id,),
+        ).fetchall()
+        return jsonify({
+            "ok": True,
+            "message": {
+                "id": msg["id"],
+                "name": msg["full_name"] or msg["guest_name"] or "زائر",
+                "email": msg["user_email"] or msg["guest_email"] or "",
+                "message": msg["message"],
+                "status": msg["status"],
+                "created_at": msg["created_at"],
+            },
+            "replies": [
+                {
+                    "id": r["id"],
+                    "text": r["reply_text"],
+                    "agent_name": r["agent_name"] or "TrBridgo Support",
+                    "agent_image": url_for("static", filename=f"uploads/agents/{r['agent_image']}") if r["agent_image"] else "",
+                    "reply_mode": r["reply_mode"] or "human",
+                    "created_at": r["created_at"],
+                }
+                for r in replies
+            ],
+        })
+
     @app.route("/admin/support-message/<int:message_id>/reply", methods=("POST",))
     @admin_required
     def admin_reply_support_message(message_id):
         db = get_db()
+        wants_json = request.headers.get("Accept", "").startswith("application/json") or request.is_json
         message = db.execute("SELECT * FROM support_messages WHERE id = ?", (message_id,)).fetchone()
         if message is None:
+            if wants_json:
+                return jsonify({"ok": False, "error": "رسالة غير موجودة"}), 404
             flash("رسالة الدعم غير موجودة.", "error")
             return redirect(url_for("admin_dashboard"))
-        reply_text = request.form.get("reply_text", "").strip()
+        data = request.get_json(silent=True) or {}
+        reply_text = (data.get("reply_text") or request.form.get("reply_text", "")).strip()
+        reply_mode = (data.get("reply_mode") or request.form.get("reply_mode", "human")).strip()
+        if reply_mode not in {"human", "faq", "ai"}:
+            reply_mode = "human"
         if not reply_text:
+            if wants_json:
+                return jsonify({"ok": False, "error": "يرجى كتابة الرد"}), 400
             flash("يرجى كتابة الرد.", "error")
             return redirect(url_for("admin_dashboard"))
-        agent_id_value = request.form.get("agent_id", "")
+        agent_id_value = data.get("agent_id") or request.form.get("agent_id", "")
         agent_id = int(agent_id_value) if agent_id_value else None
         if agent_id:
             agent = db.execute("SELECT id FROM support_agents WHERE id = ? AND is_active = 1", (agent_id,)).fetchone()
             if agent is None:
                 agent_id = None
         db.execute(
-            "INSERT INTO support_replies (message_id, agent_id, reply_text) VALUES (?, ?, ?)",
-            (message_id, agent_id, reply_text),
+            "INSERT INTO support_replies (message_id, agent_id, reply_text, reply_mode) VALUES (?, ?, ?, ?)",
+            (message_id, agent_id, reply_text, reply_mode),
         )
         db.execute(
             "UPDATE support_messages SET status = 'تم الرد', assigned_agent_id = ? WHERE id = ?",
@@ -2398,6 +2456,8 @@ def create_app(test_config=None):
                 (message["user_id"], "تم الرد على رسالتك في الدعم الغني."),
             )
         db.commit()
+        if wants_json:
+            return jsonify({"ok": True, "message": "تم إرسال الرد"})
         flash("تم إرسال الرد.", "success")
         return redirect(url_for("admin_dashboard"))
 

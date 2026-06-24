@@ -315,7 +315,7 @@
                 <td>{{ campaign.duration_days }} أيام<br><small>{{ campaign.start_date or "لم يبدأ" }} → {{ campaign.end_date or "-" }}</small></td>
                 <td><small>Reach: {{ campaign.estimated_reach }}<br>Leads: {{ campaign.expected_leads }}<br>Clicks: {{ campaign.estimated_clicks }}</small></td>
                 <td><span class="status-pill {{ 'good' if campaign.status in ['Approved','Running','Completed'] else 'bad' if campaign.status == 'Rejected' else 'warn' }}">{{ campaign.status }}</span></td>
-                <td><div class="marketing-progress admin-mini-progress"><span style="width: {{ campaign.progress }}%"></span></div>{{ campaign.progress }}%</td>
+                <td><div class="marketing-progress admin-mini-progress"><span style="--bar-w: {{ campaign.progress }}%" class="bar-fill"></span></div>{{ campaign.progress }}%</td>
                 <td>
                     <form action="{{ url_for('admin_marketing_campaign_status', campaign_id=campaign.id) }}" method="post" class="inline-form wide-inline marketing-admin-form">
                         <select name="status">{% for status in marketing_campaign_statuses %}<option {% if status == campaign.status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select>
@@ -332,12 +332,122 @@
         </section>
 
         <section id="support" class="admin-section" data-admin-section>
-            <div class="admin-section-head"><div><h2>رسائل الدعم</h2><p>الرد على الرسائل السريعة من الصفحة الرئيسية.</p></div></div>
-            <div class="admin-stat-grid"><article><span>الرسائل الجديدة</span><b>{{ admin_stats.support.new }}</b></article><article><span>قيد الرد</span><b>{{ admin_stats.support.progress }}</b></article><article><span>تم الرد</span><b>{{ admin_stats.support.replied }}</b></article></div>
-            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في رسائل الدعم"><select data-admin-status><option value="">كل الحالات</option>{% for status in support_statuses %}<option>{{ status }}</option>{% endfor %}</select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
-            <div class="table-wrap"><table data-admin-table><thead><tr><th>العميل</th><th>البريد</th><th>الرسالة</th><th>تاريخ الإرسال</th><th>الحالة</th><th>الوكيل المسؤول</th><th>فتح المحادثة والرد</th></tr></thead><tbody>
-            {% for item in support_messages %}<tr data-status="{{ item.status }}" data-date="{{ item.created_at }}"><td>{{ item.full_name or item.guest_name or "زائر" }}</td><td>{{ item.user_email or item.guest_email or "-" }}</td><td>{{ item.message }}</td><td>{{ item.created_at }}</td><td><form action="{{ url_for('admin_update_support_message_status', message_id=item.id) }}" method="post" class="inline-form"><select name="status">{% for status in support_statuses %}<option {% if status == item.status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select><button>حفظ</button></form></td><td>{{ item.assigned_agent_name or "TrBridgo Support" }}</td><td><details class="support-admin-thread"><summary class="secondary">فتح المحادثة</summary><div class="support-admin-messages"><p><strong>العميل:</strong> {{ item.message }}</p>{% for reply in support_replies if reply.message_id == item.id %}<p><strong>{{ reply.agent_name or "TrBridgo Support" }}:</strong> {{ reply.reply_text }}</p>{% endfor %}</div><form action="{{ url_for('admin_reply_support_message', message_id=item.id) }}" method="post" class="stack"><select name="agent_id"><option value="">TrBridgo Support</option>{% for agent in active_support_agents %}<option value="{{ agent.id }}">{{ agent.name }}</option>{% endfor %}</select><textarea name="reply_text" placeholder="اكتب رد الأدمن هنا" required></textarea><button class="primary">الرد</button></form></details></td></tr>{% else %}<tr><td colspan="7">لا توجد رسائل دعم حتى الآن.</td></tr>{% endfor %}
-            </tbody></table></div>
+            <div class="admin-section-head"><div><h2>صندوق الدعم الفني</h2><p>إدارة محادثات الدعم والرد عليها.</p></div></div>
+            <div class="admin-stat-grid">
+                <article><span>الرسائل الجديدة</span><b>{{ admin_stats.support.new }}</b></article>
+                <article><span>قيد الرد</span><b>{{ admin_stats.support.progress }}</b></article>
+                <article><span>تم الرد</span><b>{{ admin_stats.support.replied }}</b></article>
+            </div>
+
+            <div class="inbox-layout" id="adminInbox">
+                <!-- ── LIST ── -->
+                <aside class="inbox-list">
+                    <div class="inbox-list-head">
+                        <input class="inbox-search" id="inboxSearch" placeholder="🔍 بحث..." type="search">
+                        <select class="inbox-filter" id="inboxFilter">
+                            <option value="">كل الحالات</option>
+                            {% for status in support_statuses %}<option>{{ status }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="inbox-items" id="inboxItems">
+                        {% for item in support_messages %}
+                        <div class="inbox-item {% if item.status == 'جديدة' %}inbox-unread{% endif %}"
+                             data-inbox-id="{{ item.id }}"
+                             data-inbox-status="{{ item.status }}"
+                             data-inbox-name="{{ (item.full_name or item.guest_name or 'زائر')|e }}"
+                             data-inbox-preview="{{ item.message[:60]|e }}">
+                            <div class="inbox-item-avatar">{{ (item.full_name or item.guest_name or 'Z')[0]|upper }}</div>
+                            <div class="inbox-item-body">
+                                <div class="inbox-item-row">
+                                    <span class="inbox-item-name">{{ item.full_name or item.guest_name or "زائر" }}</span>
+                                    <span class="inbox-item-time">{{ item.created_at[:10] }}</span>
+                                </div>
+                                <div class="inbox-item-preview">{{ item.message[:55] }}{% if item.message|length > 55 %}…{% endif %}</div>
+                            </div>
+                            <span class="inbox-item-badge inbox-badge-{{ item.status|replace(' ','-') }}">{{ item.status }}</span>
+                        </div>
+                        {% else %}
+                        <div class="inbox-empty-list">لا توجد رسائل بعد.</div>
+                        {% endfor %}
+                    </div>
+                </aside>
+
+                <!-- ── DETAIL ── -->
+                <div class="inbox-detail" id="inboxDetail">
+                    <div class="inbox-placeholder">
+                        <div class="inbox-placeholder-icon">💬</div>
+                        <p>اختر محادثة من القائمة للبدء</p>
+                    </div>
+
+                    <!-- Conversation panels (hidden until selected) -->
+                    {% for item in support_messages %}
+                    <div class="inbox-conv" id="conv-{{ item.id }}" data-conv="{{ item.id }}" hidden>
+                        <div class="inbox-conv-header">
+                            <div class="inbox-conv-user">
+                                <div class="inbox-conv-avatar">{{ (item.full_name or item.guest_name or 'Z')[0]|upper }}</div>
+                                <div>
+                                    <b>{{ item.full_name or item.guest_name or "زائر" }}</b>
+                                    <small>{{ item.user_email or item.guest_email or "بدون بريد" }}</small>
+                                </div>
+                            </div>
+                            <div class="inbox-conv-controls">
+                                <div class="agent-mode-wrap">
+                                    <label class="agent-mode-label" id="am-label-{{ item.id }}">
+                                        <span class="agent-mode-dot am-human"></span>Human
+                                    </label>
+                                    <select class="agent-mode-select" data-mode-select="{{ item.id }}" aria-label="وضع الرد">
+                                        <option value="human">👤 Human</option>
+                                        <option value="faq">📋 FAQ Agent</option>
+                                        <option value="ai">🤖 AI Agent</option>
+                                    </select>
+                                </div>
+                                <form action="{{ url_for('admin_update_support_message_status', message_id=item.id) }}" method="post" class="inbox-status-form">
+                                    <select name="status">
+                                        {% for status in support_statuses %}<option {% if status == item.status %}selected{% endif %}>{{ status }}</option>{% endfor %}
+                                    </select>
+                                    <button type="submit" class="inbox-status-btn">حفظ</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="inbox-thread">
+                            <div class="inbox-bubble inbox-bubble-user">
+                                <div class="inbox-bubble-body">{{ item.message }}</div>
+                                <span class="inbox-bubble-time">{{ item.created_at[:16] }}</span>
+                            </div>
+                            {% for reply in support_replies if reply.message_id == item.id %}
+                            <div class="inbox-bubble inbox-bubble-agent">
+                                <div class="inbox-bubble-meta">
+                                    {% if reply.agent_image %}<img src="{{ url_for('static', filename='uploads/agents/' ~ reply.agent_image) }}" alt="{{ reply.agent_name }}" class="inbox-agent-avatar">{% else %}<span class="inbox-agent-avatar-letter">🤝</span>{% endif %}
+                                    <span class="inbox-bubble-agent-name">{{ reply.agent_name or "TrBridgo Support" }}</span>
+                                </div>
+                                <div class="inbox-bubble-body">{{ reply.reply_text }}</div>
+                                <span class="inbox-bubble-time">{{ reply.created_at[:16] }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <form class="inbox-reply-form" data-reply-form="{{ item.id }}">
+                            <div class="inbox-reply-head">
+                                <select name="agent_id" class="inbox-agent-select">
+                                    <option value="">TrBridgo Support</option>
+                                    {% for agent in active_support_agents %}<option value="{{ agent.id }}">{{ agent.name }}</option>{% endfor %}
+                                </select>
+                                <input type="hidden" name="reply_mode" class="inbox-reply-mode-input" value="human">
+                            </div>
+                            <div class="inbox-reply-body">
+                                <textarea name="reply_text" class="inbox-reply-textarea" placeholder="اكتب ردك هنا..." required rows="2"></textarea>
+                                <button type="submit" class="inbox-reply-send">
+                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                    إرسال
+                                </button>
+                            </div>
+                            <p class="inbox-reply-status" data-reply-status></p>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
         </section>
 
         <section id="agents" class="admin-section" data-admin-section>
