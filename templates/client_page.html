@@ -1345,13 +1345,31 @@
             <p>طريقة السحب المحلية: <b>{{ user.local_withdraw_method or "غير محددة" }}</b></p>
         </div>
     </section>
-    <section class="panel global-map-card">
-        <div class="section-title"><h2>Live Global Activity Map</h2><span class="live-dot">LIVE</span></div>
-        <div class="world-map-3d" data-live-map>
-            <span class="map-point p1"></span><span class="map-point p2"></span><span class="map-point p3"></span><span class="map-point p4"></span><span class="map-point p5"></span>
-            <p class="live-activity-text" data-live-activity>عميل من الجزائر قام بإيداع</p>
+    <section class="panel global-map-card" style="padding:24px">
+        <div class="section-title" style="margin-bottom:20px"><h2>Live Global Activity Map</h2><span class="live-dot">LIVE</span></div>
+        <div class="wmap-panel">
+            <div class="wmap-col">
+                <div class="wmap-feed-head">
+                    <h3>النشاط الأخير</h3>
+                    <span class="wmap-live-badge"><span class="wmap-live-dot"></span>LIVE</span>
+                </div>
+                <div class="wmap-feed" id="wmapFeedDash"></div>
+            </div>
+            <div class="wmap-col">
+                <div class="wmap-map-head">
+                    <h3>النشاط العالمي</h3>
+                    <span class="wmap-clock" id="wmapClockDash">--:--:--</span>
+                </div>
+                <div class="wmap-box">
+                    <svg id="wmapSvgDash"></svg>
+                </div>
+                <div class="wmap-legend">
+                    <span><i style="background:#34d399;box-shadow:0 0 8px #34d399"></i> مكتمل</span>
+                    <span><i style="background:#f5b341;box-shadow:0 0 8px #f5b341"></i> قيد المراجعة</span>
+                    <span><i style="background:#c2f24a;box-shadow:0 0 8px #c2f24a"></i> المركز الرئيسي</span>
+                </div>
+            </div>
         </div>
-        <div class="country-marquee"><span>مصر • الجزائر • المغرب • تونس • لبنان • العراق • فلسطين • ليبيا • موريتانيا • السعودية • سوريا • فرنسا • بريطانيا • النيجر • إثيوبيا • الهند • أمريكا</span></div>
     </section>
     {% endif %}
 
@@ -1430,4 +1448,21 @@
   });
 })();
 </script>
+
+{% if page == "settings" %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='js/world_map.js') }}"></script>
+<script>
+(function(){
+  function tryInit(){
+    if(document.getElementById('wmapSvgDash')){
+      initWorldMap({map:'wmapSvgDash', feed:'wmapFeedDash', clock:'wmapClockDash'});
+    }
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',tryInit); }
+  else { tryInit(); }
+})();
+</script>
+{% endif %}
 {% endblock %}

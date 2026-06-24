@@ -480,17 +480,35 @@
         </div>
     </section>
 
-    <!-- ═══════════════════════ LIVE ACTIVITY ═══════════════════════ -->
-    <section class="v2-section">
-        <div class="v2-section-head v2-centered">
+    <!-- ═══════════════════════ LIVE ACTIVITY MAP ═══════════════════════ -->
+    <section class="v2-section" style="max-width:1280px;margin-inline:auto;padding-inline:clamp(16px,4vw,40px)">
+        <div class="v2-section-head v2-centered" style="margin-bottom:32px">
             <span class="v2-section-pill">نشاط مباشر</span>
-            <h2>الأنشطة المباشرة</h2>
+            <h2>عملاء <span style="background:linear-gradient(120deg,#c2f24a,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent">يثقون بنا</span></h2>
+            <p style="color:#8ba79b;margin-top:8px;font-size:1rem">خريطة نشاط العملاء العالمية — لحظة بلحظة</p>
         </div>
-        <div class="v2-live-grid">
-            <div class="v2-live-card"><span class="v2-live-dot"></span>طلب ربط جديد</div>
-            <div class="v2-live-card"><span class="v2-live-dot"></span>تفعيل بطاقة</div>
-            <div class="v2-live-card"><span class="v2-live-dot"></span>إنشاء تذكرة تداول</div>
-            <div class="v2-live-card"><span class="v2-live-dot"></span>تحديث محفظة</div>
+        <div class="wmap-panel">
+            <div class="wmap-col">
+                <div class="wmap-feed-head">
+                    <h3>النشاط الأخير</h3>
+                    <span class="wmap-live-badge"><span class="wmap-live-dot"></span>LIVE</span>
+                </div>
+                <div class="wmap-feed" id="wmapFeedHome"></div>
+            </div>
+            <div class="wmap-col">
+                <div class="wmap-map-head">
+                    <h3>النشاط العالمي</h3>
+                    <span class="wmap-clock" id="wmapClockHome">--:--:--</span>
+                </div>
+                <div class="wmap-box">
+                    <svg id="wmapSvgHome"></svg>
+                </div>
+                <div class="wmap-legend">
+                    <span><i style="background:#34d399;box-shadow:0 0 8px #34d399"></i> مكتمل</span>
+                    <span><i style="background:#f5b341;box-shadow:0 0 8px #f5b341"></i> قيد المراجعة</span>
+                    <span><i style="background:#c2f24a;box-shadow:0 0 8px #c2f24a"></i> المركز الرئيسي</span>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -754,4 +772,18 @@
         </div>
     </div>
 </main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='js/world_map.js') }}"></script>
+<script>
+(function(){
+  function tryInit(){
+    if(document.getElementById('wmapSvgHome')){
+      initWorldMap({map:'wmapSvgHome', feed:'wmapFeedHome', clock:'wmapClockHome'});
+    }
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',tryInit); }
+  else { tryInit(); }
+})();
+</script>
 {% endblock %}

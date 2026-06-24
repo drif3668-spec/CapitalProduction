@@ -551,3 +551,47 @@
 .db-stat-card:nth-child(4) { animation-delay:.18s }
 .db-card                   { animation: fadeInUp .35s ease both; }
 .db-detail-panel           { animation: slideInRight .3s ease both; }
+
+/* ═══ WORLD MAP COMPONENT (wmap-*) ════════════════════════════════════ */
+.wmap-panel{display:grid;grid-template-columns:320px 1fr;gap:1px;background:rgba(120,200,150,.14);border:1px solid rgba(120,200,150,.14);border-radius:20px;overflow:hidden;box-shadow:0 32px 80px -32px rgba(0,0,0,.7)}
+.wmap-col{background:linear-gradient(170deg,rgba(11,24,28,.96),rgba(6,15,18,.98));padding:20px}
+.wmap-feed-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.wmap-feed-head h3{font-size:1.05rem;font-weight:800;color:#eef5f1;margin:0}
+.wmap-live-badge{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;letter-spacing:.08em;color:#34d399;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);padding:5px 11px;border-radius:999px}
+.wmap-live-dot{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;animation:wmapBlink 1.4s infinite}
+@keyframes wmapBlink{0%,100%{opacity:1}50%{opacity:.35}}
+.wmap-feed{display:flex;flex-direction:column;gap:10px}
+.wmap-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:13px;background:rgba(255,255,255,.022);border:1px solid rgba(120,200,150,.08);transition:.25s;cursor:default}
+.wmap-item:hover{border-color:rgba(120,200,150,.22);background:rgba(255,255,255,.04);transform:translateX(-3px)}
+.wmap-flash{animation:wmapFlashIn 1.2s ease}
+@keyframes wmapFlashIn{0%{background:rgba(194,242,74,.18);border-color:rgba(194,242,74,.5)}100%{background:rgba(255,255,255,.022)}}
+.wmap-avatar{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;font-size:.82rem;color:#08160f}
+.wmap-info{flex:1;min-width:0}
+.wmap-top{display:flex;align-items:center;gap:6px;font-weight:700;font-size:.92rem;direction:ltr;justify-content:flex-end;color:#eef5f1}
+.wmap-sub{font-size:.8rem;color:#8ba79b;margin-top:3px;text-align:right}
+.wmap-pill{font-size:.68rem;font-weight:700;padding:4px 9px;border-radius:7px;white-space:nowrap;flex:none}
+.wmap-done{background:rgba(52,211,153,.14);color:#34d399;border:1px solid rgba(52,211,153,.25)}
+.wmap-review{background:rgba(245,179,65,.14);color:#f5b341;border:1px solid rgba(245,179,65,.28)}
+.wmap-map-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.wmap-map-head h3{font-size:1.05rem;font-weight:800;color:#eef5f1;margin:0}
+.wmap-clock{font-size:.9rem;font-weight:600;color:#34d399;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.22);padding:5px 12px;border-radius:10px;direction:ltr;font-family:monospace}
+.wmap-box{position:relative;width:100%;aspect-ratio:16/10;border-radius:14px;overflow:hidden;background:radial-gradient(120% 100% at 50% 0%,rgba(52,211,153,.05),transparent 70%)}
+.wmap-box svg{width:100%;height:100%;display:block}
+.wmap-country{fill:rgba(52,211,153,.07);stroke:rgba(120,200,150,.28);stroke-width:.4;transition:fill .3s}
+.wmap-hot{fill:rgba(52,211,153,.16)}
+.wmap-graticule{fill:none;stroke:rgba(120,200,150,.05);stroke-width:.4}
+.wmap-arc{fill:none;stroke-width:1;opacity:.45}
+.wmap-flow{fill:none;stroke-width:1.4;stroke-linecap:round;stroke-dasharray:4 220;animation:wmapFlow 3s linear infinite}
+@keyframes wmapFlow{to{stroke-dashoffset:-224}}
+.wmap-legend{display:flex;gap:16px;justify-content:center;margin-top:13px;font-size:.82rem;color:#8ba79b;flex-wrap:wrap}
+.wmap-legend span{display:inline-flex;align-items:center;gap:6px}
+.wmap-legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+/* Light mode overrides */
+.db-shell.light-mode .wmap-col{background:linear-gradient(170deg,#f0f5f3,#e8f0ee)}
+.db-shell.light-mode .wmap-feed-head h3,.db-shell.light-mode .wmap-map-head h3{color:#1a2a24}
+.db-shell.light-mode .wmap-item{background:rgba(0,0,0,.03);border-color:rgba(52,211,153,.15)}
+.db-shell.light-mode .wmap-top{color:#1a2a24}
+.db-shell.light-mode .wmap-sub{color:#5a7a70}
+.db-shell.light-mode .wmap-country{stroke:rgba(52,150,100,.35)}
+@media(max-width:880px){.wmap-panel{grid-template-columns:1fr}.wmap-col:last-child{order:-1}}
+@media(prefers-reduced-motion:reduce){.wmap-flow,.wmap-flash,.wmap-live-dot{animation:none!important}}
