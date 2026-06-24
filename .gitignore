@@ -7,5 +7,6 @@ uploads/
 *.zip
 *.log
 .env
-.env.*
+.env.local
+.env.*.local
 marketing_center_fixed_screenshot.png
