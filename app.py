@@ -981,7 +981,7 @@ def create_app(test_config=None):
             ).fetchall(),
             "payment_status_labels": PAYMENT_STATUS_LABELS,
             "notifications": db.execute(
-                "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 5",
+                "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC",
                 (user["id"],),
             ).fetchall(),
             "local_withdrawals": db.execute(
@@ -1928,6 +1928,30 @@ def create_app(test_config=None):
     def notifications_read_all():
         user = current_user()
         get_db().execute("UPDATE notifications SET is_read = 1 WHERE user_id = ?", (user["id"],))
+        get_db().commit()
+        return ("", 204)
+
+    @app.route("/notifications/<int:notif_id>/read", methods=("POST",))
+    @login_required
+    def notification_mark_read(notif_id):
+        user = current_user()
+        get_db().execute("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?", (notif_id, user["id"]))
+        get_db().commit()
+        return ("", 204)
+
+    @app.route("/notifications/<int:notif_id>/unread", methods=("POST",))
+    @login_required
+    def notification_mark_unread(notif_id):
+        user = current_user()
+        get_db().execute("UPDATE notifications SET is_read = 0 WHERE id = ? AND user_id = ?", (notif_id, user["id"]))
+        get_db().commit()
+        return ("", 204)
+
+    @app.route("/notifications/<int:notif_id>/delete", methods=("POST",))
+    @login_required
+    def notification_delete(notif_id):
+        user = current_user()
+        get_db().execute("DELETE FROM notifications WHERE id = ? AND user_id = ?", (notif_id, user["id"]))
         get_db().commit()
         return ("", 204)
 

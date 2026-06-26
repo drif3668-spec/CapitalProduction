@@ -127,9 +127,10 @@
     {% else %}
     <a class="trial-box compact expired" href="{{ url_for('trial_page') }}" style="text-decoration:none"><b>انتهت</b><span>الاشتراك</span></a>
     {% endif %}
-    <button class="db-icon-btn" type="button" aria-label="الإشعارات">
+    {% set notif_unread = notifications|rejectattr('is_read')|list|length %}
+    <button class="db-icon-btn" type="button" id="notifBell" aria-label="الإشعارات">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-      {% if notifications|length > 0 %}<span class="db-icon-btn-badge">{{ notifications|length }}</span>{% endif %}
+      {% if notif_unread > 0 %}<span class="db-icon-btn-badge">{{ notif_unread }}</span>{% endif %}
     </button>
     <button class="db-icon-btn" type="button" data-open-client-support aria-label="الرسائل">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -144,6 +145,70 @@
     </a>
   </div>
 </header>
+
+<!-- Notification Drawer -->
+<div id="notifOverlay" class="notif-overlay" style="display:none" aria-hidden="true"></div>
+<aside id="notifDrawer" class="notif-drawer" aria-label="الإشعارات" role="dialog" aria-modal="true">
+  <div class="notif-drawer-head">
+    <h3>الإشعارات</h3>
+    <div class="notif-head-actions">
+      <button type="button" class="notif-mark-all-btn" id="notifMarkAll">قراءة الكل</button>
+      <button type="button" class="notif-close-btn" id="notifClose" aria-label="إغلاق">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="notif-drawer-body" id="notifList">
+    {% if notifications %}
+    {% for n in notifications %}
+    <div class="notif-item {% if not n.is_read %}notif-unread{% endif %}" data-id="{{ n.id }}" data-read="{{ 1 if n.is_read else 0 }}">
+      <div class="notif-dot"></div>
+      <div class="notif-content">
+        <p class="notif-msg">{{ n.message }}</p>
+        <span class="notif-time">{{ n.created_at[:16] if n.created_at else "" }}</span>
+      </div>
+      <div class="notif-actions">
+        <button type="button" class="notif-action-btn" data-action="toggle-read" title="{% if n.is_read %}تعيين كغير مقروء{% else %}تعيين كمقروء{% endif %}">
+          {% if n.is_read %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><circle cx="12" cy="12" r="10"/></svg>
+          {% else %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><polyline points="20 6 9 17 4 12"/></svg>
+          {% endif %}
+        </button>
+        <button type="button" class="notif-action-btn notif-delete-btn" data-action="delete" title="حذف">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="notif-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      <p>لا توجد إشعارات</p>
+    </div>
+    {% endif %}
+  </div>
+</aside>
+<script>(function(){
+  var bell=document.getElementById('notifBell'),drawer=document.getElementById('notifDrawer'),overlay=document.getElementById('notifOverlay'),closeBtn=document.getElementById('notifClose'),markAllBtn=document.getElementById('notifMarkAll');
+  function open(){drawer.classList.add('notif-open');overlay.style.display='';document.body.style.overflow='hidden';}
+  function close(){drawer.classList.remove('notif-open');overlay.style.display='none';document.body.style.overflow='';}
+  if(bell)bell.addEventListener('click',function(e){e.stopPropagation();drawer.classList.contains('notif-open')?close():open();});
+  if(closeBtn)closeBtn.addEventListener('click',close);
+  if(overlay)overlay.addEventListener('click',close);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+  function ajax(url,cb){var x=new XMLHttpRequest();x.open('POST',url);x.onload=function(){if(cb)cb(x.status);};x.send();}
+  function updateBadge(){var u=document.querySelectorAll('.notif-item.notif-unread').length;var b=document.querySelector('#notifBell .db-icon-btn-badge');if(u>0){if(!b){b=document.createElement('span');b.className='db-icon-btn-badge';bell.appendChild(b);}b.textContent=u;}else{if(b)b.remove();}}
+  if(markAllBtn)markAllBtn.addEventListener('click',function(){ajax('/notifications/read-all',function(s){if(s>=200&&s<300){document.querySelectorAll('.notif-item.notif-unread').forEach(function(el){el.classList.remove('notif-unread');el.dataset.read='1';var b=el.querySelector('[data-action="toggle-read"]');if(b)b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><circle cx="12" cy="12" r="10"/></svg>';});updateBadge();}});});
+  var nl=document.getElementById('notifList');
+  if(nl)nl.addEventListener('click',function(e){
+    var btn=e.target.closest('[data-action]');if(!btn)return;
+    var item=btn.closest('.notif-item');if(!item)return;
+    var id=item.dataset.id,action=btn.dataset.action;
+    if(action==='delete'){ajax('/notifications/'+id+'/delete',function(s){if(s>=200&&s<300){item.style.transition='opacity .2s,transform .2s';item.style.opacity='0';item.style.transform='translateX(20px)';setTimeout(function(){item.remove();updateBadge();if(!nl.querySelector('.notif-item')){nl.innerHTML='<div class="notif-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><p>لا توجد إشعارات</p></div>';}},230);}});}
+    else if(action==='toggle-read'){var isRead=item.dataset.read==='1';ajax('/notifications/'+id+'/'+(isRead?'unread':'read'),function(s){if(s>=200&&s<300){if(isRead){item.classList.add('notif-unread');item.dataset.read='0';btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><polyline points="20 6 9 17 4 12"/></svg>';btn.title='تعيين كمقروء';}else{item.classList.remove('notif-unread');item.dataset.read='1';btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><circle cx="12" cy="12" r="10"/></svg>';btn.title='تعيين كغير مقروء';}updateBadge();}});}
+  });
+})();</script>
 
 <!-- ═══════════════ MAIN ═══════════════ -->
 <main class="db-main">
@@ -1068,14 +1133,31 @@
               {% for package in funded_packages %}
               {% set price = package.discounted_price if package.discounted_price else package.price %}
               {% set can_buy = wallet.balance >= price %}
-              <article class="funded-package-card {{ package.accent }}">
+              <article class="funded-package-card {{ package.accent }}"
+                       data-account-size="{{ package.account_size }}"
+                       data-price="{{ package.price }}"
+                       data-discounted-price="{{ package.discounted_price or '' }}"
+                       data-discount-code="{{ package.discount_code or '' }}"
+                       data-total-max-loss="{{ package.total_max_loss }}"
+                       data-daily-loss="{{ package.daily_max_loss_percent }}"
+                       data-risk="{{ package.max_risk_per_trade_percent }}"
+                       data-phase1="{{ package.phase1_target_percent }}"
+                       data-phase2="{{ package.phase2_target_percent }}"
+                       data-duration="{{ package.test_duration }}"
+                       data-broker="{{ package.broker }}"
+                       data-platform="{{ package.platform }}"
+                       onclick="selectFundedPkg(this)" style="cursor:pointer">
                 {% if package.discount_code %}<span class="funded-hot">الأكثر شراءً</span>{% endif %}
-                <div class="funded-icon"></div>
+                <div class="funded-glass-logo">
+                  <div class="funded-glass-inner">
+                    <svg viewBox="0 0 36 36" fill="none" width="24" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="fgl{{ loop.index }}" cx="35%" cy="28%" r="72%"><stop offset="0%" stop-color="#c4b5fd"/><stop offset="100%" stop-color="#1e1b4b"/></radialGradient><linearGradient id="fgs{{ loop.index }}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,.85)"/><stop offset="100%" stop-color="rgba(139,92,246,.4)"/></linearGradient></defs><circle cx="18" cy="18" r="16" fill="url(#fgl{{ loop.index }})"/><path d="M11 18l7-7 7 7-7 7z" fill="url(#fgs{{ loop.index }})"/><path d="M18 8l-7 7h4v6h6v-6h4z" fill="rgba(255,255,255,.15)"/></svg>
+                  </div>
+                </div>
                 <strong>${{ "{:,.0f}".format(package.account_size) }}</strong>
                 <small>رأس المال</small>
                 {% if package.discount_code %}<del>${{ "%.0f"|format(package.price) }}</del>{% endif %}
                 <b>${{ "%.0f"|format(price) }}</b>
-                <form action="{{ url_for('funded_account_checkout', package_id=package.id) }}" method="get">
+                <form action="{{ url_for('funded_account_checkout', package_id=package.id) }}" method="get" onclick="event.stopPropagation()">
                   {% if package.discount_code %}<input type="hidden" name="discount_code" value="{{ package.discount_code }}">{% endif %}
                   <button class="funded-buy-btn" {% if not can_buy %}disabled{% endif %}>اختر الباقة</button>
                 </form>
@@ -1090,14 +1172,24 @@
           </div>
 
           <section class="funded-rules-card">
-            <h3>قواعد الحساب الممول</h3>
+            <h3>قواعد الحساب الممول <span class="funded-rules-pkg-badge" id="rulesPkgBadge"></span></h3>
             <div class="funded-rule-grid">
-              <span><small>أقصى خسارة يومية</small><b>3%</b></span>
-              <span><small>أقصى خسارة كلية</small><b>$1,500 - $15,000</b></span>
-              <span><small>المخاطرة لكل صفقة</small><b>10%</b></span>
-              <span><small>هدف المرحلة الأولى</small><b>50%</b></span>
-              <span><small>هدف المرحلة الثانية</small><b>30%</b></span>
-              <span><small>مدة الاختبار</small><b>مفتوحة</b></span>
+              <span><small>حجم الحساب</small><b id="ruleSize">—</b></span>
+              <span><small>السعر</small><b id="rulePrice">—</b></span>
+              <span><small>أقصى خسارة يومية</small><b id="ruleDaily">3%</b></span>
+              <span><small>أقصى خسارة كلية</small><b id="ruleTotalLoss">—</b></span>
+              <span><small>المخاطرة لكل صفقة</small><b id="ruleRisk">10%</b></span>
+              <span><small>هدف المرحلة الأولى</small><b id="rulePhase1">50%</b></span>
+              <span><small>هدف المرحلة الثانية</small><b id="rulePhase2">30%</b></span>
+              <span><small>مدة الاختبار</small><b id="ruleDuration">مفتوحة</b></span>
+              <span><small>الوسيط</small><b id="ruleBroker">Exness</b></span>
+              <span><small>المنصة</small><b id="rulePlatform">MT4 / MT5</b></span>
+            </div>
+            <div id="ruleDiscountWrap" style="display:none" class="funded-discount-banner">
+              <span>🏷️ كود الخصم: <b id="ruleDiscountCode"></b></span>
+              <em id="ruleDiscountOrig"></em>
+              <strong id="ruleDiscountFinal"></strong>
+              <small>صالح حتى اليوم 10 من كل شهر</small>
             </div>
             <div class="funded-red-warning">
               <b>تنبيهات مهمة</b>
@@ -1110,6 +1202,11 @@
             <div class="funded-account-table">
               {% for account in funded_accounts %}
               <article class="funded-account-row">
+                <div class="funded-account-glass-logo">
+                  <div class="funded-glass-inner">
+                    <svg viewBox="0 0 36 36" fill="none" width="22" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="fagl{{ loop.index }}" cx="35%" cy="28%" r="72%"><stop offset="0%" stop-color="#c4b5fd"/><stop offset="100%" stop-color="#1e1b4b"/></radialGradient><linearGradient id="fags{{ loop.index }}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,.85)"/><stop offset="100%" stop-color="rgba(139,92,246,.4)"/></linearGradient></defs><circle cx="18" cy="18" r="16" fill="url(#fagl{{ loop.index }})"/><path d="M11 18l7-7 7 7-7 7z" fill="url(#fags{{ loop.index }})"/></svg>
+                  </div>
+                </div>
                 <div><small>رقم الحساب</small><b>{{ account.login_id or "قيد التجهيز" }}</b></div>
                 <div><small>الحجم</small><b>${{ "{:,.0f}".format(account.account_size) }}</b></div>
                 <div><small>المنصة</small><b>{{ account.platform }}</b></div>
@@ -1163,6 +1260,35 @@
         </aside>
       </div>
     </section>
+    <script>(function(){
+      function selectFundedPkg(card){
+        document.querySelectorAll('.funded-package-card').forEach(function(c){c.classList.remove('fp-sel');});
+        card.classList.add('fp-sel');
+        var s=card.dataset,fmt=function(n){return Number(n).toLocaleString('en-US');};
+        document.getElementById('ruleSize').textContent='$'+fmt(s.accountSize);
+        document.getElementById('rulePrice').textContent=s.discountedPrice?'$'+s.discountedPrice:'$'+s.price;
+        document.getElementById('ruleDaily').textContent=s.dailyLoss+'%';
+        document.getElementById('ruleTotalLoss').textContent='$'+fmt(s.totalMaxLoss);
+        document.getElementById('ruleRisk').textContent=s.risk+'%';
+        document.getElementById('rulePhase1').textContent=s.phase1+'%';
+        document.getElementById('rulePhase2').textContent=s.phase2+'%';
+        document.getElementById('ruleDuration').textContent=s.duration==='unlimited'?'مفتوحة':s.duration;
+        document.getElementById('ruleBroker').textContent=s.broker;
+        document.getElementById('rulePlatform').textContent=s.platform;
+        var badge=document.getElementById('rulesPkgBadge');
+        if(badge)badge.textContent='$'+fmt(s.accountSize);
+        var dw=document.getElementById('ruleDiscountWrap');
+        if(s.discountCode){
+          dw.style.display='';
+          document.getElementById('ruleDiscountCode').textContent=s.discountCode;
+          document.getElementById('ruleDiscountOrig').textContent='السعر الأصلي: $'+s.price;
+          document.getElementById('ruleDiscountFinal').textContent='بعد الخصم: $'+s.discountedPrice;
+        }else{dw.style.display='none';}
+      }
+      window.selectFundedPkg=selectFundedPkg;
+      var first=document.querySelector('.funded-package-card');
+      if(first)selectFundedPkg(first);
+    })();</script>
     {% endif %}
 
     {% if page == "funded_checkout" %}
