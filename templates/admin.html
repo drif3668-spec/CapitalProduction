@@ -18,6 +18,7 @@
             <a href="#tickets">التذاكر</a>
             <a href="#referrals">الإحالات</a>
             <a href="#marketing">Marketing Campaigns</a>
+            <a href="#funded-accounts">Funded Accounts Management</a>
             <a href="#support">رسائل الدعم</a>
             <a href="#agents">الوكلاء</a>
             <a href="#settings">الإعدادات</a>
@@ -329,6 +330,90 @@
             <tr><td colspan="9">لا توجد حملات تسويقية بعد.</td></tr>
             {% endfor %}
             </tbody></table></div>
+        </section>
+
+        <section id="funded-accounts" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>Funded Accounts Manager</h2><p>إدارة طلبات الحسابات الممولة وتسليم بيانات MT4/MT5 وتحديث الأداء يدوياً.</p></div></div>
+            <div class="admin-stat-grid">
+                <article><span>كل الطلبات</span><b>{{ admin_stats.funded.orders }}</b></article>
+                <article><span>Pending Review</span><b>{{ admin_stats.funded.pending }}</b></article>
+                <article><span>Active / Delivered</span><b>{{ admin_stats.funded.active }}</b></article>
+                <article><span>Closed / Failed</span><b>{{ admin_stats.funded.closed }}</b></article>
+            </div>
+            <div class="admin-table-tools"><input data-admin-search placeholder="بحث في طلبات الحسابات الممولة"><select data-admin-status><option value="">كل الحالات</option>{% for status in funded_statuses %}<option>{{ status }}</option>{% endfor %}<option>rejected</option></select><button data-admin-sort type="button">ترتيب حسب التاريخ</button></div>
+            <div class="table-wrap"><table data-admin-table>
+                <thead><tr><th>#</th><th>العميل</th><th>الحجم</th><th>السعر</th><th>الخصم</th><th>الحالة</th><th>التاريخ</th><th>قرار / تسليم</th></tr></thead>
+                <tbody>
+                {% for order in funded_orders %}
+                <tr data-status="{{ order.account_status or order.status }}" data-date="{{ order.created_at }}">
+                    <td>#{{ order.id }}</td>
+                    <td>{{ order.full_name }}<br><small>{{ order.user_email }}</small></td>
+                    <td>${{ "{:,.0f}".format(order.account_size) }}</td>
+                    <td>${{ "%.2f"|format(order.final_price) }}</td>
+                    <td>{{ order.discount_code or "-" }}</td>
+                    <td><span class="status-pill {{ 'good' if (order.account_status or order.status) in ['approved','account_delivered','active','phase1_passed','phase2_passed'] else 'bad' if (order.account_status or order.status) in ['rejected','closed','failed','suspended'] else 'warn' }}">{{ funded_status_labels.get(order.account_status or order.status, order.account_status or order.status) }}</span></td>
+                    <td>{{ order.created_at }}</td>
+                    <td>
+                        <details class="support-admin-thread">
+                            <summary class="secondary">إدارة الطلب</summary>
+                            <form action="{{ url_for('admin_funded_order_decision', order_id=order.id) }}" method="post" class="stack">
+                                <div class="form-grid">
+                                    <input name="broker" value="{{ order.broker or 'Exness' }}" placeholder="Broker">
+                                    <select name="platform"><option>MT5</option><option>MT4</option></select>
+                                    <input name="server" placeholder="Server">
+                                    <input name="login_id" placeholder="MT4/MT5 Login">
+                                    <input name="trader_password" placeholder="Trader Password">
+                                    <input name="investor_password" placeholder="Investor Password">
+                                </div>
+                                <textarea name="admin_notes" rows="2" placeholder="Internal notes / user-visible login notes"></textarea>
+                                <div class="decision-actions">
+                                    <button name="action" value="approve" class="accept-btn">Approve / Assign</button>
+                                    <button name="action" value="reject" class="reject-btn">Reject + Refund</button>
+                                </div>
+                            </form>
+                        </details>
+                    </td>
+                </tr>
+                {% else %}<tr><td colspan="8">لا توجد طلبات حسابات ممولة بعد.</td></tr>{% endfor %}
+                </tbody>
+            </table></div>
+
+            <div class="admin-section-head compact-head"><div><h3>Manual Account Updates</h3><p>تحديث الرصيد، الخسائر، المرحلة، التحذيرات والحالة يظهر فوراً للعميل.</p></div></div>
+            <div class="table-wrap"><table data-admin-table>
+                <thead><tr><th>الحساب</th><th>العميل</th><th>الحالة</th><th>الأداء</th><th>تحديث يدوي</th></tr></thead>
+                <tbody>
+                {% for account in funded_admin_accounts %}
+                <tr data-status="{{ account.status }}" data-date="{{ account.updated_at }}">
+                    <td>#{{ account.id }}<br>{{ account.login_id or "-" }}<br>${{ "{:,.0f}".format(account.account_size) }}</td>
+                    <td>{{ account.full_name }}<br><small>{{ account.user_email }}</small></td>
+                    <td><span class="status-pill {{ 'good' if account.status in ['approved','account_delivered','active','phase1_passed','phase2_passed'] else 'bad' if account.status in ['closed','failed','suspended'] else 'warn' }}">{{ funded_status_labels.get(account.status, account.status) }}</span></td>
+                    <td>Balance ${{ "%.2f"|format(account.current_balance) }}<br>Equity ${{ "%.2f"|format(account.current_equity) }}<br>Daily {{ "%.2f"|format(account.daily_loss_used) }}% / Total {{ "%.2f"|format(account.total_loss_used) }}%</td>
+                    <td>
+                        <form action="{{ url_for('admin_update_funded_account', account_id=account.id) }}" method="post" class="inline-form wide-inline marketing-admin-form">
+                            <input name="broker" value="{{ account.broker }}" placeholder="Broker">
+                            <select name="platform"><option {% if account.platform == 'MT5' %}selected{% endif %}>MT5</option><option {% if account.platform == 'MT4' %}selected{% endif %}>MT4</option></select>
+                            <input name="server" value="{{ account.server or '' }}" placeholder="Server">
+                            <input name="login_id" value="{{ account.login_id or '' }}" placeholder="Login">
+                            <input name="trader_password" value="{{ account.trader_password or '' }}" placeholder="Trader Password">
+                            <input name="investor_password" value="{{ account.investor_password or '' }}" placeholder="Investor Password">
+                            <select name="status">{% for status in funded_statuses %}<option value="{{ status }}" {% if account.status == status %}selected{% endif %}>{{ funded_status_labels.get(status, status) }}</option>{% endfor %}</select>
+                            <input name="current_balance" type="number" step="0.01" value="{{ account.current_balance }}" placeholder="Balance">
+                            <input name="current_equity" type="number" step="0.01" value="{{ account.current_equity }}" placeholder="Equity">
+                            <input name="current_loss_percent" type="number" step="0.01" value="{{ account.current_loss_percent }}" placeholder="Loss %">
+                            <input name="daily_loss_used" type="number" step="0.01" value="{{ account.daily_loss_used }}" placeholder="Daily Loss">
+                            <input name="total_loss_used" type="number" step="0.01" value="{{ account.total_loss_used }}" placeholder="Total Loss">
+                            <input name="remaining_allowed_loss" type="number" step="0.01" value="{{ account.remaining_allowed_loss }}" placeholder="Remaining Loss">
+                            <input name="current_phase" value="{{ account.current_phase }}" placeholder="Current Phase">
+                            <input name="progress" type="number" min="0" max="100" value="{{ account.progress }}" placeholder="Progress">
+                            <input name="warning_message" placeholder="Add warning">
+                            <textarea name="admin_notes" rows="1" placeholder="Internal notes">{{ account.admin_notes or "" }}</textarea>
+                            <button>حفظ التحديث</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}<tr><td colspan="5">لا توجد حسابات مسلمة بعد.</td></tr>{% endfor %}
+                </tbody>
+            </table></div>
         </section>
 
         <section id="support" class="admin-section" data-admin-section>

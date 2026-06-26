@@ -1,4 +1,5 @@
 import os
+import re
 import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -66,6 +67,38 @@ PAYMENT_STATUS_LABELS = {
     "approved": "مقبول",
     "rejected": "مرفوض",
 }
+FUNDED_ACCOUNT_STATUSES = [
+    "pending_review",
+    "preparing_account",
+    "approved",
+    "account_delivered",
+    "warning",
+    "suspended",
+    "closed",
+    "failed",
+    "phase1_passed",
+    "phase2_passed",
+]
+FUNDED_ACCOUNT_STATUS_LABELS = {
+    "pending_review": "Pending Review",
+    "preparing_account": "Preparing Account",
+    "approved": "Approved",
+    "account_delivered": "Account Delivered",
+    "warning": "Warning",
+    "suspended": "Suspended",
+    "closed": "Closed",
+    "failed": "Failed",
+    "phase1_passed": "Passed Phase 1",
+    "phase2_passed": "Passed Phase 2",
+    "rejected": "Rejected",
+    "active": "Active",
+}
+FUNDED_PACKAGES = [
+    {"account_size": 10000, "price": 25, "discount_code": "TRB10", "discounted_price": 8, "total_max_loss": 1500, "accent": "purple"},
+    {"account_size": 20000, "price": 19, "discount_code": None, "discounted_price": None, "total_max_loss": 3000, "accent": "blue"},
+    {"account_size": 50000, "price": 53, "discount_code": None, "discounted_price": None, "total_max_loss": 7500, "accent": "green"},
+    {"account_size": 100000, "price": 120, "discount_code": None, "discounted_price": None, "total_max_loss": 15000, "accent": "gold"},
+]
 
 
 def utc_now():
@@ -402,8 +435,129 @@ def create_app(test_config=None):
                 updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             );
+
+            CREATE TABLE IF NOT EXISTS funded_account_packages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_size REAL NOT NULL UNIQUE,
+                price REAL NOT NULL,
+                discount_code TEXT,
+                discounted_price REAL,
+                discount_validity TEXT,
+                daily_max_loss_percent REAL NOT NULL DEFAULT 3,
+                total_max_loss REAL NOT NULL,
+                max_risk_per_trade_percent REAL NOT NULL DEFAULT 10,
+                phase1_target_percent REAL NOT NULL DEFAULT 50,
+                phase2_target_percent REAL NOT NULL DEFAULT 30,
+                test_duration TEXT NOT NULL DEFAULT 'unlimited',
+                broker TEXT NOT NULL DEFAULT 'Exness',
+                platform TEXT NOT NULL DEFAULT 'MT4 / MT5',
+                warning_text TEXT,
+                accent TEXT NOT NULL DEFAULT 'purple',
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS funded_account_orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                package_id INTEGER NOT NULL,
+                discount_code TEXT,
+                original_price REAL NOT NULL,
+                final_price REAL NOT NULL,
+                wallet_transaction_id INTEGER,
+                status TEXT NOT NULL DEFAULT 'pending_review',
+                refunded INTEGER NOT NULL DEFAULT 0,
+                user_agreement INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id),
+                FOREIGN KEY(package_id) REFERENCES funded_account_packages(id),
+                FOREIGN KEY(wallet_transaction_id) REFERENCES wallet_transactions(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS funded_accounts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_id INTEGER NOT NULL UNIQUE,
+                user_id INTEGER NOT NULL,
+                package_id INTEGER NOT NULL,
+                broker TEXT NOT NULL DEFAULT 'Exness',
+                platform TEXT NOT NULL DEFAULT 'MT5',
+                server TEXT,
+                login_id TEXT,
+                trader_password TEXT,
+                investor_password TEXT,
+                account_size REAL NOT NULL,
+                current_balance REAL NOT NULL DEFAULT 0,
+                current_equity REAL NOT NULL DEFAULT 0,
+                current_loss_percent REAL NOT NULL DEFAULT 0,
+                daily_loss_used REAL NOT NULL DEFAULT 0,
+                total_loss_used REAL NOT NULL DEFAULT 0,
+                remaining_allowed_loss REAL NOT NULL DEFAULT 0,
+                current_phase TEXT NOT NULL DEFAULT 'Phase 1',
+                progress INTEGER NOT NULL DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'preparing_account',
+                warning_message TEXT,
+                admin_notes TEXT,
+                delivered_at TEXT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(order_id) REFERENCES funded_account_orders(id),
+                FOREIGN KEY(user_id) REFERENCES users(id),
+                FOREIGN KEY(package_id) REFERENCES funded_account_packages(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS funded_account_updates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_id INTEGER NOT NULL,
+                admin_id INTEGER,
+                field_name TEXT NOT NULL,
+                old_value TEXT,
+                new_value TEXT,
+                note TEXT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(account_id) REFERENCES funded_accounts(id),
+                FOREIGN KEY(admin_id) REFERENCES users(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS funded_account_warnings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                message TEXT NOT NULL,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(account_id) REFERENCES funded_accounts(id),
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            );
             """
         )
+        for package in FUNDED_PACKAGES:
+            db.execute(
+                """
+                INSERT INTO funded_account_packages
+                (account_size, price, discount_code, discounted_price, discount_validity,
+                 daily_max_loss_percent, total_max_loss, max_risk_per_trade_percent,
+                 phase1_target_percent, phase2_target_percent, test_duration, broker, platform,
+                 warning_text, accent)
+                VALUES (?, ?, ?, ?, 'valid until day 10 of the month', 3, ?, 10, 50, 30,
+                        'unlimited', 'Exness', 'MT4 / MT5',
+                        'It is forbidden to connect this account to TrBridgo account-linking system. If detected, the account may be closed.',
+                        ?)
+                ON CONFLICT(account_size) DO UPDATE SET
+                    price = excluded.price,
+                    discount_code = excluded.discount_code,
+                    discounted_price = excluded.discounted_price,
+                    total_max_loss = excluded.total_max_loss,
+                    accent = excluded.accent
+                """,
+                (
+                    package["account_size"],
+                    package["price"],
+                    package["discount_code"],
+                    package["discounted_price"],
+                    package["total_max_loss"],
+                    package["accent"],
+                ),
+            )
         user_columns = {
             row["name"] for row in db.execute("PRAGMA table_info(users)").fetchall()
         }
@@ -538,6 +692,86 @@ def create_app(test_config=None):
             "withdrawals": withdrawals,
             "marketing_transfers": marketing_transfers,
         }
+
+    def funded_packages():
+        return get_db().execute("SELECT * FROM funded_account_packages ORDER BY account_size ASC").fetchall()
+
+    def funded_price(package, discount_code=""):
+        code = (discount_code or "").strip().upper()
+        if package["discount_code"] and code == package["discount_code"].upper() and package["discounted_price"] is not None:
+            return float(package["discounted_price"]), code
+        return float(package["price"]), ""
+
+    def notify_user(user_id, message):
+        get_db().execute("INSERT INTO notifications (user_id, message) VALUES (?, ?)", (user_id, message))
+
+    def funded_account_rows(user_id):
+        return get_db().execute(
+            """
+            SELECT funded_accounts.*, funded_account_orders.created_at purchase_date,
+                   funded_account_orders.final_price, funded_account_packages.account_size package_size,
+                   funded_account_packages.daily_max_loss_percent,
+                   funded_account_packages.total_max_loss,
+                   funded_account_packages.max_risk_per_trade_percent,
+                   funded_account_packages.phase1_target_percent,
+                   funded_account_packages.phase2_target_percent
+            FROM funded_accounts
+            JOIN funded_account_orders ON funded_account_orders.id = funded_accounts.order_id
+            JOIN funded_account_packages ON funded_account_packages.id = funded_accounts.package_id
+            WHERE funded_accounts.user_id = ?
+            ORDER BY funded_accounts.updated_at DESC, funded_accounts.created_at DESC
+            """,
+            (user_id,),
+        ).fetchall()
+
+    def funded_order_rows(user_id):
+        return get_db().execute(
+            """
+            SELECT funded_account_orders.*, funded_account_packages.account_size,
+                   funded_account_packages.broker, funded_account_packages.platform
+            FROM funded_account_orders
+            JOIN funded_account_packages ON funded_account_packages.id = funded_account_orders.package_id
+            WHERE funded_account_orders.user_id = ?
+            ORDER BY funded_account_orders.created_at DESC
+            """,
+            (user_id,),
+        ).fetchall()
+
+    def funded_account_warnings_for_user(user_id):
+        rows = get_db().execute(
+            """
+            SELECT funded_account_warnings.*
+            FROM funded_account_warnings
+            JOIN funded_accounts ON funded_accounts.id = funded_account_warnings.account_id
+            WHERE funded_accounts.user_id = ? AND funded_account_warnings.is_active = 1
+            ORDER BY funded_account_warnings.created_at DESC
+            """,
+            (user_id,),
+        ).fetchall()
+        warnings = {}
+        for row in rows:
+            warnings.setdefault(row["account_id"], []).append(row)
+        return warnings
+
+    def log_funded_update(account_id, field_name, old_value, new_value, note=""):
+        db = get_db()
+        db.execute(
+            """
+            INSERT INTO funded_account_updates (account_id, admin_id, field_name, old_value, new_value, note)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                account_id,
+                session.get("user_id"),
+                field_name,
+                "" if old_value is None else str(old_value),
+                "" if new_value is None else str(new_value),
+                note,
+            ),
+        )
+
+    def account_status_allows_credentials(status):
+        return status in {"approved", "account_delivered", "active", "warning", "phase1_passed", "phase2_passed"}
 
     def account_limit(user):
         return PLAN_LIMITS.get(user["plan"], 1)
@@ -706,6 +940,10 @@ def create_app(test_config=None):
     def risk_label_filter(risk):
         return risk_label(float(risk or 0))
 
+    @app.template_test("search")
+    def jinja_search_test(value, pattern):
+        return re.search(pattern, str(value or "")) is not None
+
     def client_context(user):
         db = get_db()
         info = trial_info(user)
@@ -756,6 +994,11 @@ def create_app(test_config=None):
             "subscription_cards": subscription_cards(user["id"]),
             "card_types": SUBSCRIPTION_CARD_TYPES,
             "max_subscription_cards": MAX_SUBSCRIPTION_CARDS,
+            "funded_packages": funded_packages(),
+            "funded_orders": funded_order_rows(user["id"]),
+            "funded_accounts": funded_account_rows(user["id"]),
+            "funded_warnings": funded_account_warnings_for_user(user["id"]),
+            "funded_status_labels": FUNDED_ACCOUNT_STATUS_LABELS,
         }
         context.update(referral_context(user))
         context.update(marketing_summary(user["id"]))
@@ -1227,6 +1470,80 @@ def create_app(test_config=None):
         db.commit()
         flash("تم تحويل المبلغ إلى محفظة التسويق بنجاح.", "success")
         return redirect(url_for("wallet_page"))
+
+    @app.route("/funded-accounts")
+    @login_required
+    def funded_accounts_page():
+        return render_client_page("funded_accounts", "الحسابات الممولة")
+
+    @app.route("/funded-accounts/checkout/<int:package_id>", methods=("GET", "POST"))
+    @login_required
+    def funded_account_checkout(package_id):
+        user = current_user()
+        db = get_db()
+        package = db.execute("SELECT * FROM funded_account_packages WHERE id = ?", (package_id,)).fetchone()
+        if package is None:
+            flash("الباقة غير موجودة.", "error")
+            return redirect(url_for("funded_accounts_page"))
+        discount_code = request.values.get("discount_code", "").strip()
+        final_price, applied_code = funded_price(package, discount_code)
+        wallet = wallet_summary(user["id"])
+        if request.method == "POST":
+            if request.form.get("accepted_rules") != "1":
+                flash("يجب قبول قواعد الحسابات الممولة قبل المتابعة.", "error")
+                return redirect(url_for("funded_account_checkout", package_id=package_id, discount_code=discount_code))
+            if wallet["balance"] < final_price:
+                flash("رصيد المحفظة غير كافٍ. يرجى شحن محفظتك أولاً.", "error")
+                return redirect(url_for("funded_account_checkout", package_id=package_id, discount_code=discount_code))
+            tx = db.execute(
+                """
+                INSERT INTO wallet_transactions (user_id, kind, method, amount, details, status)
+                VALUES (?, 'withdraw', 'Funded Accounts Wallet Payment', ?, ?, 'مقبول')
+                """,
+                (user["id"], final_price, f"شراء تحدي حساب ممول ${package['account_size']:,.0f}"),
+            )
+            order = db.execute(
+                """
+                INSERT INTO funded_account_orders
+                (user_id, package_id, discount_code, original_price, final_price, wallet_transaction_id, status, user_agreement)
+                VALUES (?, ?, ?, ?, ?, ?, 'pending_review', 1)
+                """,
+                (user["id"], package_id, applied_code, package["price"], final_price, tx.lastrowid),
+            )
+            notify_user(user["id"], "تم استلام طلب شراء الحساب الممول بنجاح وهو الآن قيد المراجعة.")
+            db.commit()
+            flash("تم استلام طلبك بنجاح. يتم الآن تجهيز الحساب الممول. سيتم إرسال بيانات الدخول بعد مراجعة الطلب.", "success")
+            return redirect(url_for("funded_accounts_page") + "#my-funded-accounts")
+        return render_client_page(
+            "funded_checkout",
+            "تأكيد شراء الحساب الممول",
+            selected_package=package,
+            discount_code=discount_code,
+            final_price=final_price,
+            applied_discount_code=applied_code,
+            checkout_wallet=wallet,
+        )
+
+    @app.route("/funded-accounts/<int:account_id>/login-details")
+    @login_required
+    def funded_account_login_details(account_id):
+        user = current_user()
+        db = get_db()
+        account = db.execute(
+            """
+            SELECT funded_accounts.*, funded_account_orders.created_at purchase_date,
+                   funded_account_packages.total_max_loss
+            FROM funded_accounts
+            JOIN funded_account_orders ON funded_account_orders.id = funded_accounts.order_id
+            JOIN funded_account_packages ON funded_account_packages.id = funded_accounts.package_id
+            WHERE funded_accounts.id = ? AND funded_accounts.user_id = ?
+            """,
+            (account_id, user["id"]),
+        ).fetchone()
+        if account is None or not account_status_allows_credentials(account["status"]):
+            flash("بيانات الدخول تظهر فقط بعد موافقة الإدارة وتسليم الحساب.", "error")
+            return redirect(url_for("funded_accounts_page") + "#my-funded-accounts")
+        return render_client_page("funded_login_details", "بيانات دخول الحساب الممول", funded_account=account)
 
     @app.route("/support-center")
     @login_required
@@ -1907,6 +2224,12 @@ def create_app(test_config=None):
                 "progress": db.execute("SELECT COUNT(*) count FROM support_messages WHERE status = 'قيد الرد'").fetchone()["count"],
                 "replied": db.execute("SELECT COUNT(*) count FROM support_messages WHERE status = 'تم الرد'").fetchone()["count"],
             },
+            "funded": {
+                "orders": db.execute("SELECT COUNT(*) count FROM funded_account_orders").fetchone()["count"],
+                "pending": db.execute("SELECT COUNT(*) count FROM funded_account_orders WHERE status = 'pending_review'").fetchone()["count"],
+                "active": db.execute("SELECT COUNT(*) count FROM funded_accounts WHERE status IN ('approved','account_delivered','active','warning','phase1_passed','phase2_passed')").fetchone()["count"],
+                "closed": db.execute("SELECT COUNT(*) count FROM funded_accounts WHERE status IN ('closed','failed','suspended')").fetchone()["count"],
+            },
         }
         return render_template(
             "admin.html",
@@ -2057,6 +2380,33 @@ def create_app(test_config=None):
             ).fetchall(),
             marketing_campaign_statuses=MARKETING_CAMPAIGN_STATUSES,
             marketing_recharge_statuses=MARKETING_RECHARGE_STATUSES,
+            funded_packages=funded_packages(),
+            funded_orders=db.execute(
+                """
+                SELECT funded_account_orders.*, users.full_name, users.email user_email,
+                       funded_account_packages.account_size, funded_account_packages.broker,
+                       funded_account_packages.platform, funded_accounts.id account_id,
+                       funded_accounts.status account_status
+                FROM funded_account_orders
+                JOIN users ON users.id = funded_account_orders.user_id
+                JOIN funded_account_packages ON funded_account_packages.id = funded_account_orders.package_id
+                LEFT JOIN funded_accounts ON funded_accounts.order_id = funded_account_orders.id
+                ORDER BY funded_account_orders.created_at DESC
+                """
+            ).fetchall(),
+            funded_admin_accounts=db.execute(
+                """
+                SELECT funded_accounts.*, users.full_name, users.email user_email,
+                       funded_account_packages.account_size package_size,
+                       funded_account_packages.total_max_loss
+                FROM funded_accounts
+                JOIN users ON users.id = funded_accounts.user_id
+                JOIN funded_account_packages ON funded_account_packages.id = funded_accounts.package_id
+                ORDER BY funded_accounts.updated_at DESC
+                """
+            ).fetchall(),
+            funded_statuses=FUNDED_ACCOUNT_STATUSES,
+            funded_status_labels=FUNDED_ACCOUNT_STATUS_LABELS,
         )
 
     @app.route("/admin/payment-request/<int:request_id>/status", methods=("POST",))
@@ -2135,6 +2485,160 @@ def create_app(test_config=None):
         db.commit()
         flash("تم تحديث طلب الإيداع بالبطاقة.", "success")
         return redirect(url_for("admin_dashboard") + "#card-deposits")
+
+    @app.route("/admin/funded-order/<int:order_id>/decision", methods=("POST",))
+    @admin_required
+    def admin_funded_order_decision(order_id):
+        db = get_db()
+        order = db.execute(
+            """
+            SELECT funded_account_orders.*, funded_account_packages.account_size,
+                   funded_account_packages.total_max_loss, funded_account_packages.broker,
+                   funded_account_packages.platform
+            FROM funded_account_orders
+            JOIN funded_account_packages ON funded_account_packages.id = funded_account_orders.package_id
+            WHERE funded_account_orders.id = ?
+            """,
+            (order_id,),
+        ).fetchone()
+        if order is None:
+            flash("طلب الحساب الممول غير موجود.", "error")
+            return redirect(url_for("admin_dashboard") + "#funded-accounts")
+        action = request.form.get("action", "")
+        note = request.form.get("admin_notes", "").strip()
+        if action == "approve":
+            broker = request.form.get("broker", "").strip() or order["broker"] or "Exness"
+            platform = request.form.get("platform", "").strip() or "MT5"
+            server = request.form.get("server", "").strip()
+            login_id = request.form.get("login_id", "").strip()
+            trader_password = request.form.get("trader_password", "").strip()
+            investor_password = request.form.get("investor_password", "").strip()
+            account = db.execute("SELECT * FROM funded_accounts WHERE order_id = ?", (order_id,)).fetchone()
+            if account is None:
+                cursor = db.execute(
+                    """
+                    INSERT INTO funded_accounts
+                    (order_id, user_id, package_id, broker, platform, server, login_id, trader_password,
+                     investor_password, account_size, current_balance, current_equity,
+                     remaining_allowed_loss, status, admin_notes, delivered_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?, CURRENT_TIMESTAMP)
+                    """,
+                    (
+                        order_id,
+                        order["user_id"],
+                        order["package_id"],
+                        broker,
+                        platform,
+                        server,
+                        login_id,
+                        trader_password,
+                        investor_password,
+                        order["account_size"],
+                        order["account_size"],
+                        order["account_size"],
+                        order["total_max_loss"],
+                        note,
+                    ),
+                )
+                log_funded_update(cursor.lastrowid, "status", "", "approved", "Account approved and delivered")
+            else:
+                db.execute(
+                    """
+                    UPDATE funded_accounts
+                    SET broker = ?, platform = ?, server = ?, login_id = ?, trader_password = ?,
+                        investor_password = ?, status = 'approved', admin_notes = ?,
+                        delivered_at = COALESCE(delivered_at, CURRENT_TIMESTAMP),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """,
+                    (broker, platform, server, login_id, trader_password, investor_password, note, account["id"]),
+                )
+                log_funded_update(account["id"], "status", account["status"], "approved", "Account approved")
+            db.execute(
+                "UPDATE funded_account_orders SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (order_id,),
+            )
+            notify_user(order["user_id"], "تمت الموافقة على الحساب الممول. بيانات الدخول متاحة الآن في لوحة حساباتك الممولة.")
+            notify_user(order["user_id"], "بيانات دخول الحساب الممول أصبحت متاحة.")
+            flash("تمت الموافقة على الطلب وتسليم بيانات الحساب.", "success")
+        elif action == "reject":
+            if not order["refunded"]:
+                db.execute(
+                    """
+                    INSERT INTO wallet_transactions (user_id, kind, method, amount, details, status)
+                    VALUES (?, 'deposit', 'Funded Account Refund', ?, ?, 'مقبول')
+                    """,
+                    (order["user_id"], order["final_price"], f"استرجاع طلب حساب ممول #{order_id}"),
+                )
+            db.execute(
+                """
+                UPDATE funded_account_orders
+                SET status = 'rejected', refunded = 1, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (order_id,),
+            )
+            notify_user(order["user_id"], f"تم رفض طلب الحساب الممول #{order_id} وتم إرجاع المبلغ إلى محفظتك.")
+            flash("تم رفض الطلب وإرجاع الرصيد.", "success")
+        else:
+            flash("إجراء غير معروف.", "error")
+        db.commit()
+        return redirect(url_for("admin_dashboard") + "#funded-accounts")
+
+    @app.route("/admin/funded-account/<int:account_id>/update", methods=("POST",))
+    @admin_required
+    def admin_update_funded_account(account_id):
+        db = get_db()
+        account = db.execute("SELECT * FROM funded_accounts WHERE id = ?", (account_id,)).fetchone()
+        if account is None:
+            flash("الحساب الممول غير موجود.", "error")
+            return redirect(url_for("admin_dashboard") + "#funded-accounts")
+        text_fields = ["broker", "platform", "server", "login_id", "trader_password", "investor_password", "current_phase", "status", "admin_notes"]
+        number_fields = ["current_balance", "current_equity", "current_loss_percent", "daily_loss_used", "total_loss_used", "remaining_allowed_loss", "progress"]
+        updates = {}
+        for field in text_fields:
+            if field in request.form:
+                value = request.form.get(field, "").strip()
+                if field == "status" and value not in FUNDED_ACCOUNT_STATUSES and value not in {"active", "rejected"}:
+                    value = account["status"]
+                updates[field] = value
+        for field in number_fields:
+            if field in request.form:
+                try:
+                    value = float(request.form.get(field, account[field]) or 0)
+                except ValueError:
+                    value = float(account[field] or 0)
+                if field == "progress":
+                    value = max(0, min(100, int(value)))
+                updates[field] = value
+        if updates:
+            assignments = ", ".join([f"{field} = ?" for field in updates])
+            values = list(updates.values()) + [account_id]
+            db.execute(f"UPDATE funded_accounts SET {assignments}, updated_at = CURRENT_TIMESTAMP WHERE id = ?", values)
+            for field, value in updates.items():
+                if str(account[field] or "") != str(value or ""):
+                    log_funded_update(account_id, field, account[field], value, "Manual admin update")
+        warning_message = request.form.get("warning_message", "").strip()
+        if warning_message:
+            db.execute(
+                "INSERT INTO funded_account_warnings (account_id, user_id, message) VALUES (?, ?, ?)",
+                (account_id, account["user_id"], warning_message),
+            )
+            db.execute(
+                "UPDATE funded_accounts SET warning_message = ?, status = CASE WHEN status IN ('closed','failed','suspended') THEN status ELSE 'warning' END, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (warning_message, account_id),
+            )
+            log_funded_update(account_id, "warning_message", account["warning_message"], warning_message, "Warning added")
+            notify_user(account["user_id"], f"تحذير على حسابك الممول: {warning_message}")
+        if "current_balance" in updates or "current_equity" in updates:
+            notify_user(account["user_id"], "تم تحديث رصيد أو حقوق الحساب الممول.")
+        if updates.get("status") == "suspended":
+            notify_user(account["user_id"], "تم تعليق الحساب الممول مؤقتاً.")
+        if updates.get("status") == "closed":
+            notify_user(account["user_id"], "تم إغلاق الحساب الممول.")
+        db.commit()
+        flash("تم تحديث الحساب الممول وتسجيل العملية.", "success")
+        return redirect(url_for("admin_dashboard") + "#funded-accounts")
 
 
     @app.route("/admin/marketing-campaign/<int:campaign_id>/status", methods=("POST",))

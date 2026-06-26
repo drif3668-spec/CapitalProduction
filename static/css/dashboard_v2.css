@@ -595,3 +595,67 @@
 .db-shell.light-mode .wmap-country{stroke:rgba(52,150,100,.35)}
 @media(max-width:880px){.wmap-panel{grid-template-columns:1fr}.wmap-col:last-child{order:-1}}
 @media(prefers-reduced-motion:reduce){.wmap-flow,.wmap-flash,.wmap-live-dot{animation:none!important}}
+
+/* Funded Accounts */
+.funded-dashboard{color:#f8fafc}
+.funded-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:14px}
+.funded-heading h2{margin:0 0 8px;font-size:1.75rem;font-weight:900;color:#fff}
+.funded-heading p{margin:0;color:#a6adbb}
+.funded-wallet-pill{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border:1px solid rgba(124,58,237,.35);border-radius:14px;background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(14,165,233,.08));color:#fff;text-decoration:none;box-shadow:0 18px 40px rgba(0,0,0,.25)}
+.funded-wallet-pill b{color:#fff}
+.funded-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px}
+.funded-package-stage,.funded-rules-card,.funded-my-accounts,.funded-status-card,.funded-performance-card,.funded-checkout,.funded-login-details{position:relative;border:1px solid rgba(148,163,184,.18);border-radius:16px;background:linear-gradient(180deg,rgba(15,23,42,.82),rgba(2,6,23,.86));box-shadow:0 24px 60px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(18px);overflow:hidden}
+.funded-package-stage{padding:18px 16px 20px}
+.funded-package-stage:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 18% 18%,rgba(168,85,247,.18),transparent 26%),radial-gradient(circle at 72% 70%,rgba(16,185,129,.13),transparent 32%);pointer-events:none}
+.funded-package-stage h3,.funded-rules-card h3,.funded-my-accounts h3,.funded-status-card h3,.funded-performance-card h3{position:relative;margin:0 0 16px;color:#fff;font-size:1.05rem;font-weight:900}
+.funded-package-grid{position:relative;display:grid;grid-template-columns:repeat(4,minmax(145px,1fr));gap:12px}
+.funded-package-card{min-height:292px;padding:34px 18px 18px;border-radius:22px;border:1px solid rgba(255,255,255,.16);background:linear-gradient(170deg,rgba(15,23,42,.78),rgba(2,6,23,.7));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;box-shadow:inset 0 1px 18px rgba(255,255,255,.05),0 20px 34px rgba(0,0,0,.35);transition:transform .25s ease,box-shadow .25s ease;overflow:hidden;position:relative}
+.funded-package-card:before,.funded-package-card:after{content:"";position:absolute;inset:-1px;border-radius:22px;pointer-events:none}
+.funded-package-card:before{background:linear-gradient(135deg,rgba(168,85,247,.65),transparent 34%,rgba(255,255,255,.1),transparent 70%);opacity:.75}
+.funded-package-card:after{inset:auto 12px 0;height:42px;filter:blur(18px);opacity:.75;background:#a855f7}
+.funded-package-card.blue:before{background:linear-gradient(135deg,rgba(56,189,248,.58),transparent 34%,rgba(255,255,255,.1),transparent 70%)}
+.funded-package-card.blue:after{background:#38bdf8}
+.funded-package-card.green:before{background:linear-gradient(135deg,rgba(16,185,129,.6),transparent 34%,rgba(255,255,255,.1),transparent 70%)}
+.funded-package-card.green:after{background:#10b981}
+.funded-package-card.gold:before{background:linear-gradient(135deg,rgba(245,158,11,.62),transparent 34%,rgba(255,255,255,.1),transparent 70%)}
+.funded-package-card.gold:after{background:#f59e0b}
+.funded-package-card:hover{transform:translateY(-8px) scale(1.015);box-shadow:0 30px 70px rgba(0,0,0,.46)}
+.funded-hot{position:absolute;top:18px;left:18px;background:linear-gradient(135deg,rgba(168,85,247,.7),rgba(124,58,237,.35));border:1px solid rgba(255,255,255,.18);border-radius:9px;padding:6px 10px;color:#fff;font-size:.76rem;font-weight:800}
+.funded-icon{width:46px;height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:radial-gradient(circle,rgba(255,255,255,.25),transparent 62%),linear-gradient(135deg,rgba(168,85,247,.25),rgba(59,130,246,.12));box-shadow:0 0 28px rgba(168,85,247,.35)}
+.funded-package-card strong{font-size:2rem;letter-spacing:0;color:#fff;z-index:1}
+.funded-package-card small,.funded-package-card em{color:#cbd5e1;z-index:1}
+.funded-package-card del{color:#fb7185;font-weight:800;z-index:1}
+.funded-package-card b{font-size:1.55rem;color:#c084fc;z-index:1}
+.funded-buy-btn,.funded-primary-wide{border:1px solid rgba(255,255,255,.22);border-radius:10px;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-weight:900;padding:12px 28px;cursor:pointer;box-shadow:0 10px 26px rgba(124,58,237,.35);text-decoration:none;transition:.2s ease}
+.funded-buy-btn:hover,.funded-primary-wide:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.funded-buy-btn:disabled{cursor:not-allowed;filter:grayscale(.45);opacity:.5;transform:none}
+.funded-insufficient,.funded-inline-warning{margin:6px 0 0;padding:10px;border:1px solid rgba(248,113,113,.3);border-radius:10px;background:rgba(127,29,29,.35);color:#fecaca;font-size:.82rem}
+.funded-deposit-link{display:inline-flex;align-items:center;justify-content:center;margin-top:6px;padding:8px 12px;border-radius:9px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.28);color:#86efac;text-decoration:none;font-weight:800}
+.funded-rules-card,.funded-my-accounts,.funded-status-card,.funded-performance-card{margin-top:16px;padding:18px}
+.funded-rule-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
+.funded-rule-grid span{padding:14px 10px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(15,23,42,.65);text-align:center}
+.funded-rule-grid small{display:block;color:#9ca3af;margin-bottom:7px}.funded-rule-grid b{color:#fff;font-size:1.16rem}
+.funded-red-warning{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:18px;border:1px solid rgba(244,63,94,.22);border-radius:14px;background:linear-gradient(135deg,rgba(127,29,29,.52),rgba(88,28,46,.28));color:#fecaca}
+.funded-red-warning p{margin:4px 0 0;color:#fecaca}
+.funded-account-table{display:grid;gap:10px}
+.funded-account-row{display:grid;grid-template-columns:repeat(5,minmax(92px,1fr)) auto;gap:10px;align-items:center;padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(2,6,23,.42)}
+.funded-account-row small,.funded-status-card dt{display:block;color:#94a3b8;font-size:.76rem}.funded-account-row b,.funded-status-card dd{color:#fff;margin:0}
+.funded-progress{display:block;width:92px;height:8px;border-radius:99px;background:rgba(148,163,184,.18);overflow:hidden}.funded-progress i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#7c3aed,#d946ef)}
+.funded-details-btn{padding:10px 14px;border-radius:10px;background:rgba(124,58,237,.22);border:1px solid rgba(168,85,247,.3);color:#fff;text-decoration:none;font-weight:800;text-align:center}
+.funded-details-btn.disabled{opacity:.45;pointer-events:none}
+.funded-empty{padding:24px;border-radius:12px;background:rgba(255,255,255,.04);color:#cbd5e1;text-align:center}
+.funded-side{display:flex;flex-direction:column;gap:16px}
+.funded-status-pill{display:inline-flex;margin-bottom:12px;padding:7px 12px;border-radius:9px;background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.22);font-weight:900}
+.funded-status-card dl{display:grid;gap:0}.funded-status-card div,.funded-status-card dl{border-radius:12px;overflow:hidden}.funded-status-card dt,.funded-status-card dd{padding:12px;border-bottom:1px solid rgba(255,255,255,.06)}.funded-status-card dt{float:right;width:42%}.funded-status-card dd{text-align:left}
+.funded-primary-wide{display:flex;justify-content:center;margin-top:14px}
+.funded-ring{width:142px;height:142px;margin:10px auto 18px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#ef4444 0 18%,#f59e0b 18% 32%,#22c55e 32% 100%);box-shadow:0 0 32px rgba(124,58,237,.28)}
+.funded-ring span{width:104px;height:104px;border-radius:50%;display:grid;place-items:center;text-align:center;background:#0b1020;color:#fff}
+.funded-performance-card p{display:flex;justify-content:space-between;color:#cbd5e1;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:9px}.funded-performance-card b{color:#fff}
+.funded-checkout-grid{display:grid;grid-template-columns:320px 1fr;gap:18px}.funded-checkout h2,.funded-login-details h2{margin-top:0;color:#fff}
+.funded-checkout-grid article,.funded-agreement-form,.funded-credential{padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(15,23,42,.54)}
+.funded-checkout-grid article span{display:block;color:#94a3b8;margin-top:10px}.funded-checkout-grid article b{display:block;color:#fff;font-size:1.35rem}
+.funded-agreement-form ul{line-height:1.85;color:#dbeafe}.funded-check{display:flex;align-items:center;gap:10px;margin:14px 0;color:#fff;font-weight:800}
+.funded-credential-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.funded-credential{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center}.funded-credential span{color:#94a3b8}.funded-credential b{color:#fff;word-break:break-word}.funded-credential button{border:1px solid rgba(34,197,94,.3);background:rgba(34,197,94,.14);color:#86efac;border-radius:8px;padding:7px 10px;cursor:pointer}
+.db-shell.light-mode .funded-dashboard{color:#111827}.db-shell.light-mode .funded-package-stage,.db-shell.light-mode .funded-rules-card,.db-shell.light-mode .funded-my-accounts,.db-shell.light-mode .funded-status-card,.db-shell.light-mode .funded-performance-card,.db-shell.light-mode .funded-checkout,.db-shell.light-mode .funded-login-details{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(241,245,249,.9));color:#111827}.db-shell.light-mode .funded-heading h2,.db-shell.light-mode .funded-package-stage h3,.db-shell.light-mode .funded-rules-card h3,.db-shell.light-mode .funded-my-accounts h3,.db-shell.light-mode .funded-status-card h3,.db-shell.light-mode .funded-performance-card h3,.db-shell.light-mode .funded-account-row b,.db-shell.light-mode .funded-status-card dd,.db-shell.light-mode .funded-checkout h2,.db-shell.light-mode .funded-login-details h2,.db-shell.light-mode .funded-credential b{color:#111827}
+@media(max-width:1180px){.funded-layout{grid-template-columns:1fr}.funded-package-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.funded-rule-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.funded-heading{align-items:stretch;flex-direction:column}.funded-package-grid,.funded-checkout-grid,.funded-credential-grid{grid-template-columns:1fr}.funded-rule-grid{grid-template-columns:repeat(2,1fr)}.funded-account-row{grid-template-columns:1fr 1fr}.funded-credential{grid-template-columns:1fr}.funded-status-card dt{float:none;width:auto}.funded-status-card dd{text-align:right}}

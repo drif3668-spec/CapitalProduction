@@ -416,3 +416,126 @@ def test_support_center_uses_rich_support_tables(client, app):
         message = db.execute("SELECT * FROM support_messages WHERE user_id = 2").fetchone()
         assert message["message"] == "أحتاج مساعدة في ربط الحساب"
         assert message["status"] == "جديدة"
+
+
+def fund_wallet(client, amount="100"):
+    client.post(
+        "/deposit",
+        data={"method": "USDT (TRC20)", "amount": amount, "details": "fund funded account"},
+        follow_redirects=True,
+    )
+    client.post("/logout")
+    client.post("/login", data={"identifier": "admin@tribridge.io", "password": "Admin12345"})
+    client.post("/admin/transaction/1/status", data={"status": "مقبول"})
+    client.post("/logout")
+    client.post("/login", data={"identifier": "client@example.com", "password": "StrongPass123"})
+
+
+def test_funded_account_packages_discount_and_order_flow(client, app):
+    register_and_login(client)
+    response = client.get("/funded-accounts")
+    html = response.get_data(as_text=True)
+    assert "الحسابات الممولة" in html
+    assert "$10,000" in html
+    assert "TRB10" in html or "$8" in html
+    assert "رصيد المحفظة غير كاف" in html
+
+    fund_wallet(client, "100")
+    response = client.get("/funded-accounts/checkout/1?discount_code=TRB10")
+    html = response.get_data(as_text=True)
+    assert "$8.00" in html
+    assert "I have read and accepted all funded account rules" in html
+
+    response = client.post(
+        "/funded-accounts/checkout/1",
+        data={"discount_code": "TRB10", "accepted_rules": "1"},
+        follow_redirects=True,
+    )
+    html = response.get_data(as_text=True)
+    assert "تم استلام طلبك بنجاح" in html
+    with read_test_db(app) as db:
+        order = db.execute("SELECT * FROM funded_account_orders WHERE user_id = 2").fetchone()
+        tx = db.execute("SELECT * FROM wallet_transactions WHERE id = ?", (order["wallet_transaction_id"],)).fetchone()
+        assert order["status"] == "pending_review"
+        assert order["final_price"] == 8
+        assert tx["kind"] == "withdraw"
+        assert tx["status"] == "مقبول"
+
+    client.post("/logout")
+    response = client.post(
+        "/login",
+        data={"identifier": "admin@tribridge.io", "password": "Admin12345"},
+        follow_redirects=True,
+    )
+    assert "Funded Accounts Manager" in response.get_data(as_text=True)
+
+
+def test_admin_approves_updates_and_user_sees_funded_account(client, app):
+    register_and_login(client)
+    fund_wallet(client, "100")
+    client.post(
+        "/funded-accounts/checkout/1",
+        data={"discount_code": "TRB10", "accepted_rules": "1"},
+        follow_redirects=True,
+    )
+    client.post("/logout")
+    client.post("/login", data={"identifier": "admin@tribridge.io", "password": "Admin12345"})
+    response = client.post(
+        "/admin/funded-order/1/decision",
+        data={
+            "action": "approve",
+            "broker": "Exness",
+            "platform": "MT5",
+            "server": "Exness-MT5Real15",
+            "login_id": "654321",
+            "trader_password": "trade-pass",
+            "investor_password": "invest-pass",
+            "admin_notes": "Account delivered.",
+        },
+        follow_redirects=True,
+    )
+    assert "تمت الموافقة" in response.get_data(as_text=True)
+
+    response = client.post(
+        "/admin/funded-account/1/update",
+        data={
+            "broker": "Exness",
+            "platform": "MT5",
+            "server": "Exness-MT5Real15",
+            "login_id": "654321",
+            "trader_password": "trade-pass",
+            "investor_password": "invest-pass",
+            "status": "warning",
+            "current_balance": "9700",
+            "current_equity": "9650",
+            "current_loss_percent": "3",
+            "daily_loss_used": "3",
+            "total_loss_used": "1.2",
+            "remaining_allowed_loss": "700",
+            "current_phase": "Phase 1",
+            "progress": "35",
+            "warning_message": "تحذير: خسرت 3% من رصيد الحساب اليوم. تبقى لك 5% فقط قبل إغلاق الحساب.",
+            "admin_notes": "Updated manually.",
+        },
+        follow_redirects=True,
+    )
+    assert "تم تحديث الحساب الممول" in response.get_data(as_text=True)
+
+    client.post("/logout")
+    client.post("/login", data={"identifier": "client@example.com", "password": "StrongPass123"})
+    response = client.get("/funded-accounts")
+    html = response.get_data(as_text=True)
+    assert "654321" in html
+    assert "تحذير: خسرت 3%" in html
+    assert "$9700.00" in html
+
+    response = client.get("/funded-accounts/1/login-details")
+    html = response.get_data(as_text=True)
+    assert "Exness-MT5Real15" in html
+    assert "trade-pass" in html
+    assert "invest-pass" in html
+    with read_test_db(app) as db:
+        audit_count = db.execute("SELECT COUNT(*) count FROM funded_account_updates WHERE account_id = 1").fetchone()["count"]
+        notification_count = db.execute("SELECT COUNT(*) count FROM notifications WHERE user_id = 2").fetchone()["count"]
+        assert audit_count > 0
+        assert notification_count >= 3

@@ -41,6 +41,11 @@
       <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
       الاشتراكات
     </a>
+    <a class="db-nav-link {% if page in ['funded_accounts','funded_checkout','funded_login_details'] %}active{% endif %}" href="{{ url_for('funded_accounts_page') }}">
+      <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7 7 .7-5.3 4.6 1.6 7L12 17.6 5.7 21.3l1.6-7L2 9.7 9 9z"/><path d="M12 8v4l3 2"/></svg>
+      الحسابات الممولة
+      <span class="db-nav-badge">جديد</span>
+    </a>
     <a class="db-nav-link {% if page == 'tickets' %}active{% endif %}" href="{{ url_for('tickets_page') }}">
       <svg class="db-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/></svg>
       التذاكر
@@ -899,6 +904,185 @@
             </tbody>
         </table></div>
     </section>
+    {% endif %}
+
+    {% if page == "funded_accounts" %}
+    <section class="funded-dashboard" dir="rtl">
+      <div class="funded-heading">
+        <div>
+          <h2>الحسابات الممولة</h2>
+          <p>اختر حسابك الممول، اجتز الاختبار، واحصل على حساب حقيقي من Exness.</p>
+        </div>
+        <a class="funded-wallet-pill" href="{{ url_for('wallet_page') }}">الرصيد الكلي <b>${{ "%.2f"|format(wallet.balance) }}</b></a>
+      </div>
+      <div class="funded-layout">
+        <div>
+          <div class="funded-package-stage">
+            <h3>اختر حساب ممول</h3>
+            <div class="funded-package-grid">
+              {% for package in funded_packages %}
+              {% set price = package.discounted_price if package.discounted_price else package.price %}
+              {% set can_buy = wallet.balance >= price %}
+              <article class="funded-package-card {{ package.accent }}">
+                {% if package.discount_code %}<span class="funded-hot">الأكثر شراءً</span>{% endif %}
+                <div class="funded-icon"></div>
+                <strong>${{ "{:,.0f}".format(package.account_size) }}</strong>
+                <small>رأس المال</small>
+                {% if package.discount_code %}<del>${{ "%.0f"|format(package.price) }}</del>{% endif %}
+                <b>${{ "%.0f"|format(price) }}</b>
+                <form action="{{ url_for('funded_account_checkout', package_id=package.id) }}" method="get">
+                  {% if package.discount_code %}<input type="hidden" name="discount_code" value="{{ package.discount_code }}">{% endif %}
+                  <button class="funded-buy-btn" {% if not can_buy %}disabled{% endif %}>اختر الباقة</button>
+                </form>
+                {% if package.discount_code %}<em>صالحة حتى: 10 من كل شهر</em>{% endif %}
+                {% if not can_buy %}
+                <p class="funded-insufficient">رصيد المحفظة غير كافٍ. يرجى شحن محفظتك أولاً.</p>
+                <a class="funded-deposit-link" href="{{ url_for('deposit') }}">Deposit Funds</a>
+                {% endif %}
+              </article>
+              {% endfor %}
+            </div>
+          </div>
+
+          <section class="funded-rules-card">
+            <h3>قواعد الحساب الممول</h3>
+            <div class="funded-rule-grid">
+              <span><small>أقصى خسارة يومية</small><b>3%</b></span>
+              <span><small>أقصى خسارة كلية</small><b>$1,500 - $15,000</b></span>
+              <span><small>المخاطرة لكل صفقة</small><b>10%</b></span>
+              <span><small>هدف المرحلة الأولى</small><b>50%</b></span>
+              <span><small>هدف المرحلة الثانية</small><b>30%</b></span>
+              <span><small>مدة الاختبار</small><b>مفتوحة</b></span>
+            </div>
+            <div class="funded-red-warning">
+              <b>تنبيهات مهمة</b>
+              <p>ممنوع ربط الحساب بنظام الربط الآلي داخل TrBridgo. يمكن للإدارة تحديث حالة الحساب أو إغلاقه عند مخالفة القواعد.</p>
+            </div>
+          </section>
+
+          <section class="funded-my-accounts" id="my-funded-accounts">
+            <h3>حساباتي الممولة</h3>
+            <div class="funded-account-table">
+              {% for account in funded_accounts %}
+              <article class="funded-account-row">
+                <div><small>رقم الحساب</small><b>{{ account.login_id or "قيد التجهيز" }}</b></div>
+                <div><small>الحجم</small><b>${{ "{:,.0f}".format(account.account_size) }}</b></div>
+                <div><small>المنصة</small><b>{{ account.platform }}</b></div>
+                <div><small>الحالة</small><b>{{ funded_status_labels.get(account.status, account.status) }}</b></div>
+                <div><small>المرحلة</small><b>{{ account.current_phase }}</b></div>
+                <div><small>التقدم</small><span class="funded-progress"><i style="width: {{ account.progress }}%"></i></span>{{ account.progress }}%</div>
+                <div><small>الرصيد</small><b>${{ "%.2f"|format(account.current_balance) }}</b></div>
+                <div><small>خسارة يومية</small><b>{{ "%.2f"|format(account.daily_loss_used) }}%</b></div>
+                <div><small>خسارة كلية</small><b>{{ "%.2f"|format(account.total_loss_used) }}%</b></div>
+                <a class="funded-details-btn {% if account.status not in ['approved','account_delivered','active','warning','phase1_passed','phase2_passed'] %}disabled{% endif %}" href="{{ url_for('funded_account_login_details', account_id=account.id) }}">عرض التفاصيل</a>
+                {% for warning in funded_warnings.get(account.id, []) %}<p class="funded-inline-warning">تحذير: {{ warning.message }}</p>{% endfor %}
+              </article>
+              {% else %}
+              <div class="funded-empty">لم تقم بشراء أي حساب ممول بعد.</div>
+              {% endfor %}
+            </div>
+          </section>
+        </div>
+
+        <aside class="funded-side">
+          <section class="funded-status-card">
+            <h3>حالة حسابك الممول</h3>
+            {% set first_account = funded_accounts[0] if funded_accounts else none %}
+            {% if first_account %}
+            <span class="funded-status-pill">{{ funded_status_labels.get(first_account.status, first_account.status) }}</span>
+            <dl>
+              <dt>رقم الحساب</dt><dd>{{ first_account.login_id or "قيد التجهيز" }}</dd>
+              <dt>نوع الحساب</dt><dd>${{ "{:,.0f}".format(first_account.account_size) }} Challenge</dd>
+              <dt>المنصة</dt><dd>{{ first_account.platform }}</dd>
+              <dt>التاجر</dt><dd>{{ first_account.broker }}</dd>
+              <dt>خادم التداول</dt><dd>{{ first_account.server or "-" }}</dd>
+              <dt>تاريخ البدء</dt><dd>{{ first_account.purchase_date[:10] }}</dd>
+            </dl>
+            <a class="funded-primary-wide" href="{{ url_for('funded_account_login_details', account_id=first_account.id) }}">عرض بيانات الدخول</a>
+            {% else %}
+            <p>اختر باقة من اليسار لبدء تحدي الحساب الممول.</p>
+            {% endif %}
+          </section>
+          <section class="funded-performance-card">
+            <h3>أداء الحساب</h3>
+            {% if first_account %}
+            <div class="funded-ring"><span>خسارة كلية<br><b>{{ "%.0f"|format(first_account.total_loss_used) }}%</b></span></div>
+            <p>الرصيد الحالي <b>${{ "%.2f"|format(first_account.current_balance) }}</b></p>
+            <p>حقوق الملكية <b>${{ "%.2f"|format(first_account.current_equity) }}</b></p>
+            <p>الخسارة اليومية <b>{{ "%.2f"|format(first_account.daily_loss_used) }}%</b></p>
+            <p>المتبقي المسموح <b>${{ "%.2f"|format(first_account.remaining_allowed_loss) }}</b></p>
+            {% else %}
+            <p>سيظهر الأداء بعد موافقة الإدارة.</p>
+            {% endif %}
+          </section>
+        </aside>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if page == "funded_checkout" %}
+    <section class="funded-checkout panel" dir="rtl">
+      <h2>تأكيد شراء الحساب الممول</h2>
+      <div class="funded-checkout-grid">
+        <article>
+          <span>حجم الحساب</span><b>${{ "{:,.0f}".format(selected_package.account_size) }}</b>
+          <span>السعر النهائي</span><b>${{ "%.2f"|format(final_price) }}</b>
+          <span>رصيد المحفظة</span><b>${{ "%.2f"|format(checkout_wallet.balance) }}</b>
+          {% if applied_discount_code %}<span>كود الخصم</span><b>{{ applied_discount_code }}</b>{% endif %}
+        </article>
+        <form method="post" class="funded-agreement-form">
+          <input type="hidden" name="discount_code" value="{{ discount_code }}">
+          <h3>قواعد الحسابات الممولة</h3>
+          <ul>
+            <li>I understand that violating the trading rules may result in account closure.</li>
+            <li>Daily maximum loss must not exceed the allowed limit.</li>
+            <li>Total maximum loss must not exceed the allowed limit.</li>
+            <li>I am responsible for my trading decisions.</li>
+            <li>Login credentials are confidential.</li>
+            <li>Sharing or selling the account is prohibited.</li>
+            <li>Connecting the account to unauthorized automation or prohibited systems is forbidden.</li>
+            <li>TrBridgo reserves the right to suspend accounts that violate the rules.</li>
+            <li>All purchases are final after account delivery.</li>
+            <li>I agree to all Terms & Conditions.</li>
+          </ul>
+          {% if checkout_wallet.balance < final_price %}
+          <p class="funded-inline-warning">رصيد المحفظة غير كافٍ. يرجى شحن محفظتك أولاً.</p>
+          <a class="funded-deposit-link" href="{{ url_for('deposit') }}">Deposit Funds</a>
+          {% endif %}
+          <label class="funded-check"><input id="fundedAgree" type="checkbox" name="accepted_rules" value="1"> I have read and accepted all funded account rules.</label>
+          <button id="fundedContinue" class="primary" {% if checkout_wallet.balance < final_price %}disabled{% endif %}>Continue</button>
+        </form>
+      </div>
+    </section>
+    <script>(function(){var c=document.getElementById('fundedAgree'),b=document.getElementById('fundedContinue');if(c&&b&&!b.disabled){b.disabled=true;c.addEventListener('change',function(){b.disabled=!c.checked;});}})();</script>
+    {% endif %}
+
+    {% if page == "funded_login_details" %}
+    <section class="funded-login-details panel" dir="rtl">
+      <h2>بيانات دخول الحساب الممول</h2>
+      <div class="funded-credential-grid">
+        {% for label, value in [
+          ("Broker", funded_account.broker),
+          ("Platform", funded_account.platform),
+          ("Server", funded_account.server),
+          ("Login ID", funded_account.login_id),
+          ("Trader Password", funded_account.trader_password),
+          ("Investor Password", funded_account.investor_password),
+          ("Account Size", "$" ~ "{:,.0f}".format(funded_account.account_size)),
+          ("Current Balance", "$" ~ "%.2f"|format(funded_account.current_balance)),
+          ("Current Equity", "$" ~ "%.2f"|format(funded_account.current_equity)),
+          ("Account Status", funded_status_labels.get(funded_account.status, funded_account.status)),
+          ("Notes from Admin", funded_account.admin_notes)
+        ] %}
+        <div class="funded-credential">
+          <span>{{ label }}</span>
+          <b>{{ value or "-" }}</b>
+          {% if value and label in ["Server","Login ID","Trader Password","Investor Password"] %}<button type="button" data-copy="{{ value }}">Copy</button>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    <script>document.querySelectorAll('[data-copy]').forEach(function(b){b.addEventListener('click',function(){navigator.clipboard&&navigator.clipboard.writeText(b.dataset.copy);b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1200);});});</script>
     {% endif %}
 
     {% if page == "withdraw" %}
