@@ -87,6 +87,36 @@
             </tbody></table></div>
         </section>
 
+        <section id="telegram-deposits" class="admin-section" data-admin-section>
+            <div class="admin-section-head"><div><h2>معاملات Telegram</h2><p>إيداعات الوكيل عبر Telegram — قيد الإنجاز.</p></div></div>
+            <div class="table-wrap"><table data-admin-table><thead><tr><th>العميل</th><th>المبلغ</th><th>رمز الطلب</th><th>وصل الدفع</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead><tbody>
+            {% for tx in transactions if tx.method == "وكيل Telegram" %}
+            <tr data-status="{{ tx.status }}" data-date="{{ tx.created_at }}">
+                <td>{{ tx.full_name }}</td>
+                <td>${{ tx.amount }}</td>
+                <td><small style="font-family:monospace">{{ tx.details or "-" }}</small></td>
+                <td>{% if tx.proof_filename %}<a href="{{ url_for('uploaded_file', filename=tx.proof_filename) }}" target="_blank" class="receipt-link"><img src="{{ url_for('uploaded_file', filename=tx.proof_filename) }}" alt="وصل" class="receipt-thumb">فتح الوصل</a>{% else %}-{% endif %}</td>
+                <td><span class="status-pill {{ 'good' if tx.status == 'مقبول' else 'bad' if tx.status == 'مرفوض' else 'warn' }}">{{ tx.status }}</span></td>
+                <td>{{ tx.created_at[:10] }}</td>
+                <td>
+                    {% if tx.status not in ["مقبول", "مرفوض"] %}
+                    <div class="decision-actions">
+                        <form action="{{ url_for('admin_transaction_status', transaction_id=tx.id) }}" method="post">
+                            <input type="hidden" name="status" value="مقبول">
+                            <button class="accept-btn">تم الدفع ✓</button>
+                        </form>
+                        <form action="{{ url_for('admin_transaction_status', transaction_id=tx.id) }}" method="post">
+                            <input type="hidden" name="status" value="مرفوض">
+                            <button class="reject-btn">رفض</button>
+                        </form>
+                    </div>
+                    {% else %}<small class="text-muted">تمت المعالجة</small>{% endif %}
+                </td>
+            </tr>
+            {% else %}<tr><td colspan="7">لا توجد معاملات Telegram.</td></tr>{% endfor %}
+            </tbody></table></div>
+        </section>
+
         <section id="payment-requests" class="admin-section" data-admin-section>
             <div class="admin-section-head"><div><h2>طلبات الدفع</h2><p>طلبات الدفع الآمنة برقم مرجع ورمز تأكيد، بدون بيانات بطاقات بنكية.</p></div></div>
             <div class="admin-stat-grid">

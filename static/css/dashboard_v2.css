@@ -659,3 +659,67 @@
 .db-shell.light-mode .funded-dashboard{color:#111827}.db-shell.light-mode .funded-package-stage,.db-shell.light-mode .funded-rules-card,.db-shell.light-mode .funded-my-accounts,.db-shell.light-mode .funded-status-card,.db-shell.light-mode .funded-performance-card,.db-shell.light-mode .funded-checkout,.db-shell.light-mode .funded-login-details{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(241,245,249,.9));color:#111827}.db-shell.light-mode .funded-heading h2,.db-shell.light-mode .funded-package-stage h3,.db-shell.light-mode .funded-rules-card h3,.db-shell.light-mode .funded-my-accounts h3,.db-shell.light-mode .funded-status-card h3,.db-shell.light-mode .funded-performance-card h3,.db-shell.light-mode .funded-account-row b,.db-shell.light-mode .funded-status-card dd,.db-shell.light-mode .funded-checkout h2,.db-shell.light-mode .funded-login-details h2,.db-shell.light-mode .funded-credential b{color:#111827}
 @media(max-width:1180px){.funded-layout{grid-template-columns:1fr}.funded-package-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.funded-rule-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:720px){.funded-heading{align-items:stretch;flex-direction:column}.funded-package-grid,.funded-checkout-grid,.funded-credential-grid{grid-template-columns:1fr}.funded-rule-grid{grid-template-columns:repeat(2,1fr)}.funded-account-row{grid-template-columns:1fr 1fr}.funded-credential{grid-template-columns:1fr}.funded-status-card dt{float:none;width:auto}.funded-status-card dd{text-align:right}}
+
+/* OTP Timer */
+.otp-timer-wrap{display:flex;align-items:center;gap:8px;justify-content:center;margin:10px 0}
+.otp-timer-label{font-size:.82rem;color:#8ba79b}
+.otp-timer-count{font-size:1.1rem;font-weight:800;color:#34d399;font-family:monospace;min-width:52px;text-align:center}
+.otp-resend-wrap{margin-top:14px;font-size:.85rem;color:#8ba79b;display:flex;align-items:center;gap:8px;justify-content:center}
+.otp-resend-link{color:#60a5fa;text-decoration:underline;cursor:pointer}
+
+/* Trial countdown */
+.trial-countdown-panel{}
+.trial-countdown-box{text-align:center;padding:32px 20px}
+.trial-countdown-label{font-size:.95rem;color:var(--db-muted);margin-bottom:20px}
+.trial-countdown-digits{display:flex;align-items:center;justify-content:center;gap:8px;margin:20px 0}
+.trial-digit-group{display:flex;flex-direction:column;align-items:center;gap:6px}
+.trial-digit{font-size:2.8rem;font-weight:900;color:#34d399;font-family:monospace;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:12px;padding:8px 16px;min-width:70px;text-align:center;line-height:1}
+.trial-digit-label{font-size:.75rem;color:var(--db-muted)}
+.trial-sep{font-size:2rem;font-weight:900;color:#34d399;margin-bottom:20px}
+.trial-countdown-note{color:var(--db-muted);font-size:.9rem;margin-top:16px}
+.trial-expired-box{text-align:center;padding:32px 20px}
+.trial-expired-icon{font-size:3rem;margin-bottom:12px}
+.trial-expired-box h3{font-size:1.4rem;font-weight:800;margin-bottom:8px;color:#ef4444}
+.trial-expired-box p{color:var(--db-muted);margin-bottom:20px}
+.trial-activate-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;max-width:540px;margin:0 auto 20px}
+.trial-activate-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;border-radius:16px;background:var(--db-card);border:1px solid var(--db-border);text-align:center}
+.trial-plan-name{font-size:.85rem;font-weight:700;padding:4px 12px;border-radius:999px;text-transform:uppercase}
+.trial-plan-name.basic{background:rgba(96,165,250,.15);color:#60a5fa}
+.trial-plan-name.pro{background:rgba(139,92,246,.15);color:#8b5cf6}
+.trial-plan-name.ultra{background:rgba(245,158,11,.15);color:#f59e0b}
+.trial-plan-price{font-size:1.5rem;font-weight:900;color:var(--db-text)}
+.trial-plan-price small{font-size:.75rem;color:var(--db-muted);font-weight:400}
+.trial-wallet-note{font-size:.85rem;color:var(--db-muted)}
+.trial-wallet-note a{color:#60a5fa}
+
+/* Deposit method selector */
+.deposit-method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.deposit-method-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;border-radius:14px;background:var(--db-card);border:2px solid var(--db-border);cursor:pointer;transition:.2s;font-size:.85rem;text-align:center}
+.deposit-method-card:hover{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.04)}
+.deposit-method-card.active{border-color:#34d399;background:rgba(52,211,153,.08)}
+.deposit-method-card strong{font-size:.9rem;color:var(--db-text)}
+.deposit-method-card small{font-size:.75rem;color:var(--db-muted)}
+.deposit-method-icon{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:.85rem}
+.deposit-sub-form{padding:20px;background:var(--db-card);border-radius:14px;border:1px solid var(--db-border)}
+/* Crypto address */
+.crypto-address-panel .section-title{align-items:center}
+.crypto-timer-badge{font-size:1.1rem;font-weight:800;color:#34d399;font-family:monospace;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25);padding:6px 14px;border-radius:10px}
+.crypto-address-box{background:rgba(52,211,153,.04);border:1px solid rgba(52,211,153,.2);border-radius:16px;padding:24px;text-align:center;margin:16px 0}
+.crypto-address-method{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px}
+.crypto-address-method strong{font-size:1.4rem;font-weight:900;color:#34d399}
+.crypto-address-label{font-size:.82rem;color:var(--db-muted);margin-bottom:8px}
+.crypto-address-value{font-size:.95rem;font-family:monospace;word-break:break-all;color:var(--db-text);background:var(--db-bg);border:1px solid var(--db-border);border-radius:10px;padding:12px 16px;margin-bottom:12px;direction:ltr;text-align:left}
+.crypto-address-warn{font-size:.8rem;color:#f59e0b;margin-top:12px}
+.crypto-copy-btn{margin-bottom:8px}
+.crypto-divider{text-align:center;color:var(--db-muted);font-size:.85rem;margin:20px 0;position:relative}
+.crypto-divider::before,.crypto-divider::after{content:'';position:absolute;top:50%;width:30%;height:1px;background:var(--db-border)}
+.crypto-divider::before{right:0}.crypto-divider::after{left:0}
+/* Telegram deposit */
+.tg-request-box{background:rgba(96,165,250,.04);border:1px solid rgba(96,165,250,.2);border-radius:16px;padding:24px;text-align:center;margin:16px 0}
+.tg-request-label{font-size:.85rem;color:var(--db-muted);margin-bottom:8px}
+.tg-request-code{font-size:1.5rem;font-weight:900;font-family:monospace;color:#60a5fa;letter-spacing:.08em;margin-bottom:12px}
+.tg-amount-badge{margin-top:12px;font-size:.9rem;color:var(--db-muted)}
+.tg-amount-badge strong{color:var(--db-text);font-size:1.1rem}
+.tg-contact-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#2ea6d8,#1e8bb5);color:#fff;border-radius:14px;padding:14px 24px;font-size:1rem;font-weight:700;text-decoration:none;margin:16px 0;border:none;cursor:pointer;transition:.2s}
+.tg-contact-btn:hover{opacity:.88;transform:translateY(-1px)}
+.tg-divider{text-align:center;color:var(--db-muted);font-size:.85rem;margin:20px 0}

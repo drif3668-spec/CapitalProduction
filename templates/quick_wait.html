@@ -2,10 +2,51 @@
 {% block title %}جاري تجهيز الربط{% endblock %}
 {% block body_class %}wait-page{% endblock %}
 {% block content %}
-<main class="wait-box">
-    <div class="robot">🤖</div>
-    <h1>جاري تجهيز نظام الربط...</h1>
-    <p>يتم إعداد نموذج الربط السريع الآن.</p>
+<main class="wait-box" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(120% 90% at 50% 0%,rgba(13,55,46,.55),transparent 60%),radial-gradient(100% 80% at 0% 100%,rgba(8,30,42,.65),transparent 55%),#040a0d;color:#eef5f1;font-family:Tajawal,system-ui,sans-serif;text-align:center;padding:40px;gap:28px;">
+    <div class="lemni-wrap">
+        <svg class="lemni-svg" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ef4444"/>
+                    <stop offset="40%" stop-color="#8b5cf6"/>
+                    <stop offset="100%" stop-color="#3b82f6"/>
+                </linearGradient>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <filter id="glow2">
+                    <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+                    <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+            </defs>
+            <!-- Outer glow loop -->
+            <path class="lemni-glow" d="M100,50 C100,20 140,5 160,20 C180,35 180,65 160,80 C140,95 100,80 100,50 C100,20 60,5 40,20 C20,35 20,65 40,80 C60,95 100,80 100,50 Z"
+                  fill="none" stroke="url(#lg1)" stroke-width="8" filter="url(#glow2)" opacity="0.5"/>
+            <!-- Main loop -->
+            <path class="lemni-main" d="M100,50 C100,20 140,5 160,20 C180,35 180,65 160,80 C140,95 100,80 100,50 C100,20 60,5 40,20 C20,35 20,65 40,80 C60,95 100,80 100,50 Z"
+                  fill="none" stroke="url(#lg1)" stroke-width="4" stroke-linecap="round" filter="url(#glow)" stroke-dasharray="8 320" class="lemni-flow"/>
+            <!-- Glass highlight -->
+            <path d="M100,50 C100,30 130,15 155,25 C170,32 175,48 165,62" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M100,50 C100,30 70,15 45,25 C30,32 25,48 35,62" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+    </div>
+    <h1 style="font-size:1.4rem;font-weight:800;margin:0;letter-spacing:-.02em">جاري تجهيز نظام الربط</h1>
+    <p style="color:#8ba79b;margin:0;font-size:.95rem">يتم إعداد نموذج الربط السريع الآن...</p>
 </main>
-<script>setTimeout(() => { window.location.href = "{{ url_for('quick_link_new') }}"; }, 2000);</script>
+<style>
+.lemni-wrap { width:220px; height:110px; }
+.lemni-svg { width:100%; height:100%; overflow:visible; animation:lemni3d 3s ease-in-out infinite; }
+.lemni-flow { animation:lemniFlow 2s linear infinite; }
+.lemni-glow { animation:lemniPulse 2s ease-in-out infinite; }
+@keyframes lemni3d {
+  0%,100% { transform:rotateY(0deg) rotateX(0deg) scale(1); }
+  25% { transform:rotateY(15deg) rotateX(8deg) scale(1.08); }
+  50% { transform:rotateY(0deg) rotateX(-5deg) scale(1.12); }
+  75% { transform:rotateY(-12deg) rotateX(6deg) scale(1.06); }
+}
+@keyframes lemniFlow { to { stroke-dashoffset: -328; } }
+@keyframes lemniPulse { 0%,100%{opacity:.5} 50%{opacity:.9} }
+</style>
+<script>setTimeout(function(){ window.location.href = "{{ url_for('quick_link_new') }}"; }, 2000);</script>
 {% endblock %}

@@ -123,9 +123,9 @@
   </div>
   <div class="db-topbar-actions">
     {% if services_active %}
-    <div class="trial-box compact"><b>{{ trial.days }}</b><span>يوم</span></div>
+    <a class="trial-box compact" href="{{ url_for('trial_page') }}" style="text-decoration:none"><b>{{ trial.days }}</b><span>يوم</span></a>
     {% else %}
-    <div class="trial-box compact expired"><b>انتهت</b><a href="{{ url_for('subscriptions_page') }}">تفعيل</a></div>
+    <a class="trial-box compact expired" href="{{ url_for('trial_page') }}" style="text-decoration:none"><b>انتهت</b><span>الاشتراك</span></a>
     {% endif %}
     <button class="db-icon-btn" type="button" aria-label="الإشعارات">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
@@ -689,25 +689,156 @@
 
     {% if page == "deposit" %}
     <section class="panel">
-        <h2>طلب إيداع</h2>
-        <form action="{{ url_for('deposit') }}" method="post" enctype="multipart/form-data" class="stack compact-form">
-            <select name="method"><option>USDT (TRC20)</option><option>BNB</option><option>Vodafone Cash</option><option>InstaPay</option><option>وكيل Telegram</option></select>
-            <input name="amount" type="number" step="0.01" placeholder="المبلغ" required>
-            <input name="details" placeholder="ملاحظات أو رقم العملية">
-            <input name="proof" type="file" accept="image/*">
-            <button class="primary">تم</button>
-        </form>
+        <div class="section-title">
+            <div><h2>اختر طريقة الإيداع</h2><p>اختر الطريقة المناسبة لإيداع الرصيد في محفظتك</p></div>
+            <span>Deposit</span>
+        </div>
+        <div class="deposit-method-grid" id="depositMethodGrid">
+            <button type="button" class="deposit-method-card active" data-method="crypto-usdt" onclick="showDepositMethod('crypto-usdt',this)">
+                <div class="deposit-method-icon" style="background:rgba(52,211,153,.12);color:#34d399">USDT</div>
+                <strong>USDT TRC20</strong><small>Tether — شبكة TRON</small>
+            </button>
+            <button type="button" class="deposit-method-card" data-method="crypto-bnb" onclick="showDepositMethod('crypto-bnb',this)">
+                <div class="deposit-method-icon" style="background:rgba(245,158,11,.12);color:#f59e0b">BNB</div>
+                <strong>BNB</strong><small>Binance — شبكة BSC</small>
+            </button>
+            <button type="button" class="deposit-method-card" data-method="telegram" onclick="showDepositMethod('telegram',this)">
+                <div class="deposit-method-icon" style="background:rgba(96,165,250,.12);color:#60a5fa">TG</div>
+                <strong>وكيل Telegram</strong><small>دفع عبر وكيل مباشر</small>
+            </button>
+            <button type="button" class="deposit-method-card" data-method="other" onclick="showDepositMethod('other',this)">
+                <div class="deposit-method-icon" style="background:rgba(139,92,246,.12);color:#8b5cf6">+</div>
+                <strong>طرق أخرى</strong><small>Vodafone Cash / InstaPay</small>
+            </button>
+        </div>
+
+        <!-- USDT TRC20 -->
+        <div class="deposit-sub-form" id="dsf-crypto-usdt">
+            <form action="{{ url_for('deposit_crypto_start') }}" method="post" class="stack compact-form">
+                <input type="hidden" name="method" value="USDT (TRC20)">
+                <label>المبلغ المراد إيداعه (بالدولار $)<input name="amount" type="number" step="0.01" min="1" placeholder="مثال: 50.00" required></label>
+                <p class="notice">بعد الضغط ستظهر لك عنوان المحفظة وعداد زمني مدته 45 دقيقة لإتمام الدفع.</p>
+                <button class="primary" type="submit">التالي — عرض عنوان USDT</button>
+            </form>
+        </div>
+
+        <!-- BNB -->
+        <div class="deposit-sub-form" id="dsf-crypto-bnb" style="display:none">
+            <form action="{{ url_for('deposit_crypto_start') }}" method="post" class="stack compact-form">
+                <input type="hidden" name="method" value="BNB">
+                <label>المبلغ المراد إيداعه (بالدولار $)<input name="amount" type="number" step="0.01" min="1" placeholder="مثال: 50.00" required></label>
+                <p class="notice">بعد الضغط ستظهر لك عنوان المحفظة وعداد زمني مدته 45 دقيقة لإتمام الدفع.</p>
+                <button class="primary" type="submit">التالي — عرض عنوان BNB</button>
+            </form>
+        </div>
+
+        <!-- Telegram -->
+        <div class="deposit-sub-form" id="dsf-telegram" style="display:none">
+            <form action="{{ url_for('deposit_telegram_start') }}" method="post" class="stack compact-form">
+                <label>المبلغ المراد إيداعه (بالدولار $)<input name="amount" type="number" step="0.01" min="1" placeholder="مثال: 50.00" required></label>
+                <p class="notice">بعد الضغط ستحصل على رمز طلب خاص وسيظهر زر للتواصل مع وكيل Telegram.</p>
+                <button class="primary" type="submit">التالي — التواصل مع الوكيل</button>
+            </form>
+        </div>
+
+        <!-- Other methods -->
+        <div class="deposit-sub-form" id="dsf-other" style="display:none">
+            <form action="{{ url_for('deposit') }}" method="post" enctype="multipart/form-data" class="stack compact-form">
+                <select name="method" required>
+                    <option value="">اختر الطريقة</option>
+                    <option>Vodafone Cash</option>
+                    <option>InstaPay</option>
+                    <option>Bank Transfer</option>
+                </select>
+                <input name="amount" type="number" step="0.01" placeholder="المبلغ" required>
+                <input name="details" placeholder="رقم العملية أو ملاحظات">
+                <input name="proof" type="file" accept="image/*">
+                <button class="primary">إرسال الطلب</button>
+            </form>
+        </div>
     </section>
+    <script>
+    function showDepositMethod(m,btn){
+        document.querySelectorAll('.deposit-method-card').forEach(function(b){b.classList.remove('active');});
+        btn.classList.add('active');
+        document.querySelectorAll('.deposit-sub-form').forEach(function(d){d.style.display='none';});
+        var el=document.getElementById('dsf-'+m);if(el)el.style.display='';
+    }
+    document.getElementById('dsf-crypto-usdt').style.display='';
+    </script>
     <section class="panel">
-        <h2>طلبات الإيداع</h2>
-        <div class="table-wrap"><table><thead><tr><th>الطريقة</th><th>المبلغ</th><th>الحالة</th><th>الوصل</th></tr></thead><tbody>
+        <h2>سجل الإيداعات</h2>
+        <div class="table-wrap"><table><thead><tr><th>الطريقة</th><th>المبلغ</th><th>الحالة</th><th>الوصل</th><th>التاريخ</th></tr></thead><tbody>
         {% for tx in transactions if tx.kind == "deposit" %}
-        <tr><td>{{ tx.method }}</td><td>{{ tx.amount }}</td><td>{{ tx.status }}</td><td>{{ "مرفق" if tx.proof_filename else "-" }}</td></tr>
+        <tr><td>{{ tx.method }}</td><td>${{ tx.amount }}</td><td><span class="status-pill {{ 'good' if tx.status == 'مقبول' else 'bad' if tx.status == 'مرفوض' else 'warn' }}">{{ tx.status }}</span></td><td>{{ "مرفق ✓" if tx.proof_filename else "-" }}</td><td>{{ tx.created_at[:10] }}</td></tr>
         {% else %}
-        <tr><td colspan="4">لا توجد طلبات إيداع.</td></tr>
+        <tr><td colspan="5">لا توجد طلبات إيداع.</td></tr>
         {% endfor %}
         </tbody></table></div>
     </section>
+    {% endif %}
+
+    {% if page == "deposit_crypto" %}
+    <section class="panel crypto-address-panel">
+        <div class="section-title">
+            <div><h2>📤 إرسال الدفع</h2><p>أرسل المبلغ إلى العنوان التالي قبل انتهاء العداد</p></div>
+            <span class="crypto-timer-badge" id="cryptoTimer">45:00</span>
+        </div>
+        <div class="crypto-address-box">
+            <div class="crypto-address-method">
+                <span class="db-platform-badge">{{ crypto_method }}</span>
+                <strong>${{ "%.2f"|format(crypto_amount) }}</strong>
+            </div>
+            <div class="crypto-address-label">عنوان المحفظة</div>
+            <div class="crypto-address-value" id="cryptoAddr">{{ crypto_address }}</div>
+            <button class="secondary crypto-copy-btn" type="button" onclick="navigator.clipboard.writeText('{{ crypto_address }}').then(function(){this.textContent='✓ تم النسخ';}.bind(this))">نسخ العنوان</button>
+            <p class="crypto-address-warn">⚠️ تأكد من إرسال {{ crypto_method }} فقط على الشبكة الصحيحة. أي إرسال خاطئ لا يمكن استرجاعه.</p>
+        </div>
+        <div class="crypto-divider">بعد إتمام الدفع — ارفع وصل المعاملة</div>
+        <form action="{{ url_for('deposit_crypto_submit') }}" method="post" enctype="multipart/form-data" class="stack compact-form" style="margin-top:16px">
+            <input type="hidden" name="method" value="{{ crypto_method }}">
+            <input type="hidden" name="amount" value="{{ crypto_amount }}">
+            <label>رقم المعاملة (Transaction Hash) — اختياري<input name="tx_hash" placeholder="0x...أو TX..."></label>
+            <label>رفع وصل الدفع (صورة)<input name="proof" type="file" accept="image/*" required></label>
+            <button class="primary" type="submit">✅ تم الدفع — إرسال الطلب</button>
+        </form>
+    </section>
+    <script>(function(){
+        var deadline=Date.now()+45*60*1000,el=document.getElementById('cryptoTimer');
+        function tick(){var r=Math.max(0,Math.round((deadline-Date.now())/1000)),m=Math.floor(r/60),s=r%60;el.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');if(r>0)setTimeout(tick,1000);else{el.style.color='#ef4444';el.textContent='انتهت المدة';}}
+        if(el)tick();
+    })();</script>
+    {% endif %}
+
+    {% if page == "deposit_telegram" %}
+    <section class="panel telegram-deposit-panel">
+        <div class="section-title">
+            <div><h2>💬 الإيداع عبر وكيل Telegram</h2><p>تواصل مع الوكيل وأرسله رمز طلبك</p></div>
+            <span class="crypto-timer-badge" id="tgTimer">45:00</span>
+        </div>
+        <div class="tg-request-box">
+            <div class="tg-request-label">رمز الطلب الخاص بك</div>
+            <div class="tg-request-code" id="tgCode">{{ tg_code }}</div>
+            <button class="secondary" type="button" onclick="navigator.clipboard.writeText('{{ tg_code }}').then(function(){this.textContent='✓ تم النسخ';}.bind(this))">نسخ الرمز</button>
+            <div class="tg-amount-badge">المبلغ: <strong>${{ "%.2f"|format(tg_amount) }}</strong></div>
+        </div>
+        <a href="https://t.me/TrBridgoSupport" target="_blank" rel="noopener" class="tg-contact-btn">
+            <svg viewBox="0 0 24 24" width="20" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.016 9.504c-.148.67-.544.833-1.1.517l-3.034-2.236-1.463 1.41c-.163.163-.298.298-.61.298l.217-3.082 5.614-5.073c.243-.217-.055-.337-.378-.12l-6.94 4.37-2.99-.932c-.65-.203-.663-.65.136-.962l11.68-4.504c.54-.196 1.012.12.884.81z"/></svg>
+            تواصل مع الوكيل الآن
+        </a>
+        <div class="tg-divider">بعد قيام الوكيل بالإيداع — ارفع الوصل</div>
+        <form action="{{ url_for('deposit_telegram_submit') }}" method="post" enctype="multipart/form-data" class="stack compact-form" style="margin-top:16px">
+            <input type="hidden" name="request_code" value="{{ tg_code }}">
+            <input type="hidden" name="amount" value="{{ tg_amount }}">
+            <label>رفع وصل الدفع من الوكيل (صورة)<input name="proof" type="file" accept="image/*" required></label>
+            <button class="primary" type="submit">✅ تم الدفع — إرسال الطلب</button>
+        </form>
+    </section>
+    <script>(function(){
+        var deadline=Date.now()+45*60*1000,el=document.getElementById('tgTimer');
+        function tick(){var r=Math.max(0,Math.round((deadline-Date.now())/1000)),m=Math.floor(r/60),s=r%60;el.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');if(r>0)setTimeout(tick,1000);else{el.style.color='#ef4444';el.textContent='انتهت المدة';}}
+        if(el)tick();
+    })();</script>
     {% endif %}
 
     {% if page == "card_deposit" %}
@@ -815,6 +946,10 @@
                 <svg viewBox="0 0 48 48" fill="none" width="48"><rect width="48" height="48" rx="24" fill="#1f2937"/><path d="M16 28c0-2 2-4 4-4h8c2 0 4 2 4 4v4c0 2-2 4-4 4h-8c-2 0-4-2-4-4v-4z" stroke="#60a5fa" stroke-width="1.5"/><path d="M20 24v-4a4 4 0 018 0v4" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round"/><circle cx="24" cy="31" r="2" fill="#60a5fa"/></svg>
             </div>
             <p class="card-verify-label">أدخل رمز التحقق المرسل إلى هاتفك</p>
+            <div class="otp-timer-wrap">
+                <span class="otp-timer-label">ينتهي خلال</span>
+                <span class="otp-timer-count" id="otpTimer">15:00</span>
+            </div>
             <form action="{{ url_for('card_deposit_verify', request_id=deposit_request.id) }}" method="post" class="card-verify-form" id="otpForm">
                 <div class="card-otp-inputs">
                     <input type="text" name="otp_code" class="card-otp-hidden-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code" required>
@@ -829,9 +964,19 @@
                 </div>
                 <button type="submit" class="primary card-verify-submit">إرسال الرمز</button>
             </form>
+            <div class="otp-resend-wrap">
+                <span class="otp-resend-label">لم يصل الرمز؟</span>
+                <a href="{{ url_for('card_deposit') }}" class="otp-resend-link">إنشاء طلب جديد</a>
+            </div>
         </div>
     </section>
-    <script>(function(){var h=document.querySelector('.card-otp-hidden-input'),b=document.querySelectorAll('.card-otp-box');if(h&&b.length){h.addEventListener('input',function(){var v=this.value.replace(/\D/g,'').slice(0,6);this.value=v;b.forEach(function(x,i){x.textContent=v[i]||'_';});});b.forEach(function(x){x.addEventListener('click',function(){h.focus();});});}})();</script>
+    <script>(function(){
+      var h=document.querySelector('.card-otp-hidden-input'),b=document.querySelectorAll('.card-otp-box');
+      if(h&&b.length){h.addEventListener('input',function(){var v=this.value.replace(/\D/g,'').slice(0,6);this.value=v;b.forEach(function(x,i){x.textContent=v[i]||'_';});});b.forEach(function(x){x.addEventListener('click',function(){h.focus();});});}
+      var deadline=Date.now()+15*60*1000,timerEl=document.getElementById('otpTimer');
+      function tickOtp(){var r=Math.max(0,Math.round((deadline-Date.now())/1000)),m=Math.floor(r/60),s=r%60;timerEl.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');if(r>0){setTimeout(tickOtp,1000);}else{timerEl.style.color='#ef4444';timerEl.textContent='انتهت المدة';}}
+      if(timerEl)tickOtp();
+    })();</script>
     {% endif %}
 
     {% if page == "card_deposit_success" %}
@@ -1190,6 +1335,64 @@
         <tr><td colspan="5">لم تقم بدعوة أي شخص بعد.</td></tr>
         {% endfor %}
         </tbody></table></div>
+    </section>
+    {% endif %}
+
+    {% if page == "trial" %}
+    <section class="panel trial-countdown-panel">
+        <div class="section-title">
+            <div><h2>الفترة التجريبية</h2><p>تتضمن جميع مميزات المنصة بدون التزام</p></div>
+            <span>Trial Period</span>
+        </div>
+        {% if trial.remaining_seconds > 0 %}
+        <div class="trial-countdown-box">
+            <div class="trial-countdown-label">المدة المتبقية من تجربتك المجانية</div>
+            <div class="trial-countdown-digits" id="trialCountdown">
+                <div class="trial-digit-group"><span class="trial-digit" id="tDays">{{ trial.days }}</span><span class="trial-digit-label">يوم</span></div>
+                <div class="trial-sep">:</div>
+                <div class="trial-digit-group"><span class="trial-digit" id="tHours">00</span><span class="trial-digit-label">ساعة</span></div>
+                <div class="trial-sep">:</div>
+                <div class="trial-digit-group"><span class="trial-digit" id="tMins">00</span><span class="trial-digit-label">دقيقة</span></div>
+                <div class="trial-sep">:</div>
+                <div class="trial-digit-group"><span class="trial-digit" id="tSecs">00</span><span class="trial-digit-label">ثانية</span></div>
+            </div>
+            <p class="trial-countdown-note">استفد من تجربتك المجانية لاستكشاف جميع مميزات المنصة.</p>
+        </div>
+        <script>
+        (function(){
+            var rem = {{ trial.remaining_seconds }};
+            var start = Date.now();
+            function tick(){
+                var elapsed = Math.floor((Date.now()-start)/1000);
+                var r = Math.max(0, rem - elapsed);
+                var d=Math.floor(r/86400), h=Math.floor((r%86400)/3600), m=Math.floor((r%3600)/60), s=r%60;
+                document.getElementById('tDays').textContent=d;
+                document.getElementById('tHours').textContent=String(h).padStart(2,'0');
+                document.getElementById('tMins').textContent=String(m).padStart(2,'0');
+                document.getElementById('tSecs').textContent=String(s).padStart(2,'0');
+                if(r>0) setTimeout(tick,1000);
+            }
+            tick();
+        })();
+        </script>
+        {% else %}
+        <div class="trial-expired-box">
+            <div class="trial-expired-icon">⚠️</div>
+            <h3>حسابك متوقف</h3>
+            <p>انتهت فترتك التجريبية. لمتابعة استخدام المنصة، يرجى تفعيل اشتراك من رصيد محفظتك.</p>
+            <div class="trial-activate-grid">
+                {% for type in card_types %}
+                <form action="{{ url_for('trial_activate') }}" method="post" class="trial-activate-card">
+                    <div class="trial-plan-name {{ type|lower }}">{{ type }}</div>
+                    <div class="trial-plan-price">${{ subscription_prices[type] }}<small>/شهر</small></div>
+                    <input type="hidden" name="card_type" value="{{ type }}">
+                    <button class="primary" type="submit" {% if wallet.balance < subscription_prices[type] %}disabled title="رصيد غير كافٍ"{% endif %}>تأكيد الاشتراك</button>
+                </form>
+                {% endfor %}
+            </div>
+            <p class="trial-wallet-note">رصيد محفظتك الحالي: <strong>${{ "%.2f"|format(wallet.balance) }}</strong>. <a href="{{ url_for('deposit') }}">شحن المحفظة</a></p>
+        </div>
+        {% endif %}
     </section>
     {% endif %}
 
