@@ -27,12 +27,19 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
-# Telegram bot integration — import the Flask blueprint (required for webhook).
-# Gracefully disabled if python-telegram-bot is not installed or token is missing.
+# Telegram bot integration — always imported; telegram_bot.py never raises at
+# import time (uses os.getenv() with defaults throughout).
+# Only skipped if python-telegram-bot package is missing from the environment.
 try:
     from telegram_bot import telegram_blueprint as _telegram_blueprint
     _TELEGRAM_ENABLED = True
-except Exception:  # ImportError, KeyError (missing token), or connection error
+except ImportError:
+    import logging as _logging
+    _logging.getLogger(__name__).error(
+        "python-telegram-bot not installed — /telegram/health and "
+        "/telegram/webhook will not be available. "
+        "Ensure requirements.txt includes python-telegram-bot>=20.0 and redeploy."
+    )
     _TELEGRAM_ENABLED = False
 
 BASE_DIR = Path(__file__).resolve().parent
