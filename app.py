@@ -27,6 +27,13 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
+# Telegram bot integration — import the Flask blueprint (required for webhook).
+# Gracefully disabled if python-telegram-bot is not installed or token is missing.
+try:
+    from telegram_bot import telegram_blueprint as _telegram_blueprint
+    _TELEGRAM_ENABLED = True
+except Exception:  # ImportError, KeyError (missing token), or connection error
+    _TELEGRAM_ENABLED = False
 
 BASE_DIR = Path(__file__).resolve().parent
 TRIAL_DAYS = 14
@@ -3448,6 +3455,10 @@ def create_app(test_config=None):
     @app.errorhandler(404)
     def page_not_found(_error):
         return render_template("404.html"), 404
+
+    # Register Telegram webhook route (required for bot integration)
+    if _TELEGRAM_ENABLED:
+        app.register_blueprint(_telegram_blueprint)
 
     return app
 
