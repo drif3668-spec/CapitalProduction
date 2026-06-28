@@ -1,33 +1,31 @@
 """
 TrBridgo Telegram Bot
 =====================
-Production-ready bot built with python-telegram-bot v20+.
+Production-ready bot built with python-telegram-bot v22+.
+
+Webhook URL: <WEBAPP_URL>/telegram/webhook
+Health URL:  <WEBAPP_URL>/telegram/health
 
 Architecture
 ------------
-- Webhook mode (no polling) for deployment on any WSGI host (Render, Railway, etc.)
-- Exposes a Flask Blueprint that mounts a single POST /webhook/telegram endpoint
-- Each incoming update is processed inside an isolated asyncio.run() call —
-  safe with gunicorn's prefork workers (no shared event-loop state between workers)
+- Webhook mode only (no polling) — safe for Render / gunicorn prefork workers
+- Flask Blueprint mounts two routes:
+    POST /telegram/webhook  — receives Telegram updates
+    GET  /telegram/health   — confirms bot module is active
+- Webhook is auto-registered with Telegram on the first HTTP request to the server
+  (idempotent — safe to call every startup)
+- Each update is processed in an isolated asyncio.run() call, no shared event-loop
+  state between gunicorn workers
 
-Local development (polling)
----------------------------
+Local development (polling — do NOT use on Render)
+--------------------------------------------------
     python telegram_bot.py
 
-Register webhook after first Render deploy
-------------------------------------------
+Register webhook manually (one-off or after URL change)
+-------------------------------------------------------
     python -c "
-    import asyncio
-    from telegram_bot import set_webhook
+    import asyncio; from telegram_bot import set_webhook
     asyncio.run(set_webhook('https://capitalproduction.onrender.com'))
-    "
-
-Delete webhook (to switch back to polling)
-------------------------------------------
-    python -c "
-    import asyncio
-    from telegram_bot import delete_webhook
-    asyncio.run(delete_webhook())
     "
 """
 
@@ -36,7 +34,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from flask import Blueprint, abort, request
+from flask import Blueprint, abort, jsonify, request
 from telegram import (
     Bot,
     InlineKeyboardButton,
@@ -47,15 +45,15 @@ from telegram import (
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 # ── Environment ───────────────────────────────────────────────────────────────
-# load_dotenv() is a no-op if app.py already called it; safe to call again.
+# No-op if app.py already called load_dotenv(); safe to call again.
 load_dotenv()
 
 BOT_TOKEN: str = os.environ["TELEGRAM_BOT_TOKEN"]
 WEBAPP_URL: str = os.environ.get("WEBAPP_URL", "").rstrip("/")
 
-# Optional: set TELEGRAM_WEBHOOK_SECRET in .env to enable request validation.
-# When set, every Telegram update must carry this value in the
-# X-Telegram-Bot-Api-Secret-Token header; otherwise the request is rejected.
+# Optional secret that Telegram must include in every webhook request header:
+#   X-Telegram-Bot-Api-Secret-Token: <TELEGRAM_WEBHOOK_SECRET>
+# Set it in Render's environment variables for extra request validation.
 WEBHOOK_SECRET: str = os.environ.get("TELEGRAM_WEBHOOK_SECRET", "")
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -87,8 +85,8 @@ def build_main_keyboard() -> InlineKeyboardMarkup:
             ],
             # Row 3 — Withdraw | Referral Program
             [
-                InlineKeyboardButton("💰 Withdraw",          url=f"{WEBAPP_URL}/withdraw"),
-                InlineKeyboardButton("👥 Referral Program",  url=f"{WEBAPP_URL}/referral-program"),
+                InlineKeyboardButton("💰 Withdraw",         url=f"{WEBAPP_URL}/withdraw"),
+                InlineKeyboardButton("👥 Referral Program", url=f"{WEBAPP_URL}/referral-program"),
             ],
             # Row 4 — Support | AI Assistant
             [
@@ -126,7 +124,6 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         parse_mode="Markdown",
         reply_markup=build_main_keyboard(),
     )
-
     logger.info(
         "/start — user_id=%s username=%s",
         getattr(user, "id", "?"),
@@ -139,12 +136,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 def _build_webhook_application() -> Application:
     """
     Build a minimal Application for webhook mode.
-
-    - updater=None   → disables the built-in polling loop
-    - job_queue=None → no periodic/scheduled tasks (keeps initialize() lightweight)
-
-    Handlers are registered once here; the Application object is module-level
-    and shared across requests (read-only after construction — thread-safe).
+      updater=None   → no built-in polling loop
+      job_queue=None → no scheduled tasks; keeps initialize() lightweight
     """
     app = (
         Application.builder()
@@ -154,103 +147,44 @@ def _build_webhook_application() -> Application:
         .build()
     )
     app.add_handler(CommandHandler("start", start_command))
-    logger.info("Telegram Application built (webhook mode, handlers registered)")
+    logger.info("Telegram Application built — webhook mode, handlers registered")
     return app
 
 
-# Module-level Application instance.
-# `async with _application` in each request calls initialize() / shutdown()
-# which creates / closes the underlying aiohttp session for that single update.
 _application: Application = _build_webhook_application()
+
+# Startup log — always visible in Render's log dashboard
+_WEBHOOK_URL = f"{WEBAPP_URL}/telegram/webhook" if WEBAPP_URL else "(WEBAPP_URL not set)"
+logger.info("Telegram webhook URL: %s", _WEBHOOK_URL)
 
 
 # ── Update Dispatcher ─────────────────────────────────────────────────────────
 
 async def _dispatch_update(payload: dict) -> None:
     """
-    Process one Telegram update inside a fresh async context.
-
-    `async with _application` lifecycle per call:
-      __aenter__ → initialize() → opens aiohttp session, verifies bot token
-      process_update() → dispatches through registered handlers
-      __aexit__  → shutdown() → closes aiohttp session cleanly
+    Process one Telegram update inside a managed async context.
+    `async with _application` calls initialize() on enter (opens aiohttp session)
+    and shutdown() on exit (closes it) — one clean session per update.
     """
     async with _application:
         update = Update.de_json(payload, _application.bot)
         await _application.process_update(update)
 
 
-# ── Flask Blueprint (Webhook Endpoint) ───────────────────────────────────────
-
-telegram_blueprint = Blueprint("telegram_bot", __name__)
-
-
-@telegram_blueprint.route("/webhook/telegram", methods=["POST"])
-def telegram_webhook() -> tuple:
-    """
-    POST /webhook/telegram
-
-    Telegram calls this URL for every update (message, callback_query, etc.).
-    The handler is intentionally sync so it works with Flask's default WSGI mode
-    and gunicorn's prefork workers without any shared event-loop state.
-    """
-    # ── Optional secret-token validation ──────────────────────────────────────
-    if WEBHOOK_SECRET:
-        incoming = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
-        if incoming != WEBHOOK_SECRET:
-            logger.warning(
-                "Webhook: rejected — invalid secret token from %s",
-                request.remote_addr,
-            )
-            abort(403)
-
-    # ── Parse request body ────────────────────────────────────────────────────
-    payload = request.get_json(force=True, silent=True)
-    if not payload:
-        logger.warning("Webhook: empty or non-JSON body from %s", request.remote_addr)
-        abort(400)
-
-    # ── Dispatch update ───────────────────────────────────────────────────────
-    try:
-        asyncio.run(_dispatch_update(payload))
-    except TimeoutError:
-        logger.error(
-            "Webhook: timeout processing update_id=%s", payload.get("update_id")
-        )
-    except Exception:
-        logger.exception(
-            "Webhook: unhandled error for update_id=%s", payload.get("update_id")
-        )
-        # Return 200 even on error — prevents Telegram from retrying indefinitely.
-        # All errors are captured in logs / Render's log dashboard.
-
-    return "OK", 200
-
-
-# ── Webhook Registration Utility ──────────────────────────────────────────────
+# ── Webhook Registration ──────────────────────────────────────────────────────
 
 async def set_webhook(base_url: str, secret: str | None = None) -> bool:
     """
-    Register the bot's webhook URL with Telegram.
-
-    Call this once after deploying to Render (or whenever the URL changes).
-    Telegram will then POST every update to  <base_url>/webhook/telegram.
+    Register the bot webhook with Telegram (idempotent — safe to call every startup).
 
     Args:
-        base_url: Deployed app root URL, e.g. "https://capitalproduction.onrender.com"
+        base_url: Deployed root URL, e.g. "https://capitalproduction.onrender.com"
         secret:   Overrides TELEGRAM_WEBHOOK_SECRET env var if provided.
 
     Returns:
         True if registration succeeded.
-
-    Example:
-        python -c "
-        import asyncio
-        from telegram_bot import set_webhook
-        asyncio.run(set_webhook('https://capitalproduction.onrender.com'))
-        "
     """
-    webhook_url = f"{base_url.rstrip('/')}/webhook/telegram"
+    webhook_url = f"{base_url.rstrip('/')}/telegram/webhook"
     token = secret if secret is not None else (WEBHOOK_SECRET or None)
 
     async with Bot(token=BOT_TOKEN) as bot:
@@ -263,29 +197,125 @@ async def set_webhook(base_url: str, secret: str | None = None) -> bool:
 
         result = await bot.set_webhook(**kwargs)
 
-    status = "OK" if result else "FAILED"
-    logger.info("set_webhook(%s) → %s", webhook_url, status)
+    logger.info("set_webhook(%s) → %s", webhook_url, "OK" if result else "FAILED")
     return bool(result)
 
 
-async def delete_webhook() -> bool:
-    """
-    Remove the registered webhook from Telegram.
+async def get_webhook_info() -> dict:
+    """Return the current webhook info from Telegram."""
+    async with Bot(token=BOT_TOKEN) as bot:
+        info = await bot.get_webhook_info()
+    return {
+        "url": info.url,
+        "has_custom_certificate": info.has_custom_certificate,
+        "pending_update_count": info.pending_update_count,
+        "last_error_message": getattr(info, "last_error_message", None),
+        "last_error_date": str(getattr(info, "last_error_date", None)),
+    }
 
-    Use this when switching back to polling mode (local dev) or resetting.
-    """
+
+async def delete_webhook() -> bool:
+    """Remove the registered webhook (use when switching to polling)."""
     async with Bot(token=BOT_TOKEN) as bot:
         result = await bot.delete_webhook(drop_pending_updates=True)
     logger.info("delete_webhook → %s", "OK" if result else "FAILED")
     return bool(result)
 
 
+# ── Auto-webhook setup (fires once on first HTTP request) ─────────────────────
+_webhook_initialized: bool = False
+
+
+def _auto_setup_webhook() -> None:
+    """
+    Attempt to register the webhook with Telegram on the first server request.
+    Called from before_app_request — runs exactly once per worker process.
+    Safe to fail: errors are logged but do not break the Flask app.
+    """
+    global _webhook_initialized
+    if _webhook_initialized or not WEBAPP_URL:
+        return
+    _webhook_initialized = True  # set before calling to prevent re-entry
+
+    try:
+        result = asyncio.run(set_webhook(WEBAPP_URL))
+        if result:
+            logger.info("Auto-webhook configured: %s/telegram/webhook", WEBAPP_URL)
+        else:
+            logger.warning("Auto-webhook call returned False — check BOT_TOKEN and WEBAPP_URL")
+    except Exception:
+        logger.exception("Auto-webhook setup failed — register manually with set_webhook()")
+
+
+# ── Flask Blueprint ───────────────────────────────────────────────────────────
+
+telegram_blueprint = Blueprint("telegram_bot", __name__)
+telegram_blueprint.before_app_request(_auto_setup_webhook)
+
+
+@telegram_blueprint.route("/telegram/webhook", methods=["POST"])
+def telegram_webhook() -> tuple:
+    """
+    POST /telegram/webhook
+
+    Telegram calls this URL for every update.
+    Always returns HTTP 200 so Telegram does not retry on handler errors.
+    """
+    # Optional secret-token validation
+    if WEBHOOK_SECRET:
+        incoming = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        if incoming != WEBHOOK_SECRET:
+            logger.warning("Webhook: invalid secret token from %s", request.remote_addr)
+            abort(403)
+
+    payload = request.get_json(force=True, silent=True)
+    if not payload:
+        logger.warning("Webhook: empty or non-JSON body from %s", request.remote_addr)
+        abort(400)
+
+    try:
+        asyncio.run(_dispatch_update(payload))
+    except TimeoutError:
+        logger.error("Webhook: timeout on update_id=%s", payload.get("update_id"))
+    except Exception:
+        logger.exception("Webhook: error on update_id=%s", payload.get("update_id"))
+
+    return "OK", 200
+
+
+@telegram_blueprint.route("/telegram/health", methods=["GET"])
+def telegram_health() -> tuple:
+    """
+    GET /telegram/health
+
+    Confirms the Telegram bot module is active and returns current webhook info.
+    Use this to verify the bot is correctly configured after deployment.
+    """
+    try:
+        webhook_info = asyncio.run(get_webhook_info())
+        return jsonify({
+            "status": "active",
+            "bot_token_set": bool(BOT_TOKEN),
+            "webapp_url": WEBAPP_URL or None,
+            "webhook_url": _WEBHOOK_URL,
+            "telegram_webhook_info": webhook_info,
+        }), 200
+    except Exception as exc:
+        logger.exception("Health check failed")
+        return jsonify({
+            "status": "error",
+            "error": str(exc),
+            "bot_token_set": bool(BOT_TOKEN),
+            "webapp_url": WEBAPP_URL or None,
+        }), 500
+
+
 # ── Local Development: Polling Mode ──────────────────────────────────────────
 
 def main() -> None:
     """
-    Entry point for local development — runs the bot in polling mode.
-    This is NOT used in production (webhook mode is used there instead).
+    Entry point for local development only — runs polling mode.
+    NOT used on Render (webhook mode is used there).
 
         python telegram_bot.py
     """
@@ -293,10 +323,10 @@ def main() -> None:
         poll_app = (
             Application.builder()
             .token(BOT_TOKEN)
-            .build()  # includes Updater + JobQueue for polling
+            .build()
         )
         poll_app.add_handler(CommandHandler("start", start_command))
-        logger.info("Starting bot in POLLING mode (local development)")
+        logger.info("Starting bot in POLLING mode (local development only)")
         await poll_app.run_polling(drop_pending_updates=True)
 
     asyncio.run(_run_polling())
