@@ -2,11 +2,12 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}TriBridge.io{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sw_inbox.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard_v2.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/telegram_mobile.css') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -20,5 +21,14 @@
     {% endwith %}
     {% block content %}{% endblock %}
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+    (function () {
+      if (window.Telegram && window.Telegram.WebApp) {
+        document.body.classList.add('telegram-webapp');
+        try { window.Telegram.WebApp.expand(); } catch (e) {}
+        try { window.Telegram.WebApp.ready(); } catch (e) {}
+      }
+    })();
+    </script>
 </body>
 </html>

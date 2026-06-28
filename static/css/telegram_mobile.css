@@ -1,0 +1,160 @@
+/* telegram_mobile.css
+   Mobile layout fixes + Telegram WebApp specific styles.
+   .telegram-webapp class is added to <body> by JS when window.Telegram.WebApp is detected.
+*/
+
+/* ──────────────────────────────────────────────────────
+   GENERAL MOBILE FIXES (all mobile browsers, ≤ 860px)
+────────────────────────────────────────────────────── */
+
+@media (max-width: 860px) {
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  /* Fix: detail panel must stack vertically on mobile.
+     The 1100px rule sets flex-direction:row which is wrong on phones. */
+  .db-detail-panel {
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .db-stat-card {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  /* Allow card header to wrap when buttons don't fit */
+  .db-card-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .db-card-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  /* Ensure accounts table scrolls inside its wrapper */
+  .db-accounts-table {
+    min-width: 480px;
+  }
+}
+
+@media (max-width: 540px) {
+  /* Hide topbar search — wastes space on small screens */
+  .db-topbar-search {
+    display: none;
+  }
+
+  /* Hide user name/role text next to avatar */
+  .db-topbar-user-name,
+  .db-topbar-user-role {
+    display: none;
+  }
+
+  .db-topbar-actions {
+    gap: 4px;
+  }
+}
+
+/* ──────────────────────────────────────────────────────
+   TELEGRAM WEBAPP SPECIFIC STYLES (.telegram-webapp)
+────────────────────────────────────────────────────── */
+
+/* Extra bottom padding so content isn't hidden behind the bottom nav */
+.telegram-webapp .db-main {
+  padding-bottom: 76px;
+}
+
+/* Always hide search bar in Telegram WebApp */
+.telegram-webapp .db-topbar-search {
+  display: none;
+}
+
+/* Compact topbar actions on narrow Telegram windows */
+@media (max-width: 480px) {
+  .telegram-webapp .db-topbar-user-name,
+  .telegram-webapp .db-topbar-user-role {
+    display: none;
+  }
+
+  .telegram-webapp .db-topbar-actions {
+    gap: 3px;
+  }
+}
+
+/* Single-column stat cards on very narrow screens */
+@media (max-width: 360px) {
+  .telegram-webapp .db-stats-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ──────────────────────────────────────────────────────
+   TELEGRAM BOTTOM NAVIGATION BAR (.tg-bottom-nav)
+────────────────────────────────────────────────────── */
+
+.tg-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--db-card, #0d1a1b);
+  border-top: 1px solid rgba(52, 211, 153, .14);
+  padding: 6px 4px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+/* Visible only inside Telegram WebApp on mobile */
+.telegram-webapp .tg-bottom-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+/* Never show on desktop even if class is set */
+@media (min-width: 861px) {
+  .tg-bottom-nav {
+    display: none !important;
+  }
+}
+
+.tg-bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--db-muted, #64748b);
+  text-decoration: none;
+  font-size: 9.5px;
+  font-weight: 500;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: color .18s;
+  flex: 1;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.tg-bottom-nav-item.active {
+  color: var(--db-green, #67ff4a);
+}
+
+.tg-bottom-nav-item:active {
+  color: var(--db-green, #67ff4a);
+  opacity: .8;
+}
+
+.tg-bottom-nav-item svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
