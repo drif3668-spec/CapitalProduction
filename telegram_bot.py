@@ -68,7 +68,7 @@ def _call_api(method: str, payload: dict) -> dict:
         resp = client.post(url, json=payload)
 
     data = resp.json()
-    logger.debug("TG API ← %s  response=%s", method, json.dumps(data))
+    logger.info("TG API ← %s  response=%s", method, json.dumps(data))
 
     if not data.get("ok"):
         raise RuntimeError(f"Telegram API {method} failed: {data}")
@@ -110,27 +110,10 @@ def _build_keyboard() -> dict:
 # ── Command Handlers ──────────────────────────────────────────────────────────
 
 def handle_start(chat_id: int, first_name: str) -> None:
-    """
-    Send the /start welcome message with the InlineKeyboard to chat_id.
-    Uses a direct sendMessage API call — no async, no event loop.
-    """
-    text = (
-        f"👋 Welcome, *{first_name}*!\n\n"
-        "🏆 *TrBridgo* — Your Professional Trading Platform\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        "📈  Real-time trading dashboard\n"
-        "💳  Seamless deposits & withdrawals\n"
-        "👥  Earn through referral commissions\n"
-        "🤖  AI-powered market insights\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        "Tap a button below to get started:"
-    )
-
+    """Send a plain-text test reply to /start (temporary — no buttons, no Markdown)."""
     _call_api("sendMessage", {
         "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "Markdown",
-        "reply_markup": _build_keyboard(),
+        "text": "Telegram Test OK",
     })
     logger.info("START message sent → chat_id=%s name=%s", chat_id, first_name)
 
