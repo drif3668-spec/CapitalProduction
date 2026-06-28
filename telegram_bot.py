@@ -1,47 +1,38 @@
 """
 TrBridgo Telegram Bot
 =====================
-Production-ready bot using python-telegram-bot v22+.
+python-telegram-bot v22+ is kept for local polling (python telegram_bot.py).
 
-Routes registered (always, even if token is not yet configured):
-    POST /telegram/webhook  — receives Telegram updates
-    GET  /telegram/health   — returns JSON status (use this to verify deployment)
+In production (Render / gunicorn) all updates are handled through the Flask
+webhook route using direct, synchronous httpx calls to the Telegram Bot API.
+This avoids every asyncio / event-loop incompatibility with WSGI workers.
 
-Design rules
-------------
-* This module NEVER raises at import time — os.getenv() with defaults throughout.
-  A missing TELEGRAM_BOT_TOKEN is logged as a warning; routes still mount.
-* Webhook is auto-registered with Telegram on the first HTTP request (idempotent).
-* asyncio.run() is used per-request so there is no shared event-loop state
-  between gunicorn prefork workers.
-* Polling is only used when running this file directly (local dev).
+Routes always mounted (even if token is absent — returns 503 JSON):
+    POST /telegram/webhook   — receives Telegram updates from the Bot API
+    GET  /telegram/health    — JSON status; open in browser to verify deploy
 
-Local development
------------------
-    python telegram_bot.py          # polling mode
+Environment variables (set in Render → Environment):
+    TELEGRAM_BOT_TOKEN        required
+    WEBAPP_URL                required  (e.g. https://capitalproduction.onrender.com)
+    TELEGRAM_WEBHOOK_SECRET   optional  (extra header-validation security)
 
-Register webhook manually (after deploy or URL change)
-------------------------------------------------------
-    python -c "
-    import asyncio; from telegram_bot import set_webhook
-    asyncio.run(set_webhook('https://capitalproduction.onrender.com'))
-    "
+Local development (polling, do NOT use on Render):
+    python telegram_bot.py
 """
 
-import asyncio
+import json
 import logging
 import os
 
+import httpx
 from dotenv import load_dotenv
-from flask import Blueprint, abort, jsonify, request
+from flask import Blueprint, jsonify, request
 
 # ── Environment ───────────────────────────────────────────────────────────────
-# No-op when app.py already called load_dotenv(); safe to call again.
-load_dotenv()
+load_dotenv()  # no-op when app.py already called it
 
-# Use getenv() with defaults — this module must NEVER raise KeyError at import.
-BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
-WEBAPP_URL: str = os.getenv("WEBAPP_URL", "").rstrip("/")
+BOT_TOKEN: str     = os.getenv("TELEGRAM_BOT_TOKEN", "")
+WEBAPP_URL: str    = os.getenv("WEBAPP_URL", "").rstrip("/")
 WEBHOOK_SECRET: str = os.getenv("TELEGRAM_WEBHOOK_SECRET", "")
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -52,81 +43,79 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-if not BOT_TOKEN:
-    logger.warning(
-        "TELEGRAM_BOT_TOKEN is not set — bot routes will mount but updates "
-        "cannot be processed until the variable is added to the environment."
-    )
-
-# Printed in Render log on every startup so you can confirm the URL at a glance.
 _WEBHOOK_URL = f"{WEBAPP_URL}/telegram/webhook" if WEBAPP_URL else "(WEBAPP_URL not set)"
-logger.info("Telegram webhook URL: %s", _WEBHOOK_URL)
+
+if not BOT_TOKEN:
+    logger.warning("TELEGRAM_BOT_TOKEN is not set — bot is inactive until configured")
+else:
+    logger.info("Telegram bot module loaded | webhook URL: %s", _WEBHOOK_URL)
 
 
-# ── Lazy imports (only load telegram library when token is present) ────────────
+# ── Telegram Bot API (synchronous via httpx) ──────────────────────────────────
 
-def _get_telegram_classes():
+_TG_API = "https://api.telegram.org/bot"
+
+
+def _call_api(method: str, payload: dict) -> dict:
     """
-    Import python-telegram-bot types on demand.
-    Raises ImportError with a clear message if the package is missing.
+    Make a synchronous POST request to the Telegram Bot API.
+    Raises RuntimeError on HTTP error or when Telegram returns ok=false.
     """
-    try:
-        from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
-        from telegram.ext import Application, CommandHandler, ContextTypes
-        return Bot, InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo, Application, CommandHandler, ContextTypes
-    except ImportError as exc:
-        raise ImportError(
-            "python-telegram-bot is not installed. "
-            "Add 'python-telegram-bot>=20.0' to requirements.txt and redeploy."
-        ) from exc
+    url = f"{_TG_API}{BOT_TOKEN}/{method}"
+    logger.debug("TG API → %s  payload=%s", method, json.dumps(payload))
+
+    with httpx.Client(timeout=15) as client:
+        resp = client.post(url, json=payload)
+
+    data = resp.json()
+    logger.debug("TG API ← %s  response=%s", method, json.dumps(data))
+
+    if not data.get("ok"):
+        raise RuntimeError(f"Telegram API {method} failed: {data}")
+
+    return data.get("result", {})
 
 
 # ── Keyboard Builder ──────────────────────────────────────────────────────────
 
-def build_main_keyboard():
-    """Return the main-menu InlineKeyboardMarkup."""
-    _, InlineKeyboardButton, InlineKeyboardMarkup, _, WebAppInfo, _, _, _ = _get_telegram_classes()
-
-    return InlineKeyboardMarkup(
-        [
-            # Row 1 — Telegram WebApp full-screen launcher
+def _build_keyboard() -> dict:
+    """
+    Return a Telegram InlineKeyboardMarkup dict.
+    Row 1  — WebApp launcher (opens the platform inside Telegram).
+    Rows 2-4 — deep-link buttons for key platform sections.
+    """
+    return {
+        "inline_keyboard": [
+            # Row 1 — full-screen WebApp
+            [{"text": "🚀 Open TrBridgo Platform", "web_app": {"url": WEBAPP_URL}}],
+            # Row 2
             [
-                InlineKeyboardButton(
-                    "🚀 Open TrBridgo Platform",
-                    web_app=WebAppInfo(url=WEBAPP_URL),
-                )
+                {"text": "📊 Dashboard", "url": f"{WEBAPP_URL}/dashboard"},
+                {"text": "💳 Deposit",   "url": f"{WEBAPP_URL}/deposit"},
             ],
-            # Row 2 — Dashboard | Deposit
+            # Row 3
             [
-                InlineKeyboardButton("📊 Dashboard", url=f"{WEBAPP_URL}/dashboard"),
-                InlineKeyboardButton("💳 Deposit",   url=f"{WEBAPP_URL}/deposit"),
+                {"text": "💰 Withdraw",         "url": f"{WEBAPP_URL}/withdraw"},
+                {"text": "👥 Referral Program", "url": f"{WEBAPP_URL}/referral-program"},
             ],
-            # Row 3 — Withdraw | Referral Program
+            # Row 4
             [
-                InlineKeyboardButton("💰 Withdraw",         url=f"{WEBAPP_URL}/withdraw"),
-                InlineKeyboardButton("👥 Referral Program", url=f"{WEBAPP_URL}/referral-program"),
-            ],
-            # Row 4 — Support | AI Assistant
-            [
-                InlineKeyboardButton("💬 Support",      url=f"{WEBAPP_URL}/support"),
-                InlineKeyboardButton("🤖 AI Assistant", url=f"{WEBAPP_URL}/ai"),
+                {"text": "💬 Support",      "url": f"{WEBAPP_URL}/support"},
+                {"text": "🤖 AI Assistant", "url": f"{WEBAPP_URL}/ai"},
             ],
         ]
-    )
+    }
 
 
 # ── Command Handlers ──────────────────────────────────────────────────────────
 
-async def start_command(update, context) -> None:
-    """Handle /start — branded welcome message with main keyboard."""
-    if update.message is None:
-        return
-
-    user = update.effective_user
-    name = user.first_name if user else "Trader"
-
-    welcome = (
-        f"👋 Welcome, *{name}*!\n\n"
+def handle_start(chat_id: int, first_name: str) -> None:
+    """
+    Send the /start welcome message with the InlineKeyboard to chat_id.
+    Uses a direct sendMessage API call — no async, no event loop.
+    """
+    text = (
+        f"👋 Welcome, *{first_name}*!\n\n"
         "🏆 *TrBridgo* — Your Professional Trading Platform\n\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━\n"
         "📈  Real-time trading dashboard\n"
@@ -137,152 +126,139 @@ async def start_command(update, context) -> None:
         "Tap a button below to get started:"
     )
 
-    await update.message.reply_text(
-        welcome,
-        parse_mode="Markdown",
-        reply_markup=build_main_keyboard(),
-    )
-    logger.info(
-        "/start — user_id=%s username=%s",
-        getattr(user, "id", "?"),
-        getattr(user, "username", name),
-    )
+    _call_api("sendMessage", {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "Markdown",
+        "reply_markup": _build_keyboard(),
+    })
+    logger.info("START message sent → chat_id=%s name=%s", chat_id, first_name)
 
 
-# ── Application Factory ───────────────────────────────────────────────────────
+# ── Update Router ─────────────────────────────────────────────────────────────
 
-def _build_webhook_application():
+def _route_update(payload: dict) -> None:
     """
-    Build a minimal Application for webhook mode.
-      updater=None   → no built-in polling
-      job_queue=None → no scheduled tasks; keeps initialize() lightweight
-    Returns None (with a warning) if BOT_TOKEN is not set.
+    Inspect the update payload and dispatch to the correct handler.
+    All command routing lives here so it is easy to extend.
     """
-    if not BOT_TOKEN:
-        logger.warning("Skipping Application build — TELEGRAM_BOT_TOKEN is empty")
-        return None
+    update_id = payload.get("update_id", "?")
+    logger.info("[update_id=%s] routing update", update_id)
 
-    _, _, _, _, _, Application, CommandHandler, _ = _get_telegram_classes()
+    message = payload.get("message")
+    if not message:
+        logger.info("[update_id=%s] no 'message' key — ignored (type: %s)",
+                    update_id, list(payload.keys()))
+        return
 
-    app = (
-        Application.builder()
-        .token(BOT_TOKEN)
-        .updater(None)
-        .job_queue(None)
-        .build()
-    )
-    app.add_handler(CommandHandler("start", start_command))
-    logger.info("Telegram Application built — webhook mode, handlers registered")
-    return app
+    chat_id    = message.get("chat", {}).get("id")
+    text       = (message.get("text") or "").strip()
+    user       = message.get("from") or {}
+    first_name = user.get("first_name") or "Trader"
+    username   = user.get("username") or first_name
+
+    logger.info("[update_id=%s] message | chat_id=%s | user=%s | text=%r",
+                update_id, chat_id, username, text)
+
+    if not chat_id:
+        logger.warning("[update_id=%s] missing chat_id — cannot reply", update_id)
+        return
+
+    # ── command dispatch ──────────────────────────────────────────────────────
+    if text.startswith("/start"):
+        logger.info("[update_id=%s] dispatching /start handler", update_id)
+        handle_start(chat_id, first_name)
+
+    else:
+        logger.info("[update_id=%s] no handler for text=%r", update_id, text)
 
 
-_application = _build_webhook_application()
+# ── Webhook Registration (synchronous) ────────────────────────────────────────
 
-
-# ── Update Dispatcher ─────────────────────────────────────────────────────────
-
-async def _dispatch_update(payload: dict) -> None:
+def set_webhook(base_url: str) -> bool:
     """
-    Process one Telegram update.
-    `async with _application` calls initialize() on enter (opens aiohttp session)
-    and shutdown() on exit — one clean HTTP session per update.
-    """
-    async with _application:
-        _, _, _, Update, _, _, _, _ = _get_telegram_classes()
-        update = Update.de_json(payload, _application.bot)
-        await _application.process_update(update)
-
-
-# ── Webhook Registration ──────────────────────────────────────────────────────
-
-async def set_webhook(base_url: str, secret: str | None = None) -> bool:
-    """
-    Register the bot webhook with Telegram (idempotent — safe every startup).
+    Register the bot webhook with Telegram.
+    Idempotent — safe to call on every startup.
 
     Args:
-        base_url: Deployed root URL e.g. "https://capitalproduction.onrender.com"
-        secret:   Overrides TELEGRAM_WEBHOOK_SECRET env var if provided.
+        base_url: e.g. "https://capitalproduction.onrender.com"
+    Returns:
+        True if Telegram confirmed ok.
     """
     if not BOT_TOKEN:
         logger.error("set_webhook: TELEGRAM_BOT_TOKEN is not set")
         return False
 
-    Bot, _, _, _, _, _, _, _ = _get_telegram_classes()
-
     webhook_url = f"{base_url.rstrip('/')}/telegram/webhook"
-    token = secret if secret is not None else (WEBHOOK_SECRET or None)
-
-    async with Bot(token=BOT_TOKEN) as bot:
-        kwargs: dict = {
-            "url": webhook_url,
-            "allowed_updates": ["message", "callback_query"],
-        }
-        if token:
-            kwargs["secret_token"] = token
-        result = await bot.set_webhook(**kwargs)
-
-    logger.info("set_webhook(%s) → %s", webhook_url, "OK" if result else "FAILED")
-    return bool(result)
-
-
-async def get_webhook_info() -> dict:
-    """Return current webhook registration info from Telegram."""
-    if not BOT_TOKEN:
-        return {"error": "TELEGRAM_BOT_TOKEN is not set"}
-
-    Bot, _, _, _, _, _, _, _ = _get_telegram_classes()
-
-    async with Bot(token=BOT_TOKEN) as bot:
-        info = await bot.get_webhook_info()
-
-    return {
-        "url": info.url,
-        "pending_update_count": info.pending_update_count,
-        "last_error_message": getattr(info, "last_error_message", None),
-        "last_error_date": str(getattr(info, "last_error_date", None)),
+    payload: dict = {
+        "url": webhook_url,
+        "allowed_updates": ["message", "callback_query"],
     }
+    if WEBHOOK_SECRET:
+        payload["secret_token"] = WEBHOOK_SECRET
+
+    try:
+        _call_api("setWebhook", payload)
+        logger.info("setWebhook OK → %s", webhook_url)
+        return True
+    except Exception:
+        logger.exception("setWebhook FAILED for %s", webhook_url)
+        return False
 
 
-async def delete_webhook() -> bool:
-    """Remove the registered webhook (use when switching back to polling)."""
+def get_webhook_info() -> dict:
+    """Return current webhook registration from Telegram."""
+    if not BOT_TOKEN:
+        return {"error": "TELEGRAM_BOT_TOKEN not set"}
+    try:
+        info = _call_api("getWebhookInfo", {})
+        return {
+            "url":                   info.get("url", ""),
+            "pending_update_count":  info.get("pending_update_count", 0),
+            "last_error_message":    info.get("last_error_message"),
+            "last_error_date":       info.get("last_error_date"),
+        }
+    except Exception as exc:
+        return {"error": str(exc)}
+
+
+def delete_webhook() -> bool:
+    """Remove the registered webhook (use when switching to polling)."""
     if not BOT_TOKEN:
         return False
-    Bot, _, _, _, _, _, _, _ = _get_telegram_classes()
-    async with Bot(token=BOT_TOKEN) as bot:
-        result = await bot.delete_webhook(drop_pending_updates=True)
-    logger.info("delete_webhook → %s", "OK" if result else "FAILED")
-    return bool(result)
+    try:
+        _call_api("deleteWebhook", {"drop_pending_updates": True})
+        logger.info("deleteWebhook OK")
+        return True
+    except Exception:
+        logger.exception("deleteWebhook FAILED")
+        return False
 
 
-# ── Auto-webhook setup (fires once per worker on first HTTP request) ───────────
+# ── Auto-webhook setup (once per worker, on first HTTP request) ───────────────
 _webhook_initialized: bool = False
 
 
 def _auto_setup_webhook() -> None:
     """
-    Attempt to register the webhook on the first request received by this worker.
-    Safe to fail — errors are logged; the Flask app keeps running.
+    Register webhook with Telegram on the first request received by this worker.
+    Runs at most once per worker process. Errors are logged, not raised.
     """
     global _webhook_initialized
     if _webhook_initialized or not WEBAPP_URL or not BOT_TOKEN:
         return
-    _webhook_initialized = True  # set first to prevent re-entry
+    _webhook_initialized = True  # guard before I/O to prevent re-entry
 
-    try:
-        result = asyncio.run(set_webhook(WEBAPP_URL))
-        if result:
-            logger.info("Auto-webhook configured: %s/telegram/webhook", WEBAPP_URL)
-        else:
-            logger.warning("Auto-webhook returned False — verify BOT_TOKEN and WEBAPP_URL in Render")
-    except Exception:
-        logger.exception("Auto-webhook setup failed — register manually with set_webhook()")
+    result = set_webhook(WEBAPP_URL)
+    if result:
+        logger.info("Auto-webhook OK: %s/telegram/webhook", WEBAPP_URL)
+    else:
+        logger.warning("Auto-webhook FAILED — check BOT_TOKEN and WEBAPP_URL")
 
 
 # ── Flask Blueprint ───────────────────────────────────────────────────────────
 
 telegram_blueprint = Blueprint("telegram_bot", __name__)
-
-# Fire auto-setup once on the first request to this worker.
 telegram_blueprint.before_app_request(_auto_setup_webhook)
 
 
@@ -290,32 +266,49 @@ telegram_blueprint.before_app_request(_auto_setup_webhook)
 def telegram_webhook() -> tuple:
     """
     POST /telegram/webhook
-    Telegram calls this endpoint for every update (message, callback, etc.).
-    Always returns HTTP 200 to prevent Telegram from retrying on handler errors.
+
+    1. Log the raw incoming body.
+    2. Validate optional secret-token header.
+    3. Parse JSON.
+    4. Route the update.
+    5. Always return 200 OK so Telegram does not retry.
     """
-    if not BOT_TOKEN or _application is None:
-        logger.error("Webhook hit but TELEGRAM_BOT_TOKEN is not configured")
+    # ── 1. Raw body log ───────────────────────────────────────────────────────
+    raw_body = request.get_data(as_text=True)
+    logger.info("WEBHOOK HIT | ip=%s | content_type=%s | body_len=%d",
+                request.remote_addr, request.content_type, len(raw_body))
+    logger.info("RAW UPDATE BODY: %s", raw_body)
+
+    # ── 2. Bot not configured guard ───────────────────────────────────────────
+    if not BOT_TOKEN:
+        logger.error("WEBHOOK: BOT_TOKEN not set — cannot process update")
         return jsonify({"error": "bot not configured"}), 503
 
-    # Optional secret-token validation
+    # ── 3. Secret-token validation (optional) ─────────────────────────────────
     if WEBHOOK_SECRET:
         incoming = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
         if incoming != WEBHOOK_SECRET:
-            logger.warning("Webhook: invalid secret token from %s", request.remote_addr)
-            abort(403)
+            logger.warning("WEBHOOK: invalid secret token from %s", request.remote_addr)
+            return "Forbidden", 403
 
-    payload = request.get_json(force=True, silent=True)
-    if not payload:
-        logger.warning("Webhook: empty or non-JSON body from %s", request.remote_addr)
-        abort(400)
-
+    # ── 4. Parse JSON ─────────────────────────────────────────────────────────
     try:
-        asyncio.run(_dispatch_update(payload))
-    except TimeoutError:
-        logger.error("Webhook: timeout on update_id=%s", payload.get("update_id"))
+        payload = json.loads(raw_body) if raw_body else None
+    except json.JSONDecodeError:
+        logger.error("WEBHOOK: invalid JSON — body=%s", raw_body[:200])
+        return "OK", 200  # return 200 so Telegram doesn't retry a malformed body
+
+    if not payload:
+        logger.warning("WEBHOOK: empty payload")
+        return "OK", 200
+
+    # ── 5. Route the update ───────────────────────────────────────────────────
+    try:
+        _route_update(payload)
     except Exception:
-        logger.exception("Webhook: error on update_id=%s", payload.get("update_id"))
-        # Return 200 anyway — error is logged; Telegram won't retry
+        logger.exception("WEBHOOK: unhandled error for update_id=%s",
+                         payload.get("update_id"))
+        # Return 200 — error is in logs; Telegram won't retry
 
     return "OK", 200
 
@@ -324,59 +317,59 @@ def telegram_webhook() -> tuple:
 def telegram_health() -> tuple:
     """
     GET /telegram/health
-    Returns JSON confirming the bot module is active and shows webhook status.
-    Open this URL in a browser right after deploying to verify the setup.
+    Open in browser after deploying to confirm the bot is wired up correctly.
     """
-    configured = bool(BOT_TOKEN) and _application is not None
+    configured = bool(BOT_TOKEN) and bool(WEBAPP_URL)
 
-    base = {
-        "status": "active" if configured else "not_configured",
-        "bot_token_set": bool(BOT_TOKEN),
-        "webapp_url": WEBAPP_URL or None,
-        "webhook_url": _WEBHOOK_URL,
+    payload = {
+        "status":         "active" if configured else "not_configured",
+        "bot_token_set":  bool(BOT_TOKEN),
+        "webapp_url":     WEBAPP_URL or None,
+        "webhook_url":    _WEBHOOK_URL,
         "routes": {
-            "webhook": "/telegram/webhook  [POST]",
-            "health":  "/telegram/health   [GET]",
+            "webhook": "POST /telegram/webhook",
+            "health":  "GET  /telegram/health",
         },
     }
 
     if not configured:
-        base["hint"] = (
-            "Add TELEGRAM_BOT_TOKEN and WEBAPP_URL to Render's "
-            "Environment Variables, then redeploy."
+        payload["hint"] = (
+            "Set TELEGRAM_BOT_TOKEN and WEBAPP_URL in Render → Environment, "
+            "then redeploy."
         )
-        return jsonify(base), 200  # 200 so the route itself is confirmed working
+        return jsonify(payload), 200
 
-    try:
-        webhook_info = asyncio.run(get_webhook_info())
-        base["telegram_webhook_info"] = webhook_info
-        return jsonify(base), 200
-    except Exception as exc:
-        logger.exception("Health: could not fetch webhook info")
-        base["telegram_webhook_info"] = {"error": str(exc)}
-        return jsonify(base), 200
+    payload["telegram_webhook_info"] = get_webhook_info()
+    return jsonify(payload), 200
 
 
 # ── Local Development: Polling Mode ──────────────────────────────────────────
 
 def main() -> None:
     """
-    Entry point for local development — runs polling mode.
-    Do NOT use this on Render (webhook mode is always used in production).
+    Local development entry point — polling mode only.
+    Do NOT use on Render (webhook mode is used in production).
 
         python telegram_bot.py
     """
     if not BOT_TOKEN:
         raise SystemExit("TELEGRAM_BOT_TOKEN is not set. Check your .env file.")
 
-    async def _run_polling() -> None:
-        _, _, _, _, _, Application, CommandHandler, _ = _get_telegram_classes()
-        poll_app = Application.builder().token(BOT_TOKEN).build()
-        poll_app.add_handler(CommandHandler("start", start_command))
-        logger.info("Starting bot in POLLING mode (local development only)")
-        await poll_app.run_polling(drop_pending_updates=True)
+    import asyncio
+    from telegram.ext import Application, CommandHandler  # type: ignore[import]
 
-    asyncio.run(_run_polling())
+    async def start_handler(update, context):
+        user = update.effective_user
+        name = user.first_name if user else "Trader"
+        handle_start(update.effective_chat.id, name)
+
+    async def _poll() -> None:
+        app = Application.builder().token(BOT_TOKEN).build()
+        app.add_handler(CommandHandler("start", start_handler))
+        logger.info("Polling mode started (local dev only)")
+        await app.run_polling(drop_pending_updates=True)
+
+    asyncio.run(_poll())
 
 
 if __name__ == "__main__":
