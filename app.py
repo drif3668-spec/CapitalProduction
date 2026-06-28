@@ -581,6 +581,28 @@ def create_app(test_config=None):
             db.execute("ALTER TABLE users ADD COLUMN profile_image TEXT")
         if "local_withdraw_method" not in user_columns:
             db.execute("ALTER TABLE users ADD COLUMN local_withdraw_method TEXT")
+        # Telegram bot linking columns
+        if "telegram_user_id" not in user_columns:
+            db.execute("ALTER TABLE users ADD COLUMN telegram_user_id TEXT")
+        if "telegram_username" not in user_columns:
+            db.execute("ALTER TABLE users ADD COLUMN telegram_username TEXT")
+        if "telegram_first_name" not in user_columns:
+            db.execute("ALTER TABLE users ADD COLUMN telegram_first_name TEXT")
+        if "telegram_linked_at" not in user_columns:
+            db.execute("ALTER TABLE users ADD COLUMN telegram_linked_at TEXT")
+        # One-time Telegram linking tokens
+        db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS telegram_link_tokens (
+                token      TEXT PRIMARY KEY,
+                user_id    INTEGER NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                expires_at TEXT NOT NULL,
+                used       INTEGER NOT NULL DEFAULT 0,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+            """
+        )
         existing_columns = {
             row["name"] for row in db.execute("PRAGMA table_info(link_requests)").fetchall()
         }
@@ -3458,6 +3480,19 @@ def create_app(test_config=None):
             "site": "TrBridgo.io",
             "mcp_access": True,
         }), 200
+
+    # ── Telegram account-linking page ─────────────────────────────────────────
+    @app.route("/telegram/connect")
+    @login_required
+    def telegram_connect_page():
+        """
+        Logged-in users open this page (via the bot's WebApp button) to get a
+        one-time 6-character code they send to the bot with /link <CODE>.
+        """
+        from bot_services import create_link_token
+        user = current_user()
+        token = create_link_token(user["id"])
+        return render_template("telegram_connect.html", token=token, user=user)
 
     @app.errorhandler(404)
     def page_not_found(_error):

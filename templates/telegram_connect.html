@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Link Telegram — TrBridgo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #1a1d2e;
+      border: 1px solid #2d3148;
+      border-radius: 16px;
+      padding: 36px 32px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+    .icon { font-size: 48px; margin-bottom: 16px; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #fff; }
+    .subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 28px; line-height: 1.5; }
+    .steps {
+      text-align: left;
+      background: #13162a;
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 24px;
+    }
+    .step {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .step:last-child { margin-bottom: 0; }
+    .step-num {
+      background: #3b82f6;
+      color: #fff;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 1px;
+    }
+    .token-box {
+      background: #0d1020;
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .token-label { font-size: 12px; color: #64748b; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
+    .token {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: 8px;
+      color: #60a5fa;
+      font-family: "Courier New", monospace;
+    }
+    .copy-cmd {
+      background: #0d1020;
+      border: 1px solid #2d3148;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: "Courier New", monospace;
+      font-size: 15px;
+      color: #a3e635;
+      margin-bottom: 20px;
+      word-break: break-all;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      margin-bottom: 10px;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-copy { background: #3b82f6; color: #fff; }
+    .btn-refresh { background: #1e2235; color: #94a3b8; border: 1px solid #2d3148; }
+    .expiry { font-size: 12px; color: #64748b; margin-top: 16px; }
+    .copied-notice {
+      font-size: 13px;
+      color: #4ade80;
+      margin-top: -4px;
+      margin-bottom: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🔗</div>
+    <h1>Link Your Telegram Account</h1>
+    <p class="subtitle">Hello, <strong>{{ user.full_name }}</strong>! Follow these steps to connect your TrBridgo account to Telegram.</p>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div>Copy your unique code below</div></div>
+      <div class="step"><div class="step-num">2</div><div>Open the TrBridgo bot on Telegram</div></div>
+      <div class="step"><div class="step-num">3</div><div>Send exactly this command to the bot:</div></div>
+    </div>
+
+    <div class="token-box">
+      <div class="token-label">Your Linking Code</div>
+      <div class="token" id="token">{{ token }}</div>
+    </div>
+
+    <div class="copy-cmd" id="cmd">/link {{ token }}</div>
+
+    <button class="btn btn-copy" onclick="copyCmd()">📋 Copy Command</button>
+    <div class="copied-notice" id="notice">✅ Copied! Now paste it in the bot.</div>
+    <button class="btn btn-refresh" onclick="location.reload()">🔄 Generate New Code</button>
+
+    <div class="expiry">⏱ This code expires in 10 minutes</div>
+  </div>
+
+  <script>
+    function copyCmd() {
+      const cmd = document.getElementById("cmd").textContent.trim();
+      navigator.clipboard.writeText(cmd).then(() => {
+        const n = document.getElementById("notice");
+        n.style.display = "block";
+        setTimeout(() => { n.style.display = "none"; }, 3000);
+      });
+    }
+    // Telegram WebApp expand
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.expand();
+      window.Telegram.WebApp.ready();
+    }
+  </script>
+</body>
+</html>
